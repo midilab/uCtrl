@@ -1,0 +1,260 @@
+/*!
+ *  @file       page.hpp
+ *  Project     Arduino Library API interface for uMODULAR projects
+ *  @brief      Page handler module
+ *  @version    1.0.0
+ *  @author     Romulo Silva
+ *  @date       30/10/22
+ *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE. 
+ */
+
+#ifndef __U_CTRL_PAGE_HPP__
+#define __U_CTRL_PAGE_HPP__
+
+#include <Arduino.h>
+#include <functional>
+
+#ifdef USE_PAGE_COMPONENT	
+
+#define COMPONENT_LINE  8
+#define COMPONENT_GRID  2
+
+#define POT_ADC_RESOLUTION 1024
+
+typedef struct
+{
+        int8_t shift;      
+        int8_t up;
+        int8_t down;
+        int8_t left;
+        int8_t right;    
+        int8_t function1;
+        int8_t function2;
+        int8_t decrementer;
+        int8_t incrementer;
+        int8_t pot;
+} NAV_COMPONENT_CTRL; 
+
+typedef enum
+{
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT,
+} NAV_DIRECTIONS; 
+
+struct PageComponent
+{
+        uint8_t line = 1;
+        uint8_t col = 1;
+        uint8_t x = 0;
+        uint8_t y = 0;
+        bool selected = false;
+        uint8_t selected_line = 0;
+        uint8_t selected_grid = 0;
+        bool no_hook = false;
+        bool no_nav = false;
+        bool change_full_state = false;
+        bool update_selector = false;
+
+        const char * f1 = nullptr;
+        const char * f2 = nullptr;
+        uint8_t f1_state = 0;
+        uint8_t f2_state = 0;
+
+        // 
+        uint8_t line_size = 1;
+        uint8_t grid_size = 1;
+
+        // main component view
+        virtual void view() {}
+
+        // up, down, left, rigth if line or grid > 1
+        virtual void nav(uint8_t dir) {}
+
+        // incrementer 1, decrementer -1
+        virtual void change(int8_t value) {}
+
+        // option for hold button state
+        virtual void changeRelease(int8_t data) {}
+
+        // use pot option
+        virtual void pot(uint16_t value) {}
+
+        virtual void function1() {}
+
+        virtual void function2() {}
+
+        // state can be used for different pruporses other than selected, not selected
+        void setF1(const char * string, uint8_t state = 0)
+        {
+                f1 = string;
+                f1_state = state;
+        }
+
+        void setF2(const char * string, uint8_t state = 0)
+        {
+                f2 = string;
+                f2_state = state;
+        }
+
+        uint16_t parseData(uint16_t value, int16_t min_value, int16_t max_value, int16_t current_value)
+        {
+                // use current_value if provided for pick value on pot for example
+                // TODO pick by value and a smooth way of noise handling for this guy
+                return map(value, 0, POT_ADC_RESOLUTION, min_value, max_value);
+        }
+
+        uint16_t parseData(int8_t value, int16_t min_value, int16_t max_value, int16_t current_value)
+        {
+                int16_t new_value = current_value + value;
+                if (new_value > max_value) {
+                        return max_value; 
+                } else if (new_value < min_value) {
+                        return min_value;
+                }
+                return new_value;
+        }
+};
+#endif
+
+namespace uctrl { namespace page { 
+
+#define MAX_SHIFT_HOOKERS_SIZE 4
+
+typedef enum {
+  DIGITAL_EVENT,
+  ANALOG_EVENT,
+} EVENT_TYPE;
+
+typedef struct 
+{
+        int8_t selector_line = 0;
+        int8_t selector_grid = 0;
+        PageComponent * selected_component;
+} SUB_PAGE_DATA;
+
+typedef struct 
+{
+	void (*create)() = nullptr;	
+	void (*destroy)() = nullptr;
+	void (*refresh)(uint8_t) = nullptr;	
+	void (*digital_input)(uint8_t, uint16_t, uint8_t) = nullptr;
+	void (*analog_input)(uint8_t, uint16_t, uint8_t) = nullptr;
+        uint8_t sub_page_size:4; // max 16 subpages
+        uint8_t sub_page:4;
+        // each subpage needs a reference pointer to wich is the selected component of the first one to be selected
+        SUB_PAGE_DATA sub_page_data[USE_PAGE_MAX_SUB_PAGES];
+        const char * name = nullptr;
+#ifdef USE_PAGE_COMPONENT
+        void (*callback_f1)() = nullptr;
+        void (*callback_f2)() = nullptr;
+        const char * f1 = nullptr;
+        const char * f2 = nullptr;
+        uint8_t f1_state = 0;
+        uint8_t f2_state = 0;
+#endif
+} PAGE_DATA;
+
+#ifdef USE_PAGE_COMPONENT
+typedef struct 
+{
+        int8_t ctrl_id = -1;
+        void (*callback)() = nullptr;
+} SHIFT_CTRL_DATA;
+#endif
+
+class Page
+{
+    public:
+        Page();
+        ~Page(); 
+  
+        void init();
+        void setPage(int8_t page);	
+        void setSubPage(int8_t sub_page);
+        //void isPageSet(uint8_t page_number);
+        void processView();
+        void processEvent(uint8_t port, uint16_t value, uint8_t type);
+        void set(const char * page_name, 
+                 void (*page_create_callback)(),
+                 void (*page_destroy_callback)(),
+                 void (*page_refresh_callback)(uint8_t),
+                 void (*page_digital_input_callback)(uint8_t, uint16_t, uint8_t) = nullptr,
+                 void (*page_analog_input_callback)(uint8_t, uint16_t, uint8_t) = nullptr,
+                 uint8_t sub_page_size = 1);
+        const char * getPageName(int8_t page_id = -1);  
+        uint8_t getPage();  
+        uint8_t getPageSize();
+        uint8_t getSubPage();
+        uint8_t getSubPageSize();
+        bool getCallbackCreate();
+        
+        bool isAnalogInputSet();
+        bool isDigitalInputSet();
+
+#ifdef USE_PAGE_COMPONENT
+        void component(PageComponent & comp, uint8_t line, uint8_t grid, bool default_selected = false);
+        void clearComponentMap();
+        bool processComponentEvent(uint8_t port, uint16_t value);
+        void setNavComponentCtrl(int8_t shift = -1, int8_t up = -1, int8_t down = -1, int8_t left = -1, int8_t right = -1, int8_t function1 = -1, int8_t function2 = -1, int8_t decrementer = -1, int8_t incrementer = -1, int8_t pot = -1);
+        void selectComponent(NAV_DIRECTIONS dir);
+        void selectComponent(PageComponent & comp);
+	void setFunctionDrawCallback(void (*callback)(const char *, const char *, uint8_t, uint8_t)) {
+		_function_display_callback = callback;
+	}
+        void (*_function_display_callback)(const char *, const char *, uint8_t, uint8_t) = nullptr;
+        void setNavPot(bool state);
+        bool _use_nav_pot = false;
+        uint8_t _nav_ctrl_guard = 0;
+        NAV_COMPONENT_CTRL _nav_ctrl_port;
+
+        // functions f1, f2 hook support(it does not overload in case a component already have a function hook setup)
+	void setFunctionHook(const char * f1_string, const char * f2_string, void (*f1_callback)(), void (*f2_callback)());
+        void clearFunctionHook();
+        //void setShiftFunctionHook(const char * f1_string, const char * f2_string, void (*f1_callback)(), void (*f2_callback)());
+        //void clearShiftFunctionHook();
+        void setShiftCtrlAction(int8_t control_id, void (*callback)());
+        void clearShiftCtrlAction(int8_t control_id);
+#endif
+  
+    private:
+        uint8_t _pages_size;
+        uint8_t _page; // selected page
+        uint8_t _last_page;  
+        bool _page_callback_create;
+        bool _page_callback_destroy;
+        PAGE_DATA _page_data[USE_PAGE_MAX_PAGES];
+
+#ifdef USE_PAGE_COMPONENT
+        SHIFT_CTRL_DATA _shift_hooker[MAX_SHIFT_HOOKERS_SIZE];
+        PageComponent * _component_map[COMPONENT_LINE][COMPONENT_GRID];
+        int8_t _selector_line = 0;
+        int8_t _selector_grid = 0;
+        uint8_t _shift = 0;
+#endif
+};
+
+} }
+
+extern uctrl::page::Page page_module;
+
+#endif
