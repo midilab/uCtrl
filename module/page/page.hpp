@@ -76,8 +76,8 @@ struct PageComponent
         uint8_t x = 0;
         uint8_t y = 0;
         bool selected = false;
-        uint8_t selected_line = 0;
-        uint8_t selected_grid = 0;
+        uint8_t selected_line = 1;
+        uint8_t selected_grid = 1;
         bool no_hook = false;
         bool no_nav = false;
         bool change_full_state = false;
@@ -252,6 +252,7 @@ class Page
         //void clearShiftFunctionHook();
         void setShiftCtrlAction(int8_t control_id, void (*callback)());
         void clearShiftCtrlAction(int8_t control_id);
+        bool isShiftPressed();
 #endif
   
     private:

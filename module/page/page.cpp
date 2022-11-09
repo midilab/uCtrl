@@ -167,6 +167,11 @@ void Page::clearShiftCtrlAction(int8_t control_id)
 	}
 }
 
+bool Page::isShiftPressed()
+{
+	return _shift;
+}
+
 void Page::clearComponentMap()
 {
 	// do it for all array!
