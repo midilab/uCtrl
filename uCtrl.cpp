@@ -413,8 +413,11 @@ void uCtrlClass::run()
 			din->event_queue.head = head
 		)
 
+		// +1 for user interface
+		++port;
+
 #ifdef USE_DEVICE
-	   if ( device->handleDigitalEvent(port+1, value, 0) == true ) {
+	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
 			continue;
 	   }
 #endif
@@ -426,6 +429,8 @@ void uCtrlClass::run()
 			// if it is, check if it is inc or dec commands... 
 			if (port == page->_nav_ctrl_port.incrementer || 
 				port == page->_nav_ctrl_port.decrementer ||
+				port == page->_nav_ctrl_port.incrementer_secondary || 
+				port == page->_nav_ctrl_port.decrementer_secondary ||
 				port == page->_nav_ctrl_port.up || 
 				port == page->_nav_ctrl_port.down ||
 				port == page->_nav_ctrl_port.left || 
@@ -437,10 +442,10 @@ void uCtrlClass::run()
 			}
 		}
 	#endif
-		page->processEvent(port+1, value, uctrl::page::DIGITAL_EVENT);
+		page->processEvent(port, value, uctrl::page::DIGITAL_EVENT);
 #endif
 	   if ( din->callback != nullptr ) {
-			din->callback(port+1, value);
+			din->callback(port, value);
 	   }
 	}
 	// set port_ref in case other digital modules were initialized
@@ -460,8 +465,11 @@ void uCtrlClass::run()
 			touch->event_queue.head = head
 		)
 
+		// +1 for user interface
+		++port;
+
 #ifdef USE_DEVICE
-	   if ( device->handleDigitalEvent(port+1, value, 0) == true ) {
+	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
 			continue;
 	   }
 #endif                 
@@ -473,6 +481,8 @@ void uCtrlClass::run()
 			// if it is, check if it is inc or dec commands... 
 			if (port == page->_nav_ctrl_port.incrementer || 
 				port == page->_nav_ctrl_port.decrementer ||
+				port == page->_nav_ctrl_port.incrementer_secondary || 
+				port == page->_nav_ctrl_port.decrementer_secondary ||
 				port == page->_nav_ctrl_port.up || 
 				port == page->_nav_ctrl_port.down ||
 				port == page->_nav_ctrl_port.left || 
@@ -484,10 +494,10 @@ void uCtrlClass::run()
 			}
 		}
 	#endif
-		page->processEvent(port+1, (uint16_t)value, uctrl::page::DIGITAL_EVENT);
+		page->processEvent(port, (uint16_t)value, uctrl::page::DIGITAL_EVENT);
 #endif
 		if ( touch->callback != nullptr ) {
-			touch->callback(port+1, value);
+			touch->callback(port, value);
 		}
 	}
 #endif
@@ -504,8 +514,11 @@ void uCtrlClass::run()
 			_ain_event_queue.head = head
 		)
 
+		// +1 for user interface
+		++port;
+
 		if (discard_ain_data) {
-			if (port == page->_nav_ctrl_port.pot-1) {
+			if (port == page->_nav_ctrl_port.pot) {
 				if (ain->isLocked(page->_nav_ctrl_port.pot-1) == false) {
 					discard_ain_data = false;
 				} else {
@@ -517,10 +530,10 @@ void uCtrlClass::run()
 			// device process are done inside interrupt to keep smooth for realtime controllers events
 			// EDIT MODE HANDLER
 			if ( device->getCtrlMode() == 2 ) {
-				device->setupCtrl(port+1, value);
+				device->setupCtrl(port, value);
 			}
 
-			if ( device->handleAnalogEvent(port+1, value, 0) == true ) {
+			if ( device->handleAnalogEvent(port, value, 0) == true ) {
 				continue;
 			}
 #endif
@@ -529,7 +542,7 @@ void uCtrlClass::run()
 		page->processEvent(port, value, uctrl::page::ANALOG_EVENT);
 #endif
 		if ( ain->callback != nullptr ) {
-			ain->callback(port+1, value, 0);
+			ain->callback(port, value, 0);
 		}
 	}
 

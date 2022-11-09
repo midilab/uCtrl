@@ -88,7 +88,7 @@ void Page::processEvent(uint8_t port, uint16_t value, uint8_t type)
 		case ANALOG_EVENT:
 #ifdef USE_PAGE_COMPONENT
 			// if we have pot as changer and configuration saying pot changer enabled too
-			if (_nav_ctrl_port.pot == port && _use_nav_pot) {
+			if (port == _nav_ctrl_port.pot && _use_nav_pot) {
 				if (_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component != nullptr) {
 					_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component->change(value);
 				}
