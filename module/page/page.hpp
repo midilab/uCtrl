@@ -39,6 +39,12 @@
 
 #define POT_ADC_RESOLUTION 1024
 
+// for change control
+#define INCREMENT -1
+#define DECREMENT -2
+#define INCREMENT_SECONDARY -3
+#define DECREMENT_SECONDARY -4
+
 typedef struct
 {
         int8_t shift;      
@@ -50,6 +56,8 @@ typedef struct
         int8_t function2;
         int8_t decrementer;
         int8_t incrementer;
+        int8_t decrementer_secondary;
+        int8_t incrementer_secondary;
         int8_t pot;
 } NAV_COMPONENT_CTRL; 
 
@@ -90,14 +98,17 @@ struct PageComponent
         // up, down, left, rigth if line or grid > 1
         virtual void nav(uint8_t dir) {}
 
-        // incrementer 1, decrementer -1
-        virtual void change(int8_t value) {}
+        // -1, -2, -3, -4, to escalar values from 0 to ...
+        // #define INCREMENT -1
+        // #define DECREMENT -2
+        // #define INCREMENT_SECONDARY -3
+        // #define DECREMENT_SECONDARY -4
+        // > 0: escalar value
+        // parse data should take care of number formating
+        virtual void change(int16_t value) {}
 
-        // option for hold button state
-        virtual void changeRelease(int8_t data) {}
-
-        // use pot option
-        virtual void pot(uint16_t value) {}
+        // option for hold/release button state
+        virtual void changeRelease(int16_t data) {}
 
         virtual void function1() {}
 
@@ -116,21 +127,28 @@ struct PageComponent
                 f2_state = state;
         }
 
-        uint16_t parseData(uint16_t value, int16_t min_value, int16_t max_value, int16_t current_value)
+        int16_t parseData(int16_t value, int16_t min_value, int16_t max_value, int16_t current_value)
         {
-                // use current_value if provided for pick value on pot for example
-                // TODO pick by value and a smooth way of noise handling for this guy
-                return map(value, 0, POT_ADC_RESOLUTION, min_value, max_value);
-        }
+                int16_t new_value;
 
-        uint16_t parseData(int8_t value, int16_t min_value, int16_t max_value, int16_t current_value)
-        {
-                int16_t new_value = current_value + value;
-                if (new_value > max_value) {
-                        return max_value; 
-                } else if (new_value < min_value) {
-                        return min_value;
+                if (value < 0) {
+                        if (value == INCREMENT || value == INCREMENT_SECONDARY) {
+                                value = 1;
+                        } else {
+                                value = -1;
+                        }
+                        new_value = current_value + value;
+                        if (new_value > max_value) {
+                                new_value = max_value; 
+                        } else if (new_value < min_value) {
+                                new_value = min_value;
+                        }
+                } else {
+                        // use current_value if provided for pick value on pot for example
+                        // TODO pick by value and a smooth way of noise handling for this guy
+                        new_value = map(value, 0, POT_ADC_RESOLUTION, min_value, max_value);
                 }
+
                 return new_value;
         }
 };
@@ -215,14 +233,14 @@ class Page
         void component(PageComponent & comp, uint8_t line, uint8_t grid, bool default_selected = false);
         void clearComponentMap();
         bool processComponentEvent(uint8_t port, uint16_t value);
-        void setNavComponentCtrl(int8_t shift = -1, int8_t up = -1, int8_t down = -1, int8_t left = -1, int8_t right = -1, int8_t function1 = -1, int8_t function2 = -1, int8_t decrementer = -1, int8_t incrementer = -1, int8_t pot = -1);
+        void setNavComponentCtrl(int8_t shift = -1, int8_t up = -1, int8_t down = -1, int8_t left = -1, int8_t right = -1, int8_t function1 = -1, int8_t function2 = -1, int8_t decrementer = -1, int8_t incrementer = -1, int8_t decrementer_secondary = -1, int8_t incrementer_secondary = -1);
         void selectComponent(NAV_DIRECTIONS dir);
         void selectComponent(PageComponent & comp);
 	void setFunctionDrawCallback(void (*callback)(const char *, const char *, uint8_t, uint8_t)) {
 		_function_display_callback = callback;
 	}
         void (*_function_display_callback)(const char *, const char *, uint8_t, uint8_t) = nullptr;
-        void setNavPot(bool state);
+        void setNavPot(int8_t pot_id);
         bool _use_nav_pot = false;
         uint8_t _nav_ctrl_guard = 0;
         NAV_COMPONENT_CTRL _nav_ctrl_port;

@@ -88,9 +88,9 @@ void Page::processEvent(uint8_t port, uint16_t value, uint8_t type)
 		case ANALOG_EVENT:
 #ifdef USE_PAGE_COMPONENT
 			// if we have pot as changer and configuration saying pot changer enabled too
-			if (_nav_ctrl_port.pot > 0 && _use_nav_pot) {
+			if (_nav_ctrl_port.pot == port && _use_nav_pot) {
 				if (_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component != nullptr) {
-					_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component->pot(value);
+					_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component->change(value);
 				}
 				return;
 			}
@@ -336,7 +336,7 @@ bool Page::processComponentEvent(uint8_t port, uint16_t value)
 		if (selected_component->change_full_state == false || _shift == true)
 			return false;
 		
-		if (selected_component->change_full_state == true && (port != _nav_ctrl_port.decrementer && port != _nav_ctrl_port.incrementer)) 
+		if (selected_component->change_full_state == true && (port != _nav_ctrl_port.decrementer && port != _nav_ctrl_port.incrementer && port != _nav_ctrl_port.decrementer_secondary && port != _nav_ctrl_port.incrementer_secondary)) 
 			return false;
 	}
 
@@ -396,18 +396,36 @@ bool Page::processComponentEvent(uint8_t port, uint16_t value)
 
 	if (port == _nav_ctrl_port.decrementer) {
 		if (value == HIGH) {
-			selected_component->change(-1);
+			selected_component->change(DECREMENT);
 		} else if (value == LOW) {
-			selected_component->changeRelease(-1);
+			selected_component->changeRelease(DECREMENT);
 		}
 		return true;
 	}
 
 	if (port == _nav_ctrl_port.incrementer) {
 		if (value == HIGH) {
-			selected_component->change(1);
+			selected_component->change(INCREMENT);
 		} else if (value == LOW) {
-			selected_component->changeRelease(1);
+			selected_component->changeRelease(INCREMENT);
+		}
+		return true;
+	}
+
+	if (port == _nav_ctrl_port.decrementer_secondary) {
+		if (value == HIGH) {
+			selected_component->change(DECREMENT_SECONDARY);
+		} else if (value == LOW) {
+			selected_component->changeRelease(DECREMENT_SECONDARY);
+		}
+		return true;
+	}
+
+	if (port == _nav_ctrl_port.incrementer_secondary) {
+		if (value == HIGH) {
+			selected_component->change(INCREMENT_SECONDARY);
+		} else if (value == LOW) {
+			selected_component->changeRelease(INCREMENT_SECONDARY);
 		}
 		return true;
 	}
@@ -431,7 +449,7 @@ bool Page::processComponentEvent(uint8_t port, uint16_t value)
 	return false;
 }
 
-void Page::setNavComponentCtrl(int8_t shift, int8_t up, int8_t down, int8_t left, int8_t right, int8_t function1, int8_t function2, int8_t decrementer, int8_t incrementer, int8_t pot)
+void Page::setNavComponentCtrl(int8_t shift, int8_t up, int8_t down, int8_t left, int8_t right, int8_t function1, int8_t function2, int8_t decrementer, int8_t incrementer, int8_t decrementer_secondary, int8_t incrementer_secondary)
 {
 	_nav_ctrl_port.shift = shift;
 	_nav_ctrl_port.up = up;
@@ -442,12 +460,14 @@ void Page::setNavComponentCtrl(int8_t shift, int8_t up, int8_t down, int8_t left
 	_nav_ctrl_port.function2 = function2;
 	_nav_ctrl_port.decrementer = decrementer;
 	_nav_ctrl_port.incrementer = incrementer;
-	_nav_ctrl_port.pot = pot;
+	_nav_ctrl_port.decrementer_secondary = decrementer_secondary;
+	_nav_ctrl_port.incrementer_secondary = incrementer_secondary;
 }
 
-void Page::setNavPot(bool state)
+void Page::setNavPot(int8_t pot_id)
 {
-	_use_nav_pot = state;
+	_nav_ctrl_port.pot = pot_id;
+	_use_nav_pot = true;
 }
 #endif
 

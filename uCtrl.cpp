@@ -556,7 +556,6 @@ void uCtrlClass::run()
 
 #ifdef USE_DOUT
 	uCtrl.dout->flushBuffer();
-	//uCtrl.dout->flush();
 #endif                 	
 }
 
@@ -620,10 +619,10 @@ uctrl::uCtrlClass uCtrl;
 // you can set the priority to 0(max prio)
 //
 uint8_t _timerCounter1ms = 0;
-uint16_t _timerCounterAin = 0;
-uint16_t _timerCapTouch = 0;
-uint16_t _timerCounterDin = 0;
-uint16_t _timerCounterDout = 0;
+uint8_t _timerCounterAin = 0;
+uint8_t _timerCapTouch = 0;
+uint8_t _timerCounterDin = 0;
+uint8_t _timerCounterDout = 0;
 #if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
 void ucrtISR()
 #elif defined(__AVR_ATmega32U4__)	
