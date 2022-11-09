@@ -136,12 +136,12 @@ void Dout::flushBuffer()
 		return;
 	}
 	noInterrupts();
-	memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
-	//i=_chain_size-1;
-	//while(i >= 0) {
-	//	_digital_output_buffer[i] = _digital_output_state[i];
-	//	i--;
-	//}
+	//memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
+	i=_chain_size-1;
+	while(i >= 0) {
+		_digital_output_buffer[i] = _digital_output_state[i];
+		i--;
+	}
 	_flush_dout = true;
 	interrupts();
 }
