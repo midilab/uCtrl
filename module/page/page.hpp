@@ -71,26 +71,46 @@ typedef enum
 
 struct PageComponent
 {
-        uint8_t line = 1;
-        uint8_t col = 1;
+        // 4 bits = 0 - 15
+        uint8_t line:4;
+        uint8_t col:4;
+        uint8_t selected_line:4;
+        uint8_t selected_grid:4;
+        uint8_t f1_state:4;
+        uint8_t f2_state:4;
+        uint8_t line_size:4;
+        uint8_t grid_size:4;
+        // 8bits bool setup mem
+        bool selected:1;
+        bool no_hook:1;
+        bool no_nav:1;
+        bool change_full_state:1;
+        bool update_selector:1;
+        bool reserved:3;
+
         uint8_t x = 0;
         uint8_t y = 0;
-        bool selected = false;
-        uint8_t selected_line = 1;
-        uint8_t selected_grid = 1;
-        bool no_hook = false;
-        bool no_nav = false;
-        bool change_full_state = false;
-        bool update_selector = false;
 
         const char * f1 = nullptr;
         const char * f2 = nullptr;
-        uint8_t f1_state = 0;
-        uint8_t f2_state = 0;
 
-        // 
-        uint8_t line_size = 1;
-        uint8_t grid_size = 1;
+        PageComponent() : 
+                line(1), 
+                col(1), 
+                selected_line(1),
+                selected_grid(1),
+                f1_state(0),
+                f2_state(0),
+                line_size(1),
+                grid_size(1),
+                selected(false),
+                no_hook(false),
+                no_nav(false),
+                change_full_state(false),
+                update_selector(false)
+                {
+
+                }
 
         // main component view
         virtual void view() {}

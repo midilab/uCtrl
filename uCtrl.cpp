@@ -658,10 +658,20 @@ ISR(TIMER2_COMPA_vect, ISR_NOBLOCK)
 	}
 
 #ifdef USE_DIN
-	// 5ms call
-	if (++_timerCounterDin == 20) {
+	// 2ms call
+	if (++_timerCounterDin == 8) {
 		_timerCounterDin = 0;
 		uCtrl.din->read(1);
+		return;
+	}
+#endif
+
+#ifdef USE_CAP_TOUCH	
+	// 3ms call
+	if (++_timerCapTouch == 12) 
+	{
+		_timerCapTouch = 0;
+		uCtrl.touch->read();
 		return;
 	}
 #endif
@@ -676,18 +686,8 @@ ISR(TIMER2_COMPA_vect, ISR_NOBLOCK)
 	}
 #endif
 
-#ifdef USE_CAP_TOUCH	
-	// 200ms call
-	if (++_timerCapTouch == 80) 
-	{
-		_timerCapTouch = 0;
-		uCtrl.touch->read();
-		return;
-	}
-#endif
-
 #ifdef USE_DOUT
-	// 300ms call
+	// 30ms call
 	if (++_timerCounterDout == 120) {
 		_timerCounterDout = 0;
 		uCtrl.dout->flush();
