@@ -245,7 +245,7 @@ void Page::component(PageComponent & comp, uint8_t line, uint8_t grid, bool defa
 		}
 	}
 	// any updates from view for line/grid?
-	if (comp.update_selector) {
+	if (comp.update_selector_view) {
 		_selector_line = comp.line + comp.selected_line - 2;
 		_selector_grid = comp.selected_grid-1;
 	}

@@ -86,7 +86,8 @@ struct PageComponent
         bool no_nav:1;
         bool change_full_state:1;
         bool update_selector:1;
-        bool reserved:3;
+        bool update_selector_view:1;
+        bool reserved:2;
 
         uint8_t x = 0;
         uint8_t y = 0;
@@ -107,7 +108,8 @@ struct PageComponent
                 no_hook(false),
                 no_nav(false),
                 change_full_state(false),
-                update_selector(false)
+                update_selector(false),
+                update_selector_view(false)
                 {
 
                 }
