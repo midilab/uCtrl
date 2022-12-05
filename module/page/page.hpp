@@ -30,7 +30,6 @@
 #define __U_CTRL_PAGE_HPP__
 
 #include <Arduino.h>
-#include <functional>
 
 #ifdef USE_PAGE_COMPONENT	
 
