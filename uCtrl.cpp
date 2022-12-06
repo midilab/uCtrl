@@ -2,7 +2,7 @@
  *  @file       uCtrl.cpp
  *  Project     Arduino Library API interface for uMODULAR projects
  *  @brief      ...
- *  @version    1.0.0
+ *  @version    1.1.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
@@ -31,51 +31,60 @@
 // 
 // Timer setup for work clock
 //
-#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
+// all non-avr timmers setup
+// Teensyduino port
+#if defined(TEENSYDUINO)
 IntervalTimer _uctrlTimer;
-// forward declaration
+#endif
+// Seedstudio XIAO M0 port
+#if defined(SEEED_XIAO_M0)
+// 16 bits timer
+#include <TimerTC3.h>
+// uses TimerTc3
+#endif
+
+// 
+// Timer setup for work clock
+//
+// Generic AVR 8 bits timer
+#if defined(ARDUINO_ARCH_AVR)
+void enableTimer()
+{
+	ATOMIC(
+		TCCR2A = 0; // set entire TCCR2A register to 0
+		TCCR2B = 0; // same for TCCR2B
+		TCNT2  = 0; // initialize counter value to 0
+		// set compare match register for 4000 Hz increments [250us]
+		OCR2A = 124; // = 16000000 / (32 * 4000) - 1 (must be <256)
+		// turn on CTC mode
+		TCCR2B |= (1 << WGM21);
+		// Set CS22, CS21 and CS20 bits for 32 prescaler
+		TCCR2B |= (0 << CS22) | (1 << CS21) | (1 << CS20);
+		// enable timer compare interrupt
+		TIMSK2 |= (1 << OCIE2A);
+	)
+}
+// ARM ports
+#else
 void ucrtISR();
 void enableTimer()
 {
-	_uctrlTimer.begin(ucrtISR, 250);
-	// Set the interrupt priority level, controlling which other interrupts
-	// this timer is allowed to interrupt. Lower numbers are higher priority, 
-	// with 0 the highest and 255 the lowest. Most other interrupts default to 128. 
-	// As a general guideline, interrupt routines that run longer should be given 
-	// lower priority (higher numerical values).
-	_uctrlTimer.priority(80);
-}
-#elif defined(__AVR_ATmega32U4__)	
-// avr general timer3 - 16bits
-void enableTimer()
-{
-	TCCR3A = 0; // set entire TCCR1A register to 0
-	TCCR3B = 0; // same for TCCR1B
-	TCNT3  = 0; // initialize counter value to 0
-	// set compare match register for 4000 Hz increments
-	OCR3A = 3999; // = 16000000 / (1 * 4000) - 1 (must be <65536)
-	// turn on CTC mode
-	TCCR3B |= (1 << WGM32);
-	// Set CS12, CS11 and CS10 bits for 1 prescaler
-	TCCR3B |= (0 << CS32) | (0 << CS31) | (1 << CS30);
-	// enable timer compare interrupt
-	TIMSK3 |= (1 << OCIE3A);
-}
-#else
-// avr general timer2 - 8bits
-void enableTimer()
-{
-	TCCR2A = 0; // set entire TCCR2A register to 0
-	TCCR2B = 0; // same for TCCR2B
-	TCNT2  = 0; // initialize counter value to 0
-	// set compare match register for 4000 Hz increments
-	OCR2A = 124; // = 16000000 / (32 * 4000) - 1 (must be <256)
-	// turn on CTC mode
-	TCCR2B |= (1 << WGM21);
-	// Set CS22, CS21 and CS20 bits for 32 prescaler
-	TCCR2B |= (0 << CS22) | (1 << CS21) | (1 << CS20);
-	// enable timer compare interrupt
-	TIMSK2 |= (1 << OCIE2A);
+	#if defined(TEENSYDUINO)
+		_uctrlTimer.begin(ucrtISR, 250);
+		// Set the interrupt priority level, controlling which other interrupts
+		// this timer is allowed to interrupt. Lower numbers are higher priority, 
+		// with 0 the highest and 255 the lowest. Most other interrupts default to 128. 
+		// As a general guideline, interrupt routines that run longer should be given 
+		// lower priority (higher numerical values).
+		_uctrlTimer.priority(80);
+	#endif
+
+	#if defined(SEEED_XIAO_M0)
+		TimerTc3.initialize(250);
+
+		// attach to generic uclock ISR
+		TimerTc3.attachInterrupt(ucrtISR);
+	#endif
 }
 #endif
 
@@ -636,12 +645,13 @@ uint8_t _timerCounterAin = 0;
 uint8_t _timerCapTouch = 0;
 uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
-#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
-void ucrtISR()
-#elif defined(__AVR_ATmega32U4__)	
-ISR(TIMER3_COMPA_vect, ISR_NOBLOCK) 
-#else
+
+#if defined(ARDUINO_ARCH_AVR)
 ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) 
+#else
+void ucrtISR()
+//#elif defined(__AVR_ATmega32U4__)	
+//ISR(TIMER3_COMPA_vect, ISR_NOBLOCK) 
 #endif
 {
 	if (uCtrl.on250usCallback) {

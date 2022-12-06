@@ -180,8 +180,8 @@ namespace uctrl { namespace page {
 #define MAX_SHIFT_HOOKERS_SIZE 4
 
 typedef enum {
-  DIGITAL_EVENT,
-  ANALOG_EVENT,
+        DIGITAL_EVENT,
+        ANALOG_EVENT,
 } EVENT_TYPE;
 
 typedef struct 

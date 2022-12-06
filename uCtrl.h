@@ -2,7 +2,7 @@
  *  @file       uCtrl.h
  *  Project     Arduino Library API interface for uMODULAR projects
  *  @brief      ...
- *  @version    1.0.0
+ *  @version    1.1.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
