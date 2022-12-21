@@ -38,6 +38,10 @@ namespace uctrl { namespace module {
 #define SPI_SPEED_DOUT         2000000
 #define SPI_MODE_DOUT          SPI_MODE0	
 
+#if !defined(USE_DOUT_MAX_PORTS)
+#define USE_DOUT_MAX_PORTS      8
+#endif
+
 // helper
 #define BIT_GET_VALUE(a,n) ((a >> n)  & 0x01)
 
@@ -56,26 +60,34 @@ class Dout
         void write(uint8_t remote_port, uint8_t value, uint8_t interrupted = 0);
         void writeAll(uint8_t value, uint8_t interrupted = 0);		
         uint8_t sizeOf();	
+#if defined(USE_DOUT_PORT_PIN)
         void plug(uint8_t setup);
+#endif
+#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
+        void plugSR(uint8_t setup);
+#endif
         void setTimer(uint32_t time);
         bool blink();
 
-        uint8_t _digital_output_state[USE_DOUT_MAX_PORTS/8];
-        volatile uint8_t _digital_output_buffer[USE_DOUT_MAX_PORTS/8];
+#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
+        uint8_t * _digital_output_state = nullptr;
+        volatile uint8_t * _digital_output_buffer = nullptr;
+#endif
+#if defined(USE_DOUT_PORT_PIN)
+	uint8_t _dout_pin[USE_DOUT_MAX_PORTS] = {0};
+#endif	
+
         uint8_t _remote_digital_output_port = 0; 
 
         uint8_t _chain_size = 0;
+        uint8_t _chain_size_pin = 0;
         volatile bool _flush_dout = false;
         bool _change_flag = true;
         
 	bool _blink = false;
 	uint32_t _blink_timer = 0;
 
-#if !defined(DOUT_BITBANG_DRIVER) && !defined(DOUT_SPI_DRIVER)
-	uint8_t _dout_pin[USE_DOUT_MAX_PORTS] = {0};
-#endif	
-
-#if defined(DOUT_SPI_DRIVER)
+#if defined(USE_DOUT_SPI_DRIVER)
 	SPIClass * _spi_device = nullptr;
 	void setSpi(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
         int8_t _latch_pin = -1;

@@ -72,7 +72,7 @@ class Ain
 		
 		void setMaxAdcValue(uint16_t max_adc_value);
 	
-#ifdef USE_AIN_4051
+#if defined(USE_AIN_4051)
 		void setMuxPins(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
 		void selectMuxPort(uint8_t port);
 		int8_t _mux_control_pin_1 = -1;
@@ -96,15 +96,15 @@ class Ain
 			
 		// for filtering ADC data changes
 #ifdef ANALOG_AVG_READS
-		AVG_READS _analog_input_state[USE_AIN_MAX_PORTS];
+		AVG_READS * _analog_input_state;
 #else
-		uint16_t _analog_input_state[USE_AIN_MAX_PORTS];
+		uint16_t * _analog_input_state;
 #endif
-		uint16_t _analog_input_last_state[USE_AIN_MAX_PORTS];	
-		int8_t _analog_input_lock_control[USE_AIN_MAX_PORTS];	
+		uint16_t * _analog_input_last_state;	
+		int8_t * _analog_input_lock_control;	
 #ifdef AUTOLOCK	
-		uint16_t _analog_input_check_state[USE_AIN_MAX_PORTS];	
-#endif		
+		uint16_t * _analog_input_check_state;	
+#endif	
 
 		bool _invert_read = false;
 			

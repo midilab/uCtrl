@@ -49,28 +49,39 @@ uint8_t Din::sizeOf()
 	return _remote_digital_port;
 }			
 
+#if defined(USE_DIN_PORT_PIN)
+// call first all plug() for pin register, then plugSR if needed
 void Din::plug(uint8_t setup)
 {
-#if defined(DIN_BITBANG_DRIVER) || defined(DIN_SPI_DRIVER)
-	_chain_size = setup;
-	_remote_digital_port = _chain_size * 8;
-#else
 	if (_remote_digital_port < USE_DIN_MAX_PORTS) {
 		_button_pin[_remote_digital_port] = setup;
-		_remote_digital_port++;
-		_chain_size = floor(_remote_digital_port/8)+1;
+		++_remote_digital_port;
+		_chain_size_pin = floor(_remote_digital_port/8)+1;
 	}
-#endif
 }
+#endif
 
+#if defined(USE_DIN_SPI_DRIVER) || defined(USE_DIN_BITBANG_DRIVER)
+void Din::plugSR(uint8_t setup)
+{
+	_chain_size_sr = setup;
+	_remote_digital_port += _chain_size_sr * 8;
+}
+#endif
+
+// call it only after all plug() and plugSR() requests
 void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 {
 	uint8_t state_group;
 
 	if (use_encoder == false) {
 		use_encoder = true;
+		uint8_t chain_size = (_chain_size_pin + _chain_size_sr);
 		// we need to init din drivers here to malloc heap data structures
-		init();
+		_digital_detent_pin = (uint8_t*) malloc( sizeof(uint8_t) * chain_size );
+		for (uint8_t i=0; i < chain_size; i++) {
+			_digital_detent_pin[i] = 0;
+		}
 	}
 
 	// TODO: take off this decrement shit, do it in programmer way for everything
@@ -100,37 +111,42 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 
 void Din::init()
 {
-	// are we init our selfs before because of encoders call?
-	if (initiate) {
-		return;
-	}
-
-#if defined(DIN_BITBANG_DRIVER)
+#if defined(USE_DIN_BITBANG_DRIVER)
 	pinModeFast(DIN_LATCH_PIN, OUTPUT);
 	pinModeFast(DIN_DATA_PIN, INPUT); 
 	pinModeFast(DIN_CLOCK_PIN, OUTPUT);	
 	digitalWriteFast(DIN_LATCH_PIN, HIGH);	
-#elif defined(DIN_SPI_DRIVER)
+#elif defined(USE_DIN_SPI_DRIVER)
 	pinMode(_chip_select, OUTPUT);
 	digitalWrite(_chip_select, HIGH);	
-	// Initing a common shared SPI device for all uMODULAR modules using SPI bus
+	// initing SPI bus
 	_spi_device->begin();
-#else
-	// walk port reference structure and setup PINs as PULLUP/INPUT
-	for (uint8_t i=0; i < _remote_digital_port; i++ ) {
-		pinMode(_button_pin[i], INPUT_PULLUP);
+#endif
+
+	// init total chain size 
+	_chain_size = (_chain_size_pin + _chain_size_sr);
+
+#if defined(USE_DIN_PORT_PIN)
+	// any plug() for direct pin register on DIN?
+	if (_chain_size_pin > 0) {
+		uint8_t remote_pin_port = _remote_digital_port - (_chain_size_sr * 8);
+		// walk port reference structure and setup PINs as PULLUP/INPUT
+		for (uint8_t i=0; i < remote_pin_port; i++ ) {
+			pinMode(_button_pin[i], INPUT_PULLUP);
+		}
 	}
 #endif
 
 	// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
 	// Each bit represents the value state readed by digital inputs	
+	// alloc rules: alloc once and forever! no memory free call at runtime
 	if ( _remote_digital_port > 0 ) {
+		_digital_input_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+		_digital_input_last_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+
 		for (uint8_t i=0; i < _chain_size; i++) {
 			_digital_input_state[i] = 0;
 			_digital_input_last_state[i] = 0;
-			if (use_encoder) {
-				_digital_detent_pin[i] = 0;
-			}
 		}
 		// init registers with first scan
 		read(0);
@@ -139,11 +155,9 @@ void Din::init()
 	event_queue.head = 0;
 	event_queue.tail = 0;
 	event_queue.size = EVENT_QUEUE_SIZE;
-
-	initiate = true;
 }
 
-#if defined(DIN_SPI_DRIVER)
+#if defined(USE_DIN_SPI_DRIVER)
 void Din::setSpi(SPIClass * spi_device, uint8_t chip_select)
 {
 	// HARDWARE NOTES
@@ -163,12 +177,36 @@ void Din::setSpi(SPIClass * spi_device, uint8_t chip_select)
 // if we dont, check skip counter and increment 
 // it(or zero it and reaches the value state)
 //
-// Read all the stream DIN bytes
+// Read all DIN
 void Din::read(uint8_t interrupted)
 {
 	static bool state_change;
 	state_change = false;
-#if defined(DIN_BITBANG_DRIVER)
+
+#if defined(USE_DIN_PORT_PIN)
+	// any direct pin registered to read?
+	if (_chain_size_pin > 0) {
+		// Read port per port
+		uint8_t remote_port = 0;
+		for (uint8_t i=0; i < _chain_size_pin; i++) {
+			// Before refresh data, set the last state data
+			_digital_input_last_state[i] = _digital_input_state[i];				
+			_digital_input_state[i] = 0;
+			for (uint8_t j=0; j < 8; j++) {
+				remote_port = (i*8)+j;
+				if (remote_port >= _remote_digital_port) {
+					break;
+				}
+				_digital_input_state[i] |= digitalRead(_button_pin[remote_port]) << j;
+			}				
+			if (state_change == false && _digital_input_last_state[i] != _digital_input_state[i]) {
+				state_change = true;
+			}
+		}
+	}
+#endif
+
+#if defined(USE_DIN_BITBANG_DRIVER)
 	//if ( interrupted == 0 ) {
 	//	_tmpSREG = SREG;
 	//	cli();
@@ -181,7 +219,7 @@ void Din::read(uint8_t interrupted)
 	digitalWriteFast(DIN_LATCH_PIN, HIGH);
 	
 	// Read byte per byte
-	for (uint8_t i=0; i < _chain_size; i++) {
+	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
 		// Before refresh data, set the last state data
 		_digital_input_last_state[i] = _digital_input_state[i];		
 		// shift in that byte
@@ -201,7 +239,7 @@ void Din::read(uint8_t interrupted)
 	//if ( interrupted == 0 ) {
 	//	SREG = _tmpSREG;	
 	//}
-#elif defined(DIN_SPI_DRIVER)
+#elif defined(USE_DIN_SPI_DRIVER)
 	//if ( interrupted == 0 ) {	
 	//	_spi_device->notUsingInterrupt(255);
 	//} else {	
@@ -212,7 +250,7 @@ void Din::read(uint8_t interrupted)
 	digitalWrite(_chip_select, LOW);
 	digitalWrite(_chip_select, HIGH);
 	// Read byte per byte
-	for (uint8_t i=0; i < _chain_size; i++) {
+	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
 		// Before refresh data, set the last state data
 		_digital_input_last_state[i] = _digital_input_state[i];		
 		_digital_input_state[i] = (uint8_t) _spi_device->transfer(0x00); 
@@ -221,25 +259,8 @@ void Din::read(uint8_t interrupted)
 		}
 	}
 	_spi_device->endTransaction();
-#else
-	// Read port per port
-	uint8_t remote_port = 0;
-	for (uint8_t i=0; i < _chain_size; i++) {
-		// Before refresh data, set the last state data
-		_digital_input_last_state[i] = _digital_input_state[i];				
-		_digital_input_state[i] = 0;
-		for (uint8_t j=0; j < 8; j++) {
-			remote_port = (i*8)+j;
-			if (remote_port >= _remote_digital_port) {
-				break;
-			}
-			_digital_input_state[i] |= digitalRead(_button_pin[remote_port]) << j;
-		}				
-		if (state_change == false && _digital_input_last_state[i] != _digital_input_state[i]) {
-			state_change = true;
-		}
-	}
-#endif	
+#endif
+
 	if (state_change) {
 		processQueue();
 	}

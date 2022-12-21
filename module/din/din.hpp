@@ -36,6 +36,10 @@ namespace uctrl { namespace module { namespace din {
 
 #define EVENT_QUEUE_SIZE	4
 
+#if !defined(USE_DIN_MAX_PORTS)
+#define USE_DIN_MAX_PORTS 16
+#endif
+
 typedef struct 
 {
 	uint8_t port;
@@ -50,7 +54,7 @@ typedef struct
 	uint8_t size; //of the buffer
 } EVENT_QUEUE;
 
-#if defined(DIN_SPI_DRIVER)
+#if defined(USE_DIN_SPI_DRIVER)
 //#define SPI_SPEED_DIN         4000000
 #define SPI_SPEED_DIN         2000000
 #define SPI_MODE_DIN          SPI_MODE0
@@ -80,34 +84,40 @@ class Din
 		int8_t getDataRaw(uint8_t port);
 		int8_t getData(uint8_t port);				
 		uint8_t sizeOf();	
+#if defined(USE_DIN_PORT_PIN)
 		void plug(uint8_t setup);
+#endif
+#if defined(USE_DIN_SPI_DRIVER) || defined(USE_DIN_BITBANG_DRIVER)
+		void plugSR(uint8_t setup);
+#endif
 		void encoder(uint8_t channel_a, uint8_t channel_b);
 
 		// default callback
 		void (*callback)(uint8_t port, uint16_t value) = nullptr;
 		void setCallback(void (*action_callback)(uint8_t port, uint16_t value)) {
 			callback = action_callback;
-		}	
+		}
 
 		// for filtering Digital data changes
 		// a matrix of 8 bits each for shift registers memory buffer
-		uint8_t _digital_input_state[USE_DIN_MAX_PORTS/8];
-		uint8_t _digital_input_last_state[USE_DIN_MAX_PORTS/8];
-		uint8_t _digital_detent_pin[USE_DIN_MAX_PORTS/8];
+		uint8_t * _digital_input_state = nullptr;
+		uint8_t * _digital_input_last_state = nullptr;
+		uint8_t * _digital_detent_pin = nullptr;
 
 		bool use_encoder = false;
-		bool initiate = false;
 
 		uint8_t _remote_digital_port = 0; 
 		uint8_t _chain_size = 0;
+		uint8_t _chain_size_pin = 0;
+		uint8_t _chain_size_sr = 0;
 
     	volatile EVENT_QUEUE event_queue;	
 
-#if !defined(DIN_BITBANG_DRIVER) && !defined(DIN_SPI_DRIVER)
+#if defined(USE_DIN_PORT_PIN)
 		uint8_t _button_pin[USE_DIN_MAX_PORTS] = {0};
 #endif	
 
-#if defined(DIN_SPI_DRIVER)
+#if defined(USE_DIN_SPI_DRIVER)
 		SPIClass * _spi_device = nullptr;
 		void setSpi(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
 		uint8_t _chip_select;

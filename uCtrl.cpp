@@ -46,11 +46,26 @@ IntervalTimer _uctrlTimer;
 // 
 // Timer setup for work clock
 //
-// Generic AVR 8 bits timer
+// Generic AVR timer
 #if defined(ARDUINO_ARCH_AVR)
 void enableTimer()
 {
 	ATOMIC(
+#if defined(__AVR_ATmega32U4__)	
+		// avr general timer3 - 16bits
+		TCCR3A = 0; // set entire TCCR1A register to 0
+		TCCR3B = 0; // same for TCCR1B
+		TCNT3  = 0; // initialize counter value to 0
+		// set compare match register for 4000 Hz increments [250us]
+		OCR3A = 3999; // = 16000000 / (1 * 4000) - 1 (must be <65536)
+		// turn on CTC mode
+		TCCR3B |= (1 << WGM32);
+		// Set CS12, CS11 and CS10 bits for 1 prescaler
+		TCCR3B |= (0 << CS32) | (0 << CS31) | (1 << CS30);
+		// enable timer compare interrupt
+		TIMSK3 |= (1 << OCIE3A);
+#else
+		// avr general timer2 - 8bits
 		TCCR2A = 0; // set entire TCCR2A register to 0
 		TCCR2B = 0; // same for TCCR2B
 		TCNT2  = 0; // initialize counter value to 0
@@ -62,9 +77,10 @@ void enableTimer()
 		TCCR2B |= (0 << CS22) | (1 << CS21) | (1 << CS20);
 		// enable timer compare interrupt
 		TIMSK2 |= (1 << OCIE2A);
+#endif
 	)
 }
-// ARM ports
+// ARM timers
 #else
 void ucrtISR();
 void enableTimer()
@@ -236,7 +252,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t chip_select)
 	}
 	
 	if ( dout != nullptr ) {
-#if defined(DOUT_SPI_DRIVER)		
+#if defined(USE_DOUT_SPI_DRIVER)		
 		if (spi_device != nullptr) {
 			dout->setSpi(spi_device, chip_select);
 		}
@@ -256,7 +272,7 @@ bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t chip_select)
 	}
 	
 	if ( din != nullptr ) {
-#if defined(DIN_SPI_DRIVER)		
+#if defined(USE_DIN_SPI_DRIVER)		
 		if (spi_device != nullptr) {
 			din->setSpi(spi_device, chip_select);
 		}
@@ -647,11 +663,13 @@ uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
 
 #if defined(ARDUINO_ARCH_AVR)
+#if defined(__AVR_ATmega32U4__)	
+ISR(TIMER3_COMPA_vect, ISR_NOBLOCK) 
+#else
 ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) 
+#endif
 #else
 void ucrtISR()
-//#elif defined(__AVR_ATmega32U4__)	
-//ISR(TIMER3_COMPA_vect, ISR_NOBLOCK) 
 #endif
 {
 	if (uCtrl.on250usCallback) {

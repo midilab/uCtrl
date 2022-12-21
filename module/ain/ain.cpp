@@ -93,6 +93,21 @@ void Ain::init()
 {
 	uint8_t host_analog_port;
 	uint16_t input_data;
+
+	// Allocate memory
+	// alloc rules: alloc once and forever! no memory free call at runtime
+	if ( _remote_analog_port > 0 ) {
+		_analog_input_last_state = (uint16_t*) malloc( sizeof(uint16_t) * _remote_analog_port );
+#ifdef ANALOG_AVG_READS
+		_analog_input_state = (AVG_READS*) malloc( sizeof(AVG_READS) * _remote_analog_port );	
+#else
+		_analog_input_state = (uint16_t*) malloc( sizeof(uint16_t*) * _remote_analog_port );	
+#endif
+		_analog_input_lock_control = (int8_t*) malloc( sizeof(int8_t) * _remote_analog_port );	
+#ifdef AUTOLOCK
+		_analog_input_check_state = (uint16_t*) malloc( sizeof(uint16_t) * _remote_analog_port );
+#endif		
+	}
 	
 	// first mux scan 	
 	for (uint8_t i=0; i < _remote_analog_port; i++) {
