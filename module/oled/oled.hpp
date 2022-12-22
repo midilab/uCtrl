@@ -38,14 +38,6 @@
 
 namespace uctrl { namespace module {
 
-#ifdef USE_OLED_U8G2
-#define DATA_BUFFER_SIZE 26
-#define MASK_SIZE 24
-#else
-#define DATA_BUFFER_SIZE 18
-#define MASK_SIZE 16
-#endif
-
 #define BLINK_TIME 250
 
 class Oled
@@ -60,7 +52,7 @@ class Oled
         void plug(U8X8 * display_ptr);
 #endif
         void print(uint8_t * bitmap8, uint8_t line, uint8_t col, bool do_blink = false);
-        void print(String string, uint8_t line, uint8_t col, bool do_blink = false, uint8_t mask_size = MASK_SIZE);
+        void print(String string, uint8_t line, uint8_t col, bool do_blink = false);
         void drawBox(uint8_t y, uint8_t x, uint8_t height, uint8_t width, bool do_blink = false);
         void select(const char ** select_data, uint8_t selected_data, uint8_t line, uint8_t col,  uint8_t height, uint8_t width, uint8_t start_idx = 0);
 #ifdef USE_OLED_U8G2

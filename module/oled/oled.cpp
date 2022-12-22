@@ -81,7 +81,7 @@ void Oled::setDisplayLockState(bool state)
 	_lock_display = state;
 }
 
-void Oled::print(String string, uint8_t line, uint8_t col, bool do_blink, uint8_t mask_size)
+void Oled::print(String string, uint8_t line, uint8_t col, bool do_blink)
 {
 	if (do_blink== true && blink())
 		return;
