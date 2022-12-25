@@ -28,19 +28,27 @@
 
 #include "uCtrl.h"
 
-// 
 // Timer setup for work clock
 //
-// all non-avr timmers setup
 // Teensyduino port
+//
 #if defined(TEENSYDUINO)
-IntervalTimer _uctrlTimer;
+	IntervalTimer _uctrlTimer;
 #endif
+//
 // Seedstudio XIAO M0 port
+//
 #if defined(SEEED_XIAO_M0)
-// 16 bits timer
-#include <TimerTC3.h>
-// uses TimerTc3
+	// 16 bits timer
+	#include <TimerTC3.h>
+	// uses TimerTc3
+#endif
+//
+// ESP32 family
+//
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	hw_timer_t * _uctrlTimer = NULL;
+	#define TIMER_ID	1
 #endif
 
 // 
@@ -100,6 +108,19 @@ void enableTimer()
 
 		// attach to generic uclock ISR
 		TimerTc3.attachInterrupt(ucrtISR);
+	#endif
+
+	#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+		_uctrlTimer = timerBegin(TIMER_ID, 80, true);
+
+		// attach to generic uclock ISR
+		timerAttachInterrupt(_uctrlTimer, &ucrtISR, true);
+
+		// init clock tick time
+		timerAlarmWrite(_uctrlTimer, 250, true); 
+
+		// activate it!
+		timerAlarmEnable(_uctrlTimer);
 	#endif
 }
 #endif
@@ -285,7 +306,7 @@ bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t chip_select)
 #endif
 
 #ifdef USE_AIN
-bool uCtrlClass::initAin(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0)
+bool uCtrlClass::initAin(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 {
 	if ( ain == nullptr ) {
 		ain = &ain_module;

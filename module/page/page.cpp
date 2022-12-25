@@ -183,7 +183,7 @@ void Page::clearComponentMap()
 	}
 }
 
-void Page::component(PageComponent & comp, uint8_t line, uint8_t grid, bool default_selected = false)
+void Page::component(PageComponent & comp, uint8_t line, uint8_t grid, bool default_selected)
 {
 	if (line > COMPONENT_LINE) return;
 	if (grid > COMPONENT_GRID) return;

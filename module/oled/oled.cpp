@@ -99,7 +99,7 @@ void Oled::print(String string, uint8_t line, uint8_t col, bool do_blink)
 #endif
 }
 
-void Oled::print(uint8_t * bitmap8, uint8_t line, uint8_t col, bool do_blink)
+void Oled::print(const uint8_t * bitmap8, uint8_t line, uint8_t col, bool do_blink)
 {
 	if (do_blink == true && blink())
 		return;
