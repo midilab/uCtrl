@@ -6,6 +6,19 @@
 
 namespace uctrl { namespace module {
 
+//
+// multicore archs
+//
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	portMUX_TYPE _uctrlMidiTimerMux = portMUX_INITIALIZER_UNLOCKED;
+	#define ATOMIC(X) portENTER_CRITICAL_ISR(&_uctrlMidiTimerMux); X; portEXIT_CRITICAL_ISR(&_uctrlMidiTimerMux);
+//
+// singlecore archs
+//
+#else
+	#define ATOMIC(X) noInterrupts(); X; interrupts();
+#endif
+
 Midi::Midi()
 {
 	_midiInputCallback = nullptr;
@@ -160,83 +173,114 @@ void Midi::write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_
 
 		//Realtime
 		case uctrl::protocol::midi::Clock:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendRealTime(midi::Clock);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendRealTime(midi::Clock))
+			} else {
+				_midi_port_if[port]->sendRealTime(midi::Clock);
+			}
 			break;   
 
 		case uctrl::protocol::midi::Start:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendRealTime(midi::Start);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendRealTime(midi::Start))
+			} else {
+				_midi_port_if[port]->sendRealTime(midi::Start);
+			}
 			break;  
 
 		case uctrl::protocol::midi::Stop:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendRealTime(midi::Stop);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendRealTime(midi::Stop))
+			} else {
+				_midi_port_if[port]->sendRealTime(midi::Stop);
+			}
 			break;   
 
 		// Non-realtime 
 		case uctrl::protocol::midi::NoteOn:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendNoteOn(msg->data1, msg->data2, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendNoteOn(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				_midi_port_if[port]->sendNoteOn(msg->data1, msg->data2, msg->channel+1);
+			}
 			break;
 
 		case uctrl::protocol::midi::NoteOff:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendNoteOff(msg->data1, 0, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendNoteOff(msg->data1, 0, msg->channel+1))
+			} else {
+				_midi_port_if[port]->sendNoteOff(msg->data1, 0, msg->channel+1);
+			}
 			break;
 
 		case uctrl::protocol::midi::ControlChange:   
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendControlChange(msg->data1, msg->data2, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendControlChange(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				_midi_port_if[port]->sendControlChange(msg->data1, msg->data2, msg->channel+1);
+			}
 			break;
 
 		case uctrl::protocol::midi::ProgramChange:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendProgramChange(msg->data1, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendProgramChange(msg->data1, msg->channel+1))
+			} else {
+				_midi_port_if[port]->sendProgramChange(msg->data1, msg->channel+1);
+			}
 			break;
 						
 		case uctrl::protocol::midi::Nrpn:  
-			if ( interrupted == 0 ) { noInterrupts(); }   
-			// param select
-			_midi_port_if[port]->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
-			_midi_port_if[port]->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
-			// send value
-			_midi_port_if[port]->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
-			_midi_port_if[port]->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(
+					// param select
+					_midi_port_if[port]->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
+					_midi_port_if[port]->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
+					// send value
+					_midi_port_if[port]->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
+					_midi_port_if[port]->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
+				)
+			} else {
+				// param select
+				_midi_port_if[port]->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
+				_midi_port_if[port]->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
+				// send value
+				_midi_port_if[port]->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
+				_midi_port_if[port]->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
+			}
 			break;
 		
 		case uctrl::protocol::midi::PitchBend:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			//_midi_port_if[port]->sendPitchBend((int16_t)(((uint8_t)msg->data1 << 8 ) | ((uint8_t)msg->data2 & 0xff)), msg->channel+1);
-			_midi_port_if[port]->sendPitchBend(msg->data1, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendPitchBend(msg->data1, msg->channel+1))
+			} else {
+				//_midi_port_if[port]->sendPitchBend((int16_t)(((uint8_t)msg->data1 << 8 ) | ((uint8_t)msg->data2 & 0xff)), msg->channel+1);
+				_midi_port_if[port]->sendPitchBend(msg->data1, msg->channel+1);
+			}
 			break;
 
 		case uctrl::protocol::midi::Sysex:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendSysEx(msg->data1, msg->sysex);
-			if ( interrupted == 0 ) { interrupts();  }	
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendSysEx(msg->data1, msg->sysex))
+			} else {
+				_midi_port_if[port]->sendSysEx(msg->data1, msg->sysex);
+			}
 			break;
 
 
 		case uctrl::protocol::midi::AfterTouchPoly:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendPolyPressure(msg->data1, msg->data2, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendPolyPressure(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				_midi_port_if[port]->sendPolyPressure(msg->data1, msg->data2, msg->channel+1);
+			}
 			break;
 			
 		case uctrl::protocol::midi::AfterTouchChannel:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_midi_port_if[port]->sendAfterTouch(msg->data1, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_midi_port_if[port]->sendAfterTouch(msg->data1, msg->channel+1))
+			} else {
+				_midi_port_if[port]->sendAfterTouch(msg->data1, msg->channel+1);
+			}
 			break;
 
 		default:
@@ -254,84 +298,115 @@ void Midi::writeUsb(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupt
 
 		//Realtime
 		case uctrl::protocol::midi::Clock:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendRealTime(midi::Clock);
-			//_usb_port_if->send_now();
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendRealTime(midi::Clock))
+			} else {
+				_usb_port_if->sendRealTime(midi::Clock);
+				//_usb_port_if->send_now();
+			}
 			break;   
 
 		case uctrl::protocol::midi::Start:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendRealTime(midi::Start);
-			//_usb_port_if->send_now();
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendRealTime(midi::Start))
+			} else {
+				_usb_port_if->sendRealTime(midi::Start);
+				//_usb_port_if->send_now();
+			}
 			break;  
 
 		case uctrl::protocol::midi::Stop:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendRealTime(midi::Stop);
-			//_usb_port_if->send_now();
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendRealTime(midi::Stop))
+			} else {
+				_usb_port_if->sendRealTime(midi::Stop);
+				//_usb_port_if->send_now();
+			}
 			break;   
 
 		// Non-realtime 
 		case uctrl::protocol::midi::NoteOn:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendNoteOn(msg->data1, msg->data2, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendNoteOn(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				_usb_port_if->sendNoteOn(msg->data1, msg->data2, msg->channel+1);
+			}
 			break;
 
 		case uctrl::protocol::midi::NoteOff:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendNoteOff(msg->data1, 0, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendNoteOff(msg->data1, 0, msg->channel+1))
+			} else {
+				_usb_port_if->sendNoteOff(msg->data1, 0, msg->channel+1);
+			}
 			break;
 
 		case uctrl::protocol::midi::ControlChange:   
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendControlChange(msg->data1, msg->data2, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendControlChange(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				_usb_port_if->sendControlChange(msg->data1, msg->data2, msg->channel+1);
+			}
 			break;
 
 		case uctrl::protocol::midi::ProgramChange:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendProgramChange(msg->data1, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendProgramChange(msg->data1, msg->channel+1))
+			} else {
+				_usb_port_if->sendProgramChange(msg->data1, msg->channel+1);
+			}
 			break;
 						
 		case uctrl::protocol::midi::Nrpn:  
-			if ( interrupted == 0 ) { noInterrupts(); }   
-			// param select
-			_usb_port_if->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
-			_usb_port_if->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
-			// send value
-			_usb_port_if->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
-			_usb_port_if->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(
+					// param select
+					_usb_port_if->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
+					_usb_port_if->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
+					// send value
+					_usb_port_if->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
+					_usb_port_if->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
+				)
+			} else {
+				// param select
+				_usb_port_if->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
+				_usb_port_if->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
+				// send value
+				_usb_port_if->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
+				_usb_port_if->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
+			}   
 			break;
 		
 		case uctrl::protocol::midi::PitchBend:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendPitchBend(msg->data1, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts(); }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendPitchBend(msg->data1, msg->channel+1))
+			} else {
+				_usb_port_if->sendPitchBend(msg->data1, msg->channel+1);
+			}
 			break;
 
 		case uctrl::protocol::midi::Sysex:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendSysEx(msg->data1, msg->sysex);
-			if ( interrupted == 0 ) { interrupts();  }	
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendSysEx(msg->data1, msg->sysex))
+			} else {
+				_usb_port_if->sendSysEx(msg->data1, msg->sysex);
+			}
 			break;
 
 		case uctrl::protocol::midi::AfterTouchPoly:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendPolyPressure(msg->data1, msg->data2, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendPolyPressure(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				_usb_port_if->sendPolyPressure(msg->data1, msg->data2, msg->channel+1);
+			}
 			break;
 			
 		case uctrl::protocol::midi::AfterTouchChannel:
-			if ( interrupted == 0 ) { noInterrupts(); }
-			_usb_port_if->sendAfterTouch(msg->data1, msg->channel+1);
-			if ( interrupted == 0 ) { interrupts();  }
+			if ( interrupted == 0 ) { 
+				ATOMIC(_usb_port_if->sendAfterTouch(msg->data1, msg->channel+1))
+			} else {
+				_usb_port_if->sendAfterTouch(msg->data1, msg->channel+1);
+			}
 			break;
     }
     

@@ -28,6 +28,7 @@
 
 #include "uCtrl.h"
 
+// 
 // Timer setup for work clock
 //
 // Teensyduino port
@@ -48,11 +49,22 @@
 //
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 	hw_timer_t * _uctrlTimer = NULL;
+	portMUX_TYPE _uctrlTimerMux = portMUX_INITIALIZER_UNLOCKED;
 	#define TIMER_ID	1
 #endif
 
-// 
-// Timer setup for work clock
+//
+// multicore archs
+//
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	#define ATOMIC(X) portENTER_CRITICAL_ISR(&_uctrlTimerMux); X; portEXIT_CRITICAL_ISR(&_uctrlTimerMux);
+//
+// singlecore archs
+//
+#else
+	#define ATOMIC(X) noInterrupts(); X; interrupts();
+#endif
+
 //
 // Generic AVR timer
 #if defined(ARDUINO_ARCH_AVR)
@@ -90,7 +102,14 @@ void enableTimer()
 }
 // ARM timers
 #else
-void ucrtISR();
+
+	// forward declaration of ISR
+	#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+		void ARDUINO_ISR_ATTR ucrtISR();
+	#else
+		void ucrtISR();
+	#endif
+	
 void enableTimer()
 {
 	#if defined(TEENSYDUINO)
@@ -684,13 +703,15 @@ uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
 
 #if defined(ARDUINO_ARCH_AVR)
-#if defined(__AVR_ATmega32U4__)	
+	#if defined(__AVR_ATmega32U4__)	
 ISR(TIMER3_COMPA_vect, ISR_NOBLOCK) 
-#else
+	#else
 ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) 
-#endif
+	#endif
+#elif defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+void ARDUINO_ISR_ATTR ucrtISR()
 #else
-void ucrtISR()
+void ucrtISR() 
 #endif
 {
 	if (uCtrl.on250usCallback) {

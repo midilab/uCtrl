@@ -34,8 +34,6 @@
 
 #include "../../modules.h"
 
-#define ATOMIC(X) noInterrupts(); X; interrupts();
-
 // modules classes includes
 #ifdef USE_OLED
 #include "module/oled/oled.hpp"
