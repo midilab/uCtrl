@@ -49,7 +49,6 @@
 //
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 	hw_timer_t * _uctrlTimer = NULL;
-	portMUX_TYPE _uctrlTimerMux = portMUX_INITIALIZER_UNLOCKED;
 	#define TIMER_ID	1
 #endif
 
@@ -57,6 +56,7 @@
 // multicore archs
 //
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	portMUX_TYPE _uctrlTimerMux = portMUX_INITIALIZER_UNLOCKED;
 	#define ATOMIC(X) portENTER_CRITICAL_ISR(&_uctrlTimerMux); X; portEXIT_CRITICAL_ISR(&_uctrlTimerMux);
 //
 // singlecore archs
