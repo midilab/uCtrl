@@ -189,7 +189,7 @@ void Ain::invertRead(bool state)
 #ifdef ANALOG_AVG_READS
 int16_t Ain::readPortAvg(uint8_t remote_port)
 {
-	if (_analog_input_state[remote_port].avg_count >= ANALOG_AVG_READS) {
+	if (_analog_input_state[remote_port].avg_count >= _analog_avg_reads) {
 		int16_t avg_value = _analog_input_state[remote_port].sum_value / _analog_input_state[remote_port].avg_count;
 		_analog_input_state[remote_port].sum_value = 0;
 		_analog_input_state[remote_port].avg_count = 0;
@@ -204,6 +204,11 @@ int16_t Ain::readPortAvg(uint8_t remote_port)
 		_analog_input_state[remote_port].avg_count++;
 		return -1;
 	}
+}
+
+void Ain::setAvgReads(uint8_t average)
+{
+	_analog_avg_reads = average;
 }
 #endif
 

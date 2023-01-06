@@ -34,7 +34,7 @@
 namespace uctrl { namespace module { 
 
 #define AUTOLOCK
-#define ANALOG_AVG_READS 8
+#define ANALOG_AVG_READS
 
 #ifdef ANALOG_AVG_READS
 typedef struct
@@ -55,6 +55,7 @@ class Ain
 		int16_t getData(uint8_t remote_port, uint16_t min = 0, uint16_t max = 0);
 #ifdef ANALOG_AVG_READS
 		int16_t readPortAvg(uint8_t remote_port);
+		void setAvgReads(uint8_t average);
 #endif
 		uint16_t rangeMe(uint16_t value, uint16_t min, uint16_t max, uint8_t adc_calc = 0);
 		void lockControl(uint8_t remote_port);
@@ -97,6 +98,7 @@ class Ain
 		// for filtering ADC data changes
 #ifdef ANALOG_AVG_READS
 		AVG_READS * _analog_input_state;
+		uint8_t _analog_avg_reads = 1;
 #else
 		uint16_t * _analog_input_state;
 #endif

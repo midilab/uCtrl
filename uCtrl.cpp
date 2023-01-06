@@ -366,7 +366,14 @@ void uCtrlClass::processAin()
 			if ( device->handleAnalogEvent(port+1, value, 1) == true ) {
 				//continue;
 			}
+#else
+			// ain callback is processed inside a timmer interrupt, so always be short inside it!
+			if ( ain->callback != nullptr ) {
+				ain->callback(port+1, value, 1);
+				continue;
+			}   
 #endif
+
 			// add event to non interrupted queue in case no device control setup
 			uint8_t tail = (_ain_event_queue.tail+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.tail+1);
 			if ( _ain_event_queue.head != tail )
@@ -374,12 +381,7 @@ void uCtrlClass::processAin()
 				_ain_event_queue.event[_ain_event_queue.tail].port = port;
 				_ain_event_queue.event[_ain_event_queue.tail].value = value;  
 				_ain_event_queue.tail = tail; 
-			}
-
-			// ain callback is processed inside a timmer interrupt, so always be short inside it!
-			//if ( ain->callback != nullptr ) {
-			//	ain->callback(port+1, value, 1);
-			//}       
+			}    
 
 		}
 		
