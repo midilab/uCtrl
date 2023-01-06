@@ -159,6 +159,11 @@ void Midi::write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_
     
     --port;    
 
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	// since esp32 is a multicore arch we need to always make atomic! so force interrupted to 0
+	interrupted = 0;
+#endif
+
 #if (defined(TEENSYDUINO) || defined(__AVR_ATmega32U4__)) && defined(USE_USB_MIDI)
 	if ( _usb_port == port ) {
 		writeUsb(msg, interrupted);

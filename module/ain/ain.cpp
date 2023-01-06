@@ -195,7 +195,12 @@ int16_t Ain::readPortAvg(uint8_t remote_port)
 		_analog_input_state[remote_port].avg_count = 0;
 		return avg_value;
 	} else {
+
+#ifdef USE_AIN_4051
+		_analog_input_state[remote_port].sum_value += analogRead(_port[(uint8_t)(remote_port/8)]);
+#else 
 		_analog_input_state[remote_port].sum_value += analogRead(_port[remote_port]);
+#endif
 		_analog_input_state[remote_port].avg_count++;
 		return -1;
 	}
@@ -215,7 +220,7 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 
 	// get selected value on last getdata operation(only serial reading incremental+ works)
 	#ifdef ANALOG_AVG_READS
-	input_data = readPortAvg(host_analog_port);
+	input_data = readPortAvg(remote_port);
 	#else
 	input_data = analogRead(_port[host_analog_port]);
 	#endif

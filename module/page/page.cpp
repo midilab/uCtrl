@@ -175,7 +175,7 @@ bool Page::isShiftPressed()
 void Page::clearComponentMap()
 {
 	// do it for all array!
-	//memset(_component_map[0], nullptr, sizeof(PageComponent)*COMPONENT_GRID);
+	//memset(_component_map[0], nullptr, sizeof(*PageComponent)*COMPONENT_GRID);
 	for (uint8_t i=0; i < COMPONENT_LINE; i++) {
 		for (uint8_t j=0; j < COMPONENT_GRID; j++) {
 			_component_map[i][j] = nullptr;
