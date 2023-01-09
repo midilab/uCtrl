@@ -59,7 +59,7 @@ void Oled::plug(U8X8 * display_ptr)
 	display->setDrawColor(2);
 	display->setFontPosTop();
 	display->setFontDirection(0);
-	display->setBusClock(200000);
+	display->setBusClock(100000);
 	////display->setFont(u8g2_font_pressstart2p_r); 
 	//display->setFont(u8g2_font_amstrad_cpc_extended_r);
 	//display->setContrast(1); // 0 to 255

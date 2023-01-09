@@ -92,7 +92,7 @@ void enableTimer()
 		// set compare match register for 4000 Hz increments [250us]
 		OCR2A = 124; // = 16000000 / (32 * 4000) - 1 (must be <256)
 		// turn on CTC mode
-		TCCR2B |= (1 << WGM21);
+		TCCR2A |= (1 << WGM21);
 		// Set CS22, CS21 and CS20 bits for 32 prescaler
 		TCCR2B |= (0 << CS22) | (1 << CS21) | (1 << CS20);
 		// enable timer compare interrupt
