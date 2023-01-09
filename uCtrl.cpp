@@ -97,6 +97,16 @@ void enableTimer()
 		TCCR2B |= (0 << CS22) | (1 << CS21) | (1 << CS20);
 		// enable timer compare interrupt
 		TIMSK2 |= (1 << OCIE2A);
+		/* 
+		we can make an option here for those who dont need a input clock sync 
+		instead of running at 250us goes to 1ms will make the interface more responsive for 16mhz AVRs
+		// 1000 Hz (16000000/((124+1)*128))
+		OCR2A = 124;
+		// turn on CTC mode
+		TCCR2A |= (1 << WGM21);
+		// Prescaler 128
+		TCCR2B |= (1 << CS22) | (1 << CS20);
+		*/
 #endif
 	)
 }
