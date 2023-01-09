@@ -53,13 +53,26 @@ void Oled::plug(U8X8 * display_ptr)
 	display = display_ptr;
 	display->begin();
 #ifdef USE_OLED_U8G2
+/*
+  Fontname: -Misc-Fixed-Medium-R-Normal--7-70-75-75-C-50-ISO10646-1
+  Copyright: Public domain font.  Share and enjoy.
+  Glyphs: 95/1848
+  BBX Build Mode: 0
+  u8g2_font_5x7_tr
+*/
 	display->setFont(u8g2_font_5x7_tr);
 	display->setFontRefHeightExtendedText();
 	display->setFontMode(1);
 	display->setDrawColor(2);
 	display->setFontPosTop();
 	display->setFontDirection(0);
+// a strange bug that freezes the send display data thru i2c at 400khz
+#if defined(ARDUINO_ARCH_AVR)
 	display->setBusClock(100000);
+#else
+	display->setBusClock(400000);
+#endif
+	
 	////display->setFont(u8g2_font_pressstart2p_r); 
 	//display->setFont(u8g2_font_amstrad_cpc_extended_r);
 	//display->setContrast(1); // 0 to 255
@@ -67,8 +80,16 @@ void Oled::plug(U8X8 * display_ptr)
 	//display->setPowerSave(1); // turn off display but keeps ram  
 	//display->setPowerSave(0); // turn on display again based on ram content
 #else
-    display->setFont(u8x8_font_pressstart2p_r); 
+/*
+  Fontname: -FreeType-Press Start 2P-Medium-R-Normal--8-80-72-72-P-69-ISO10646-1
+  Copyright: (c) 2011 Cody 
+  Glyphs: 96/556
+  BBX Build Mode: 3
+  Ops, not free, find another one!
+*/
+    //display->setFont(u8x8_font_pressstart2p_r); 
     //display->setFont(u8x8_font_amstrad_cpc_extended_r);
+	display->setFont(u8x8_font_5x7_r); 
     //display->setContrast(1); // 0 to 255
     //display->setPowerSave(1); // turn off display but keeps ram  
     //display->setPowerSave(0); // turn on display again based on ram content
