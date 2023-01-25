@@ -37,6 +37,8 @@ namespace uctrl { namespace module {
 Storage::Storage()
 {
 	//callback = nullptr;
+	// ESP family?
+	//EEPROM.begin(4096);
 }
 
 void Storage::init(SPIClass * spi_device, uint8_t chip_select)
@@ -64,7 +66,7 @@ bool Storage::load(void *data, size_t n, int address)
 
 	if (address != -1)
 		_current_address = address;
-		
+
     for (uint16_t i = 0; i < n; i++) {
 		EEPROM.get(_current_address++, *dst++);
     }
