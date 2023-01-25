@@ -31,6 +31,10 @@
 
 #include <Arduino.h>
 
+#ifndef USE_PAGE_MAX_PAGES
+#define USE_PAGE_MAX_PAGES      6
+#endif
+
 #ifdef USE_PAGE_COMPONENT	
 
 #define COMPONENT_LINE  8

@@ -65,6 +65,10 @@
 #include "module/ram/ram.hpp"
 #endif
 
+#ifdef USE_STORAGE
+#include "module/storage/storage.hpp"
+#endif
+
 #ifdef USE_SDCARD
 #include "module/sdcard/sdcard.hpp"
 #endif
@@ -117,7 +121,12 @@ class uCtrlClass
 	bool initRam(SPIClass * device, uint8_t chip_select);
 	uctrl::module::Ram * ram = nullptr;		
 #endif
-	
+
+#ifdef USE_STORAGE
+	bool initStorage(SPIClass * spi_device = nullptr, uint8_t chip_select = 1);
+	uctrl::module::Storage * storage = nullptr;		
+#endif
+
 #ifdef USE_OLED	
 	// oled module
 #ifdef USE_OLED_U8G2

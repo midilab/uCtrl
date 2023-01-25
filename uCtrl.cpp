@@ -184,6 +184,22 @@ bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
 }
 #endif
 
+#ifdef USE_STORAGE
+bool uCtrlClass::initStorage(SPIClass * spi_device, uint8_t chip_select)
+{
+	if ( storage == nullptr ) {
+		storage = &storage_module;
+	}
+	
+	if ( storage != nullptr ) {
+		storage->init(spi_device, chip_select);
+		return true;
+	} else {
+		return false;
+	}	
+}
+#endif
+
 #ifdef USE_SDCARD
 bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select)
 {
@@ -726,12 +742,13 @@ void ARDUINO_ISR_ATTR ucrtISR()
 void ucrtISR() 
 #endif
 {
+	// 250us call
 	if (uCtrl.on250usCallback) {
 		uCtrl.on250usCallback();
 	}
 
 	if (uCtrl.on1msCallback) {
-		// 1ms call
+		// ~1ms call
 		if(++_timerCounter1ms == 4) {
 			_timerCounter1ms = 0;
 			uCtrl.on1msCallback();
@@ -740,7 +757,7 @@ void ucrtISR()
 	}
 
 #ifdef USE_DIN
-	// 2ms call
+	// ~2ms call
 	if (++_timerCounterDin == 8) {
 		_timerCounterDin = 0;
 		uCtrl.din->read(1);
@@ -749,7 +766,7 @@ void ucrtISR()
 #endif
 
 #ifdef USE_CAP_TOUCH	
-	// 3ms call
+	// ~3ms call
 	if (++_timerCapTouch == 12) 
 	{
 		_timerCapTouch = 0;
@@ -759,7 +776,7 @@ void ucrtISR()
 #endif
 
 #ifdef USE_AIN	
-	// 10ms call
+	// ~10ms call
 	if (++_timerCounterAin == 40) 
 	{
 		_timerCounterAin = 0;
@@ -769,7 +786,7 @@ void ucrtISR()
 #endif
 
 #ifdef USE_DOUT
-	// 30ms call
+	// ~30ms call
 	if (++_timerCounterDout == 120) {
 		_timerCounterDout = 0;
 		uCtrl.dout->flush();

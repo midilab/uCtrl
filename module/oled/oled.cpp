@@ -66,12 +66,7 @@ void Oled::plug(U8X8 * display_ptr)
 	display->setDrawColor(2);
 	display->setFontPosTop();
 	display->setFontDirection(0);
-// a strange bug that freezes the send display data thru i2c at 400khz
-#if defined(ARDUINO_ARCH_AVR)
-	display->setBusClock(100000);
-#else
 	display->setBusClock(400000);
-#endif
 	
 	////display->setFont(u8g2_font_pressstart2p_r); 
 	//display->setFont(u8g2_font_amstrad_cpc_extended_r);
