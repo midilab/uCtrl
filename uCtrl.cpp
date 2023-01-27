@@ -394,10 +394,10 @@ void uCtrlClass::processAin()
 			}
 #else
 			// ain callback is processed inside a timmer interrupt, so always be short inside it!
-			//if ( ain->callback != nullptr ) {
-			//	ain->callback(port+1, value, 1);
-			//	continue;
-			//}   
+			if ( ain->callback != nullptr ) {
+				ain->callback(port+1, value, 1);
+				continue;
+			}   
 #endif
 
 			// add event to non interrupted queue in case no device control setup
