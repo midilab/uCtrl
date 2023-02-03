@@ -46,6 +46,7 @@ class Storage
 		// epprom
 		bool save(void *data, size_t n, int address = -1);
 		bool load(void *data, size_t n, int address = -1);
+		bool copy(int address_from, int address_to, size_t n);
 		// sdcard
 		bool load(void *data, size_t n, const char * path);
 		bool save(void *data, size_t n, const char * path);

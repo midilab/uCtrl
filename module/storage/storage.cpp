@@ -58,6 +58,7 @@ bool Storage::save(void *data, size_t n, int address)
     for (uint16_t i = 0; i < n; i++) {
 		EEPROM.put(_current_address++, *src++);
     }
+	return true;
 }
 
 bool Storage::load(void *data, size_t n, int address)
@@ -70,6 +71,15 @@ bool Storage::load(void *data, size_t n, int address)
     for (uint16_t i = 0; i < n; i++) {
 		EEPROM.get(_current_address++, *dst++);
     }
+	return true;
+}
+
+bool Storage::copy(int address_from, int address_to, size_t n)
+{
+	for (uint16_t i = 0; i < n; i++) {
+		EEPROM.write(address_to++, EEPROM.read(address_from++));
+	}
+	return true;
 }
 
 bool Storage::save(void *data, size_t n, const char * path)
