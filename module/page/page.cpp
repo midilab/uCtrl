@@ -167,6 +167,29 @@ void Page::clearShiftCtrlAction(int8_t control_id)
 	}
 }
 
+void Page::setCtrlAction(int8_t control_id, void (*callback)())
+{
+	for (uint8_t i=0; i < MAX_ACTION_HOOKERS_SIZE; i++) {
+		if (_action_hooker[i].ctrl_id == -1) {
+			_action_hooker[i].ctrl_id = control_id;
+			_action_hooker[i].callback = callback;
+			return;
+		}
+	}
+	// buffer full...
+}
+
+void Page::clearCtrlAction(int8_t control_id)
+{
+	for (uint8_t i=0; i < MAX_ACTION_HOOKERS_SIZE; i++) {
+		if (_action_hooker[i].ctrl_id == control_id) {
+			_action_hooker[i].ctrl_id = -1;
+			_action_hooker[i].callback = nullptr;
+			return;
+		}
+	}
+}
+
 bool Page::isShiftPressed()
 {
 	return _shift;

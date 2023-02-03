@@ -182,6 +182,7 @@ struct PageComponent
 namespace uctrl { namespace page { 
 
 #define MAX_SHIFT_HOOKERS_SIZE 4
+#define MAX_ACTION_HOOKERS_SIZE 4
 
 typedef enum {
         DIGITAL_EVENT,
@@ -222,7 +223,7 @@ typedef struct
 {
         int8_t ctrl_id = -1;
         void (*callback)() = nullptr;
-} SHIFT_CTRL_DATA;
+} HOOK_CTRL_DATA;
 #endif
 
 class Page
@@ -277,6 +278,8 @@ class Page
         //void clearShiftFunctionHook();
         void setShiftCtrlAction(int8_t control_id, void (*callback)());
         void clearShiftCtrlAction(int8_t control_id);
+        void setCtrlAction(int8_t control_id, void (*callback)());
+        void clearCtrlAction(int8_t control_id);
         bool isShiftPressed();
 #endif
   
@@ -289,7 +292,8 @@ class Page
         PAGE_DATA _page_data[USE_PAGE_MAX_PAGES];
 
 #ifdef USE_PAGE_COMPONENT
-        SHIFT_CTRL_DATA _shift_hooker[MAX_SHIFT_HOOKERS_SIZE];
+        HOOK_CTRL_DATA _shift_hooker[MAX_SHIFT_HOOKERS_SIZE];
+        HOOK_CTRL_DATA _action_hooker[MAX_ACTION_HOOKERS_SIZE];
         PageComponent * _component_map[COMPONENT_LINE][COMPONENT_GRID];
         int8_t _selector_line = 0;
         int8_t _selector_grid = 0;
