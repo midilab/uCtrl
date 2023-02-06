@@ -134,6 +134,7 @@ void Din::init()
 		for (uint8_t i=0; i < remote_pin_port; i++ ) {
 			pinMode(_button_pin[i], INPUT_PULLUP);
 		}
+		_chain_pin_gap = 8 - (_remote_digital_port % 8);
 	}
 #endif
 
@@ -280,6 +281,11 @@ void Din::processQueue()
 					// we got a change
 					port = (i*8)+j;
 					value = !BIT_VALUE(_digital_input_state[i], j);
+
+					// check for gaps between _chain_size_pin usage and _remote_digital_port to reindex ports
+					if (i >= _chain_size_pin) {
+						port -= _chain_pin_gap;
+					}
 
 					// identify if we have a detend encoder pin case here
 					// use a #define case here for detent driver usage

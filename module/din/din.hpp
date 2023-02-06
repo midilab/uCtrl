@@ -110,6 +110,7 @@ class Din
 		uint8_t _chain_size = 0;
 		uint8_t _chain_size_pin = 0;
 		uint8_t _chain_size_sr = 0;
+		uint8_t _chain_pin_gap = 0;
 
     	volatile EVENT_QUEUE event_queue;	
 
