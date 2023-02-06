@@ -373,6 +373,16 @@ bool Page::processComponentEvent(uint8_t port, uint16_t value)
 			return false;
 	}
 
+	// check for action hookers
+	if (_action_hooker != nullptr) {
+		for (uint8_t i=0; i < MAX_SHIFT_HOOKERS_SIZE; i++) {
+			if (_action_hooker[i].ctrl_id == port) {
+				_action_hooker[i].callback();
+				return true;
+			}
+		}
+	}
+	
 	// check for shift hookers
 	if (_shift && _shift_hooker != nullptr) {
 		for (uint8_t i=0; i < MAX_SHIFT_HOOKERS_SIZE; i++) {
