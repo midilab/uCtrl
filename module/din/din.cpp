@@ -32,7 +32,7 @@
 
 #include "din.hpp"
 
-namespace uctrl { namespace module { namespace din {
+namespace uctrl { namespace module {
     
 Din::Din()
 {
@@ -350,7 +350,7 @@ int8_t Din::getDataRaw(uint8_t port)
 	return !BIT_VALUE( _digital_input_state[(uint8_t)(floor(port / 8))], (port % 8) );
 }
 
-} } }
+} }
 
-uctrl::module::din::Din din_module;
+uctrl::module::Din din_module;
 #endif

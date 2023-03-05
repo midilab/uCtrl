@@ -32,13 +32,13 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-namespace uctrl { namespace module { namespace din {
-
 #define EVENT_QUEUE_SIZE	4
 
 #if !defined(USE_DIN_MAX_PORTS)
 #define USE_DIN_MAX_PORTS 16
 #endif
+
+namespace uctrl { namespace module { 
 
 typedef struct 
 {
@@ -125,8 +125,8 @@ class Din
 #endif
 };
 
-} } }
+} }
 
-extern uctrl::module::din::Din din_module;
+extern uctrl::module::Din din_module;
 
 #endif

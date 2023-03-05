@@ -516,7 +516,7 @@ void uCtrlClass::run()
 #endif
 
 #ifdef USE_PAGE
-	#ifdef USE_AIN 
+	#if defined(USE_AIN) && defined(USE_PAGE_COMPONENT)
 		// before each processEvent we need to: check if pot_ctrl is needed
 		if(page->_use_nav_pot) {
 			// if it is, check if it is inc or dec commands... 
@@ -535,7 +535,7 @@ void uCtrlClass::run()
 			}
 		}
 	#endif
-		page->processEvent(port, value, uctrl::page::DIGITAL_EVENT);
+		page->processEvent(port, value, uctrl::module::DIGITAL_EVENT);
 #endif
 	   if ( din->callback != nullptr ) {
 			din->callback(port, value);
@@ -587,7 +587,7 @@ void uCtrlClass::run()
 			}
 		}
 	#endif
-		page->processEvent(port, (uint16_t)value, uctrl::page::DIGITAL_EVENT);
+		page->processEvent(port, (uint16_t)value, uctrl::module::DIGITAL_EVENT);
 #endif
 		if ( touch->callback != nullptr ) {
 			touch->callback(port, value);
@@ -610,6 +610,7 @@ void uCtrlClass::run()
 		// +1 for user interface
 		++port;
 
+#ifdef USE_PAGE_COMPONENT
 		if (discard_ain_data) {
 			if (port == page->_nav_ctrl_port.pot) {
 				if (ain->isLocked(page->_nav_ctrl_port.pot-1) == false) {
@@ -619,6 +620,8 @@ void uCtrlClass::run()
 				}
 			}
 		}
+#endif
+
 #ifdef USE_DEVICE
 			// device process are done inside interrupt to keep smooth for realtime controllers events
 			// EDIT MODE HANDLER
@@ -632,7 +635,7 @@ void uCtrlClass::run()
 #endif
 
 #ifdef USE_PAGE
-		page->processEvent(port, value, uctrl::page::ANALOG_EVENT);
+		page->processEvent(port, value, uctrl::module::ANALOG_EVENT);
 #endif
 		if ( ain->callback != nullptr ) {
 			ain->callback(port, value, 0);

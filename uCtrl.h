@@ -159,7 +159,7 @@ class uCtrlClass
 #ifdef USE_DIN	
 	// din module
 	bool initDin(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
-	uctrl::module::din::Din * din = nullptr;
+	uctrl::module::Din * din = nullptr;
 #endif
 	
 #ifdef USE_AIN	
@@ -173,7 +173,7 @@ class uCtrlClass
 #ifdef USE_CAP_TOUCH	
 	// capacitive touch module
 	bool initCapTouch(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
-	uctrl::module::touch::CapTouch * touch = nullptr;
+	uctrl::module::CapTouch * touch = nullptr;
 #endif
 	
 #ifdef USE_SDCARD	
@@ -186,7 +186,7 @@ class uCtrlClass
 	// page module
 	bool initPage();
 	void processPage();
-	uctrl::page::Page * page = nullptr;
+	uctrl::module::Page * page = nullptr;
 #endif
 	
 #ifdef USE_DEVICE	

@@ -179,7 +179,7 @@ struct PageComponent
 };
 #endif
 
-namespace uctrl { namespace page { 
+namespace uctrl { namespace module { 
 
 #define MAX_SHIFT_HOOKERS_SIZE 4
 #define MAX_ACTION_HOOKERS_SIZE 4
@@ -193,7 +193,9 @@ typedef struct
 {
         int8_t selector_line = 0;
         int8_t selector_grid = 0;
+#ifdef USE_PAGE_COMPONENT	
         PageComponent * selected_component;
+#endif
 } SUB_PAGE_DATA;
 
 typedef struct 
@@ -303,6 +305,6 @@ class Page
 
 } }
 
-extern uctrl::page::Page page_module;
+extern uctrl::module::Page page_module;
 
 #endif

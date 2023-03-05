@@ -48,26 +48,20 @@ class Oled
 
 #ifdef USE_OLED_U8G2
         void plug(U8G2 * display_ptr);
+        void drawBox(uint8_t y, uint8_t x, uint8_t height, uint8_t width, bool do_blink = false);
+        void refreshDisplay();
 #else
         void plug(U8X8 * display_ptr);
+        void inverseFont(bool inverse);
 #endif
         void print(const uint8_t * bitmap8, uint8_t line, uint8_t col, bool do_blink = false);
         void print(String string, uint8_t line, uint8_t col, bool do_blink = false);
-        void drawBox(uint8_t y, uint8_t x, uint8_t height, uint8_t width, bool do_blink = false);
         void select(const char ** select_data, uint8_t selected_data, uint8_t line, uint8_t col,  uint8_t height, uint8_t width, uint8_t start_idx = 0);
-#ifdef USE_OLED_U8G2
-        void refreshDisplay();
-#endif
         void clearDisplay(uint8_t line = 0, uint8_t col = 0, uint8_t count = 0);
         void flipDisplay(uint8_t is_enable);
-#ifndef USE_OLED_U8G2
-        void inverseFont(bool inverse);
-#endif
         void setDisplayLockState(bool state);
         void powerSave(bool state);
-
         void mergeBitmap(uint8_t * bitmap8_a, uint8_t * bitmap8_b, bool do_blink = false);
-
         void setTimer(uint32_t time);
 	bool blink();
 	bool _blink = false;
