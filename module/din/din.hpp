@@ -120,8 +120,7 @@ class Din
 
 #if defined(USE_DIN_SPI_DRIVER)
 		SPIClass * _spi_device = nullptr;
-		void setSpi(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
-		uint8_t _chip_select;
+		void setSpi(SPIClass * spi_device = nullptr);
 #endif
 };
 

@@ -117,8 +117,8 @@ void Din::init()
 	pinModeFast(DIN_CLOCK_PIN, OUTPUT);	
 	digitalWriteFast(DIN_LATCH_PIN, HIGH);	
 #elif defined(USE_DIN_SPI_DRIVER)
-	pinMode(_chip_select, OUTPUT);
-	digitalWrite(_chip_select, HIGH);	
+	pinMode(DIN_LATCH_PIN, OUTPUT);
+	digitalWrite(DIN_LATCH_PIN, HIGH);	
 	// initing SPI bus
 	_spi_device->begin();
 #endif
@@ -159,14 +159,12 @@ void Din::init()
 }
 
 #if defined(USE_DIN_SPI_DRIVER)
-void Din::setSpi(SPIClass * spi_device, uint8_t chip_select)
+void Din::setSpi(SPIClass * spi_device)
 {
 	// HARDWARE NOTES
 	// For those using a SPI device for other devices than 165:
 	// since the 165 are not spi compilant we need a 2.2k resistor on MISO line to not screw up other spi devices on same MISO pin
 	_spi_device = spi_device;
-	// Chip select pin setup
-	_chip_select = chip_select;
 }
 #endif
 
@@ -248,8 +246,8 @@ void Din::read(uint8_t interrupted)
 	//}
 	_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
 	// pulsing the chip select pin to start capturing data
-	digitalWrite(_chip_select, LOW);
-	digitalWrite(_chip_select, HIGH);
+	digitalWrite(DIN_LATCH_PIN, LOW);
+	digitalWrite(DIN_LATCH_PIN, HIGH);
 	// Read byte per byte
 	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
 		// Before refresh data, set the last state data
