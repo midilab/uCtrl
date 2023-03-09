@@ -32,7 +32,7 @@
 
 #include "din.hpp"
 
-namespace uctrl { namespace module { namespace din {
+namespace uctrl { namespace module {
     
 Din::Din()
 {
@@ -84,10 +84,6 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 		}
 	}
 
-	// TODO: take off this decrement shit, do it in programmer way for everything
-	channel_a_id--;
-	channel_b_id--;
-
 	// find our indexes
 	state_group = floor(channel_a_id/8);
 
@@ -117,8 +113,8 @@ void Din::init()
 	pinModeFast(DIN_CLOCK_PIN, OUTPUT);	
 	digitalWriteFast(DIN_LATCH_PIN, HIGH);	
 #elif defined(USE_DIN_SPI_DRIVER)
-	pinMode(_chip_select, OUTPUT);
-	digitalWrite(_chip_select, HIGH);	
+	pinMode(DIN_LATCH_PIN, OUTPUT);
+	digitalWrite(DIN_LATCH_PIN, HIGH);	
 	// initing SPI bus
 	_spi_device->begin();
 #endif
@@ -159,14 +155,12 @@ void Din::init()
 }
 
 #if defined(USE_DIN_SPI_DRIVER)
-void Din::setSpi(SPIClass * spi_device, uint8_t chip_select)
+void Din::setSpi(SPIClass * spi_device)
 {
 	// HARDWARE NOTES
 	// For those using a SPI device for other devices than 165:
 	// since the 165 are not spi compilant we need a 2.2k resistor on MISO line to not screw up other spi devices on same MISO pin
 	_spi_device = spi_device;
-	// Chip select pin setup
-	_chip_select = chip_select;
 }
 #endif
 
@@ -241,15 +235,15 @@ void Din::read(uint8_t interrupted)
 	//	SREG = _tmpSREG;	
 	//}
 #elif defined(USE_DIN_SPI_DRIVER)
-	//if ( interrupted == 0 ) {	
-	//	_spi_device->notUsingInterrupt(255);
-	//} else {	
-	//	_spi_device->usingInterrupt(255);
-	//}
+	//if ( interrupted == 0 ) { 
+		//ram_module._tmpSREG = SREG;
+		//cli();
+		_spi_device->usingInterrupt(255);
+	//} 
 	_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
 	// pulsing the chip select pin to start capturing data
-	digitalWrite(_chip_select, LOW);
-	digitalWrite(_chip_select, HIGH);
+	digitalWrite(DIN_LATCH_PIN, LOW);
+	digitalWrite(DIN_LATCH_PIN, HIGH);
 	// Read byte per byte
 	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
 		// Before refresh data, set the last state data
@@ -260,6 +254,10 @@ void Din::read(uint8_t interrupted)
 		}
 	}
 	_spi_device->endTransaction();
+	//if ( interrupted == 0 ) { 
+		//SREG = _tmpSREG;
+		_spi_device->notUsingInterrupt(255);
+	//}  
 #endif
 
 	if (state_change) {
@@ -350,7 +348,7 @@ int8_t Din::getDataRaw(uint8_t port)
 	return !BIT_VALUE( _digital_input_state[(uint8_t)(floor(port / 8))], (port % 8) );
 }
 
-} } }
+} }
 
-uctrl::module::din::Din din_module;
+uctrl::module::Din din_module;
 #endif

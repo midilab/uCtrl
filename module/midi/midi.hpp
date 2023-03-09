@@ -7,7 +7,7 @@
 //#include <MIDI.h>
 #include "MIDI/MIDI.h"
 #if defined(__AVR_ATmega32U4__) && defined(USE_USB_MIDI)
-#include <USB-MIDI.h>
+#include "USB-MIDI/USB-MIDI.h"
 #endif
 
 #include "midi.h"

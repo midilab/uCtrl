@@ -311,7 +311,7 @@ void uCtrlClass::processMidi()
 #endif
 
 #ifdef USE_DOUT
-bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t chip_select)
+bool uCtrlClass::initDout(SPIClass * spi_device)
 {
 	if ( dout == nullptr ) {
 		dout = &dout_module;
@@ -320,7 +320,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t chip_select)
 	if ( dout != nullptr ) {
 #if defined(USE_DOUT_SPI_DRIVER)		
 		if (spi_device != nullptr) {
-			dout->setSpi(spi_device, chip_select);
+			dout->setSpi(spi_device);
 		}
 #endif
 		return true;
@@ -331,7 +331,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t chip_select)
 #endif
 
 #ifdef USE_DIN
-bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t chip_select)
+bool uCtrlClass::initDin(SPIClass * spi_device)
 {
 	if ( din == nullptr ) {
 		din = &din_module;
@@ -340,7 +340,7 @@ bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t chip_select)
 	if ( din != nullptr ) {
 #if defined(USE_DIN_SPI_DRIVER)		
 		if (spi_device != nullptr) {
-			din->setSpi(spi_device, chip_select);
+			din->setSpi(spi_device);
 		}
 #endif
 		return true;
@@ -506,9 +506,6 @@ void uCtrlClass::run()
 			din->event_queue.head = head
 		)
 
-		// +1 for user interface
-		++port;
-
 #ifdef USE_DEVICE
 	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
 			continue;
@@ -516,7 +513,7 @@ void uCtrlClass::run()
 #endif
 
 #ifdef USE_PAGE
-	#ifdef USE_AIN 
+	#if defined(USE_AIN) && defined(USE_PAGE_COMPONENT)
 		// before each processEvent we need to: check if pot_ctrl is needed
 		if(page->_use_nav_pot) {
 			// if it is, check if it is inc or dec commands... 
@@ -535,7 +532,7 @@ void uCtrlClass::run()
 			}
 		}
 	#endif
-		page->processEvent(port, value, uctrl::page::DIGITAL_EVENT);
+		page->processEvent(port, value, uctrl::module::DIGITAL_EVENT);
 #endif
 	   if ( din->callback != nullptr ) {
 			din->callback(port, value);
@@ -557,9 +554,6 @@ void uCtrlClass::run()
 		ATOMIC(
 			touch->event_queue.head = head
 		)
-
-		// +1 for user interface
-		++port;
 
 #ifdef USE_DEVICE
 	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
@@ -587,7 +581,7 @@ void uCtrlClass::run()
 			}
 		}
 	#endif
-		page->processEvent(port, (uint16_t)value, uctrl::page::DIGITAL_EVENT);
+		page->processEvent(port, (uint16_t)value, uctrl::module::DIGITAL_EVENT);
 #endif
 		if ( touch->callback != nullptr ) {
 			touch->callback(port, value);
@@ -607,9 +601,7 @@ void uCtrlClass::run()
 			_ain_event_queue.head = head
 		)
 
-		// +1 for user interface
-		++port;
-
+#ifdef USE_PAGE_COMPONENT
 		if (discard_ain_data) {
 			if (port == page->_nav_ctrl_port.pot) {
 				if (ain->isLocked(page->_nav_ctrl_port.pot-1) == false) {
@@ -619,6 +611,8 @@ void uCtrlClass::run()
 				}
 			}
 		}
+#endif
+
 #ifdef USE_DEVICE
 			// device process are done inside interrupt to keep smooth for realtime controllers events
 			// EDIT MODE HANDLER
@@ -632,7 +626,7 @@ void uCtrlClass::run()
 #endif
 
 #ifdef USE_PAGE
-		page->processEvent(port, value, uctrl::page::ANALOG_EVENT);
+		page->processEvent(port, value, uctrl::module::ANALOG_EVENT);
 #endif
 		if ( ain->callback != nullptr ) {
 			ain->callback(port, value, 0);
@@ -746,7 +740,7 @@ void ucrtISR()
 	if (uCtrl.on250usCallback) {
 		uCtrl.on250usCallback();
 	}
-
+	
 	if (uCtrl.on1msCallback) {
 		// ~1ms call
 		if(++_timerCounter1ms == 4) {

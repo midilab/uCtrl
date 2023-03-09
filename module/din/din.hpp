@@ -32,13 +32,13 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-namespace uctrl { namespace module { namespace din {
-
 #define EVENT_QUEUE_SIZE	4
 
 #if !defined(USE_DIN_MAX_PORTS)
 #define USE_DIN_MAX_PORTS 16
 #endif
+
+namespace uctrl { namespace module { 
 
 typedef struct 
 {
@@ -120,13 +120,12 @@ class Din
 
 #if defined(USE_DIN_SPI_DRIVER)
 		SPIClass * _spi_device = nullptr;
-		void setSpi(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
-		uint8_t _chip_select;
+		void setSpi(SPIClass * spi_device = nullptr);
 #endif
 };
 
-} } }
+} }
 
-extern uctrl::module::din::Din din_module;
+extern uctrl::module::Din din_module;
 
 #endif

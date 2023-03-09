@@ -32,7 +32,7 @@
 
 #include "page.hpp"
 	
-namespace uctrl { namespace page {
+namespace uctrl { namespace module {
 
 Page::Page()
 {
@@ -539,7 +539,9 @@ void Page::set(const char * page_name, void (*page_create_callback)(), void (*pa
 
 	// init selected component memory
 	for (uint8_t i=0; i < USE_PAGE_MAX_SUB_PAGES; i++) {
+#ifdef USE_PAGE_COMPONENT
 		_page_data[_page].sub_page_data[i].selected_component = nullptr;
+#endif
 		_page_data[_page].sub_page_data[i].selector_line = 0;
 		_page_data[_page].sub_page_data[i].selector_grid = 0;
 	}
@@ -577,6 +579,7 @@ void Page::setPage(int8_t page)
 	_last_page = _page;			
 	_page = page;	
 
+#ifdef USE_PAGE_COMPONENT
 	// set last page-subpage element as not selected 
 	if (_page_data[_last_page].sub_page_data[_page_data[_last_page].sub_page].selected_component != nullptr) {
 		_page_data[_last_page].sub_page_data[_page_data[_last_page].sub_page].selected_component->selected = false;
@@ -592,6 +595,7 @@ void Page::setPage(int8_t page)
 		_selector_line = _page_data[_page].sub_page_data[_page_data[_page].sub_page].selector_line;
 		_selector_grid = _page_data[_page].sub_page_data[_page_data[_page].sub_page].selector_grid;
 	}
+#endif
 }
 
 void Page::setSubPage(int8_t sub_page)
@@ -604,6 +608,7 @@ void Page::setSubPage(int8_t sub_page)
 		sub_page = _page_data[_page].sub_page_size - 1;
 	}
 	
+#ifdef USE_PAGE_COMPONENT
 	// set last page-subpage element as not selected 
 	if (_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component != nullptr)  {
 		_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component->selected = false;
@@ -611,9 +616,11 @@ void Page::setSubPage(int8_t sub_page)
 		_page_data[_page].sub_page_data[_page_data[_page].sub_page].selector_line = _selector_line;
 		_page_data[_page].sub_page_data[_page_data[_page].sub_page].selector_grid = _selector_grid;
 	}
-		
+#endif
+
 	_page_data[_page].sub_page = sub_page;
 
+#ifdef USE_PAGE_COMPONENT
 	// set new page-subpage element as selected 
 	if (_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component != nullptr) {
 		_page_data[_page].sub_page_data[_page_data[_page].sub_page].selected_component->selected = true;
@@ -621,6 +628,7 @@ void Page::setSubPage(int8_t sub_page)
 		_selector_line = _page_data[_page].sub_page_data[_page_data[_page].sub_page].selector_line;
 		_selector_grid = _page_data[_page].sub_page_data[_page_data[_page].sub_page].selector_grid;
 	}
+#endif
 }
 
 uint8_t Page::getSubPage()
@@ -653,5 +661,5 @@ uint8_t Page::getPage()
 
 } }
 
-uctrl::page::Page page_module;
+uctrl::module::Page page_module;
 #endif

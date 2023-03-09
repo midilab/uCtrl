@@ -133,6 +133,7 @@ void Oled::print(const uint8_t * bitmap8, uint8_t line, uint8_t col, bool do_bli
 #endif
 }
 
+#ifdef USE_OLED_U8G2
 void Oled::drawBox(uint8_t y, uint8_t x, uint8_t height, uint8_t width, bool do_blink)
 {
 	if (do_blink == true && blink())
@@ -140,6 +141,7 @@ void Oled::drawBox(uint8_t y, uint8_t x, uint8_t height, uint8_t width, bool do_
 
 	display->drawBox(x, y, width, height);
 }
+#endif
 
 void Oled::select(const char ** select_data, uint8_t selected_data, uint8_t line, uint8_t col,  uint8_t height, uint8_t width, uint8_t start_idx)
 {

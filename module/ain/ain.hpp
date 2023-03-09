@@ -36,6 +36,14 @@ namespace uctrl { namespace module {
 #define AUTOLOCK
 #define ANALOG_AVG_READS
 
+#if defined(USE_AIN_4051_DRIVER) 
+#define AIN_MUX_SIZE	8
+#endif
+
+#if defined(USE_AIN_4067_DRIVER)
+#define AIN_MUX_SIZE	16
+#endif
+
 #ifdef ANALOG_AVG_READS
 typedef struct
 {
@@ -73,16 +81,17 @@ class Ain
 		
 		void setMaxAdcValue(uint16_t max_adc_value);
 	
-#if defined(USE_AIN_4051)
+#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
 		void setMuxPins(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
 		void selectMuxPort(uint8_t port);
 		int8_t _mux_control_pin_1 = -1;
 		int8_t _mux_control_pin_2 = -1;
 		int8_t _mux_control_pin_3 = -1;
+		int8_t _mux_control_pin_4 = -1;
 #endif
 
-		// max of 128 analog ports with 16x 4051
-		int8_t _port[16] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+		// max of 128 analog ports with 8x 4051
+		int8_t _port[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
 		uint8_t _host_analog_port = 0; // uint8_t hard_port[16];
 		uint8_t _remote_analog_port = 0; // uint8_t soft_port[16];
