@@ -57,9 +57,11 @@ $ git submodule update --init --recursive
 
 ### Download
 
+In case you want to download uCtrl instead of use it as a submodule.  
+
 Create a src/ directory inside your sketch, then clone or [download](https://github.com/midilab/uCtrl/archive/refs/heads/main.zip) this repository.
 
-unzip main.zip and move the unziped folder named uCtrl-main/ to YourSketch/src/uCtrl/
+unzip **main.zip** and move the unziped folder named **uCtrl-main/** to **YourSketch/src/uCtrl/**
 
 ### Setting your sketch
 
@@ -463,22 +465,26 @@ Make use of 4067 to multiplex capacitive buttons.
 ## MIDI
 
 Agregate and control MIDI interfaces.
+Agregator for [Francois Best's Arduino MIDI library](https://github.com/FortySevenEffects/arduino_midi_library) that can handle realtime operations inside uCtrl.  
 
-Agregator for [author name] midi library for realtime usage
+Make use of MIDI circuit.
 *link or image to the midi options schematic
 
 ## Oled
 
 Connect a OLED screen.
 
-Helper class that makes use of [U8g2 oled library](https://github.com/olikraus/U8g2_Arduino). 
+Display helper class for [U8g2 oled library](https://github.com/olikraus/U8g2_Arduino). 
+
+
+Make use of i2c or spi devices.
 *link or image to the oled options schematic  
 
 ## Storage
 
 Make use of epprom and/or sdcard.
 
-Storage abstration for uCtrl using Epprom and Sdcard(library from..)
+Storage abstration for for Epprom and Sdcard usage. Sdcard library helper using [greiman's SdFat library](https://github.com/greiman/SdFat/)
 *link or image to the sdcard options schematic
 
 ## Ram

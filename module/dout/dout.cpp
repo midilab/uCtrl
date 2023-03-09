@@ -163,7 +163,11 @@ void Dout::flush()
 	// deactive device
 	digitalWrite(DOUT_LATCH_PIN, HIGH);
 #elif defined(USE_DOUT_SPI_DRIVER)
-	//_spi_device->notUsingInterrupt(255);
+	//if ( interrupted == 0 ) { 
+		//ram_module._tmpSREG = SREG;
+		//cli();
+		_spi_device->usingInterrupt(255);
+	//} 
 	_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
 	// active device
 	digitalWrite(DOUT_LATCH_PIN, LOW);
@@ -176,6 +180,7 @@ void Dout::flush()
 	// deactive device
 	digitalWrite(DOUT_LATCH_PIN, HIGH);
 	_spi_device->endTransaction(); 
+	_spi_device->notUsingInterrupt(255);
 #endif
 	// wait for the next change request
 	_flush_dout = false;

@@ -311,7 +311,7 @@ void uCtrlClass::processMidi()
 #endif
 
 #ifdef USE_DOUT
-bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t chip_select)
+bool uCtrlClass::initDout(SPIClass * spi_device)
 {
 	if ( dout == nullptr ) {
 		dout = &dout_module;
@@ -320,7 +320,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t chip_select)
 	if ( dout != nullptr ) {
 #if defined(USE_DOUT_SPI_DRIVER)		
 		if (spi_device != nullptr) {
-			dout->setSpi(spi_device, chip_select);
+			dout->setSpi(spi_device);
 		}
 #endif
 		return true;
@@ -331,7 +331,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t chip_select)
 #endif
 
 #ifdef USE_DIN
-bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t chip_select)
+bool uCtrlClass::initDin(SPIClass * spi_device)
 {
 	if ( din == nullptr ) {
 		din = &din_module;
@@ -340,7 +340,7 @@ bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t chip_select)
 	if ( din != nullptr ) {
 #if defined(USE_DIN_SPI_DRIVER)		
 		if (spi_device != nullptr) {
-			din->setSpi(spi_device, chip_select);
+			din->setSpi(spi_device);
 		}
 #endif
 		return true;
@@ -740,7 +740,7 @@ void ucrtISR()
 	if (uCtrl.on250usCallback) {
 		uCtrl.on250usCallback();
 	}
-
+	
 	if (uCtrl.on1msCallback) {
 		// ~1ms call
 		if(++_timerCounter1ms == 4) {

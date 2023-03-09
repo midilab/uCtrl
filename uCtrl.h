@@ -152,13 +152,13 @@ class uCtrlClass
 	
 #ifdef USE_DOUT	
 	// dout module
-	bool initDout(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
+	bool initDout(SPIClass * spi_device = nullptr);
 	uctrl::module::Dout * dout = nullptr;
 #endif
 	
 #ifdef USE_DIN	
 	// din module
-	bool initDin(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
+	bool initDin(SPIClass * spi_device = nullptr);
 	uctrl::module::Din * din = nullptr;
 #endif
 	
