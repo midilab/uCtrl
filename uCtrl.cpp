@@ -506,9 +506,6 @@ void uCtrlClass::run()
 			din->event_queue.head = head
 		)
 
-		// +1 for user interface
-		++port;
-
 #ifdef USE_DEVICE
 	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
 			continue;
@@ -558,9 +555,6 @@ void uCtrlClass::run()
 			touch->event_queue.head = head
 		)
 
-		// +1 for user interface
-		++port;
-
 #ifdef USE_DEVICE
 	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
 			continue;
@@ -606,9 +600,6 @@ void uCtrlClass::run()
 		ATOMIC(                      
 			_ain_event_queue.head = head
 		)
-
-		// +1 for user interface
-		++port;
 
 #ifdef USE_PAGE_COMPONENT
 		if (discard_ain_data) {

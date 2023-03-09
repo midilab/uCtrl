@@ -20,7 +20,7 @@ The following microcontrollers and boards are supported and were tested:
 [PAGE](#page): Modular User Interface programming using pages and components.  
 [AIN](#ain): Wire up to 64 potentiometers.  
 [DIN](#din): Wire up to 64 push buttons or rotary encoders.  
-[DOUT](#dout): Wire up to 64 leds.  
+[DOUT](#dout): Wire up to 64 leds or any other digital output.  
 [TOUCH](#touch): Wire up to 32 capcitive touch buttons(teensy arms only for now).  
 [MIDI](#midi): Agregate and control MIDI interfaces.  
 [OLED](#oled): Connect a OLED screen.  
@@ -65,7 +65,7 @@ unzip main.zip and move the unziped folder named uCtrl-main/ to YourSketch/src/u
 
 Create a new file on IDE tab for your sketch named **modules.h**
 
-Configure modules.h accordly to the needed modules for your application.(see Modules for MACRO setup)
+Configure **modules.h** accordly to the needed modules for your application.(see Modules for MACRO setup)
 
 ### modules.h
 
@@ -90,22 +90,27 @@ Your initial project structure should look like:
 
 # Modules
 
-A introduction to modules, base schematics and modules.h MACRO setup.
+A introduction to modules, base schematics and **modules.h** MACRO setup.
 
 ## AIN
 
 Wire up to 64 potentiometers.  
 
-Good to create midi controllers or user interface with potentiometers.
+Use this module to create midi controllers or any other user interface with potentiometers.
 
-This module can handle single ADC ports on your microcontroller or multiplexed ADC port via 4051 CI.
+This module can handle single ADC ports on your microcontroller or multiplexed ADC port via 4051 or 4067 CI.
 
-modules.h
+**modules.h**
 ```c
 #ifndef __U_CTRL_MODULES_H__
 #define __U_CTRL_MODULES_H__
 
+// enables the driver
 #define USE_AIN
+
+// for multiplexed support uncomment the needed driver
+//#define USE_AIN_4051_DRIVER
+//#define USE_AIN_4067_DRIVER
 
 #endif
 ```
@@ -115,31 +120,59 @@ YourSketch.ino
 #include <Arduino.h>
 #include "src/uCtrl/uCtrl.h"
 
+typedef enum {
+  POT_1,
+  POT_2,
+  POT_3,
+  POT_4,
+  //...,
+  //...,
+};
+
 // get change values from connected potentiometers
 void ainInput(uint8_t port, uint16_t value, uint8_t interrupted)
 {
     switch (port) {
-        case 1:
-            // do something with port 1 value changing
+        case POT_1:
+            // do something with port 1 value(0 ~ 1023)
             break;
-        case 2:
-            // do something with port 2 value changing
+        case POT_2:
+            // do something with port 2 value(0 ~ 1023)
             break;
+        case POT_3:
+            // do something with port 3 value(0 ~ 1023)
+            break;
+        case POT_4:
+            // do something with port 4 value(0 ~ 1023)
+            break;
+        //...
+        //...
     }
 }
 
-void setAinMultiplexed()
+// this plugs 4x 4051 making 32 potentiometers avaliable
+void setAinMultiplexed4051()
 {
-    // MUX_CTRL_PIN_* are the control pins of 4051 CI:
-    // datasheet link
     // initAin(uint8_t MUX_CTRL_PIN_A, uint8_t MUX_CTRL_PIN_B, uint8_t MUX_CTRL_PIN_C)
-    uCtrl.initAin(2, 3, 4);
+    uCtrl.initAin(D3, D4, D5);
     // plug(uint8_t MUX_ANALOG_PORT_PIN_X)
     uCtrl.ain->plug(A0);
     uCtrl.ain->plug(A1);
     uCtrl.ain->plug(A2);
+    uCtrl.ain->plug(A3);
 }
 
+// this plugs 2x 4067 making 32 potentiometers avaliable
+void setAinMultiplexed4067()
+{
+    // initAin(uint8_t MUX_CTRL_PIN_A, uint8_t MUX_CTRL_PIN_B, uint8_t MUX_CTRL_PIN_C, uint8_t MUX_CTRL_PIN_D)
+    uCtrl.initAin(D3, D4, D5, D6);
+    // plug(uint8_t MUX_ANALOG_PORT_PIN_X)
+    uCtrl.ain->plug(A0);
+    uCtrl.ain->plug(A1);
+}
+
+// this plugs 4 microntroller ADC ports making 4 potentiometers avaliable
 void setAinSingle()
 {
     uCtrl.initAin();
@@ -147,15 +180,21 @@ void setAinSingle()
     uCtrl.ain->plug(A1);
     uCtrl.ain->plug(A0);
     uCtrl.ain->plug(A2);
+    uCtrl.ain->plug(A3);
 }
 
 void setup() 
 {
     setAinSingle();
-    //setAinMultiplexed();
+    //setAinMultiplexed4051();
+    //setAinMultiplexed4067();
     uCtrl.ain->setCallback(ainInput);
-    // most arduinos default is 1024 based on your internal ADC resolution 
+    // most arduinos max is 1024.
+    // you can lower or raiser this value for your needs
     uCtrl.ain->setMaxAdcValue(128);
+
+    // only init uCtrl after all modules setup
+    uCtrl.init();
 }
 
 void loop()
@@ -164,37 +203,38 @@ void loop()
 }
 ```
 
-Make use of 4051 and/or 4067(to be supported) for multiplexed analog inputs
+Make use of 4051 or 4067 for multiplexed analog inputs  
 *link or image to the ain options schematic
 
 ## DIN
 
 Wire up to 64 push buttons or rotary encoders.
 
-Good to create midi controllers or user interface interactions with potentiometers.
+This module can handle single Digital ports on your microcontroller or multiplexed Digital port via 165 CI.
 
-This module can handle single ADC ports on your microcontroller or multiplexed ADC port via 4051 CI.
-
-modules.h
+**modules.h**
 ```c
 #ifndef __U_CTRL_MODULES_H__
 #define __U_CTRL_MODULES_H__
 
+// enables the driver
 #define USE_DIN
 
 //
-// for direct usage of microcontroller ADC port pin
+// for direct usage of microcontroller Digital port pin
+// all pins are setup with internal pullup resistor
+// so wire you button between microcontroller pin and GND(no need for resistor)
 // USE_DIN_MAX_PORTS is default to 16 if you dont set it
-// if you need less than 16 please set it accordly to save memory
 //
 #define USE_DIN_PORT_PIN
 //#define USE_DIN_MAX_PORTS   8
 
-// two driver options for multiplexed button input, via SPI and via BITBANG.
-// uncomment only one driver option.
+// 2 driver options for multiplexed button input: SPI and BITBANG.
+// use only one driver option!
 
 //
-// using SPI hardware wich is the recommended way in case you have a Free SPI device.
+// using SPI hardware wich is the recommended way in case you have 
+// a Free or shared SPI device.
 //
 //#define USE_DIN_SPI_DRIVER
 //#define DIN_LATCH_PIN   D4
@@ -202,7 +242,7 @@ modules.h
 //
 // using bitbang in case you dont have a free SPI. 
 // this is slower and uses the CPU to process the data transfer.
-// this options requires you to define the latch, data and clock pins of 4051.
+// this options requires you to define the latch, data and clock pins of 165.
 //
 //#define USE_DIN_BITBANG_DRIVER
 //#define DIN_LATCH_PIN   D4
@@ -217,19 +257,37 @@ YourSketch.ino
 #include <Arduino.h>
 #include "src/uCtrl/uCtrl.h"
 
+typedef enum {
+  BUTTON_1,
+  BUTTON_2,
+  ENCODER_DEC,
+  ENCODER_INC,
+  //...,
+  //...,
+};
+
 // get change values from connected push buttons or encoders
 void dinInput(uint8_t port, uint16_t value, uint8_t interrupted)
 {
     switch (port) {
-        case 1:
-            // do something with port 1 value changing
+        case BUTTON_1:
+            // do something with BUTTON_1 value(HIGH | LOW)
             break;
-        case 2:
-            // do something with port 2 value changing
+        case BUTTON_2:
+            // do something with BUTTON_2 value(HIGH | LOW)
             break;
+        case ENCODER_DEC:
+            // do something with ENCODER_DEC value(HIGH)
+            break;
+        case ENCODER_INC:
+            // do something with ENCODER_INC value(HIGH)
+            break;
+        //...
+        //...
     }
 }
 
+// this plugs 1x 165 using SPI device, making 8 push buttons avaliable
 void setDinMultiplexedSpi()
 {
     // initDin(spi device)
@@ -238,20 +296,23 @@ void setDinMultiplexedSpi()
     uCtrl.din->plugSR(1);
 }
 
+// this plugs 2x 165 using bitbang driver, making 16 push buttons avaliable
 void setDinMultiplexedBitbang()
 {
     uCtrl.initDin();
     // plugSR(uint8_t number of 165's to plug)
-    uCtrl.din->plugSR(1);
+    uCtrl.din->plugSR(2);
 }
 
+// this plugs 4 microntroller Digital ports making 4 push buttons avaliable
 void setDinSingle()
 {
     uCtrl.initDin();
-    // plug(uint8_t MUX_ANALOG_PORT_PIN_X)
+    // plug(uint8_t DIGITAL_PORT_PIN_X)
     uCtrl.din->plug(D2);
     uCtrl.din->plug(D3);
     uCtrl.din->plug(D4);
+    uCtrl.din->plug(D5);
 }
 
 void setup() 
@@ -260,8 +321,14 @@ void setup()
     //setDinMultiplexedSpi();
     //setDinMultiplexedBitbang();
     uCtrl.din->setCallback(dinInput);
-    // most arduinos default is 1024 based on your internal ADC resolution 
-    uCtrl.din->setMaxAdcValue(128);
+
+    // encoders setup?
+    // in pair and sequential pins always! 
+    // pairs starting with even ids: 0 and 1, 2 and 3, 4 and 5
+    uCtrl.din->encoder(ENCODER_DEC, ENCODER_INC);
+
+    // only init uCtrl after all modules setup
+    uCtrl.init();
 }
 
 void loop()
@@ -270,21 +337,127 @@ void loop()
 }
 ```
 
-Make use of 165 shift register to expand buttons and/or encoders.
+Make use of 165 shift register to expand buttons and/or encoders.  
 *link or image to the din options schematic
 
 ## DOUT
 
-Wire up to 64 leds.
+Wire up to 64 leds or any other digital output.
 
-Make use of 595 shiftregister to expand digital output like leds
+This module can handle single Digital output ports on your microcontroller or multiplexed Digital output port via 595 CI.
+
+**modules.h**
+```c
+#ifndef __U_CTRL_MODULES_H__
+#define __U_CTRL_MODULES_H__
+
+// enables the driver
+#define USE_DOUT
+
+//
+// for direct usage of microcontroller Digital output port pin
+// USE_DOUT_MAX_PORTS is default to 8 if you dont set it
+//
+#define USE_DOUT_PORT_PIN
+//#define USE_DOUT_MAX_PORTS   8
+
+// 2 driver options for multiplexed output: SPI and BITBANG.
+// use only one driver option!
+
+//
+// using SPI hardware wich is the recommended way in case you have 
+// a Free or shared SPI device.
+//
+//#define USE_DOUT_SPI_DRIVER
+//#define DOUT_LATCH_PIN   D7
+
+//
+// using bitbang in case you dont have a free SPI. 
+// this is slower and uses the CPU to process the data transfer.
+// this options requires you to define the latch, data and clock pins of 595.
+//
+//#define USE_DOUT_BITBANG_DRIVER
+//#define DOUT_LATCH_PIN   D7
+//#define DOUT_DATA_PIN    D8
+//#define DOUT_CLOCK_PIN   D9
+
+#endif
+```
+
+YourSketch.ino
+```c++
+#include <Arduino.h>
+#include "src/uCtrl/uCtrl.h"
+
+typedef enum {
+  LED_1,
+  LED_2,
+  LED_3,
+  LED_4,
+  //...,
+  //...,
+};
+
+// this plugs 1x 595 using SPI device, making 8 digital outputs avaliable
+void setDoutMultiplexedSpi()
+{
+    // initDout(spi device)
+    uCtrl.initDout(&SPI);
+    // plugSR(uint8_t number of 595's to plug)
+    uCtrl.dout->plugSR(1);
+}
+
+// this plugs 2x 595 using bitbang driver, making 16 digital outputs avaliable
+void setDoutMultiplexedBitbang()
+{
+    uCtrl.initDout();
+    // plugSR(uint8_t number of 165's to plug)
+    uCtrl.dout->plugSR(2);
+}
+
+// this plugs 4 microntroller Digital ports making 4 digital outputs avaliable
+void setDoutSingle()
+{
+    uCtrl.initDout();
+    // plug(uint8_t DIGITAL_PORT_PIN_X)
+    uCtrl.dout->plug(D2);
+    uCtrl.dout->plug(D3);
+    uCtrl.dout->plug(D4);
+    uCtrl.dout->plug(D5);
+}
+
+void setup() 
+{
+    setDoutSingle();
+    //setDoutMultiplexedSpi();
+    //setDoutMultiplexedBitbang();
+
+    // only init uCtrl after all modules setup
+    uCtrl.init();
+
+    // now you can use the uCtrl interface to set states on the outputs
+    // set all leds off
+    uCtrl.dout->writeAll(LOW); 
+    // set all leds on
+    //uCtrl.dout->writeAll(HIGH); 
+    // set LED_1 on
+    uCtrl.dout->write(LED_1, HIGH); 
+}
+
+void loop()
+{
+  uCtrl.run();
+}
+```
+
+Make use of 595 shiftregister to expand digital output like leds.  
 *link or image to the dout options schematic
 
 ## Touch
 
-Wire up to 32 touch buttons
+Wire up to 32 capacitive touch buttons using common ADC port.
 
-Make use of 4067 to multiplex capacitive buttons
+Make use of 4067 to multiplex capacitive buttons.  
 *link or image to the touch options schematic
 
 ## MIDI
@@ -298,8 +471,8 @@ Agregator for [author name] midi library for realtime usage
 
 Connect a OLED screen.
 
-Helper class that makes use of [author name] oled library
-*link or image to the oled options schematic
+Helper class that makes use of [U8g2 oled library](https://github.com/olikraus/U8g2_Arduino). 
+*link or image to the oled options schematic  
 
 ## Storage
 

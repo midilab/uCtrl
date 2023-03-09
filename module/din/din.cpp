@@ -84,10 +84,6 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 		}
 	}
 
-	// TODO: take off this decrement shit, do it in programmer way for everything
-	channel_a_id--;
-	channel_b_id--;
-
 	// find our indexes
 	state_group = floor(channel_a_id/8);
 

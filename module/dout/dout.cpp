@@ -50,10 +50,9 @@ uint8_t Dout::sizeOf()
 }	
 
 #if defined(USE_DOUT_SPI_DRIVER)
-void Dout::setSpi(SPIClass * spi_device, uint8_t chip_select)
+void Dout::setSpi(SPIClass * spi_device)
 {
 	_spi_device = spi_device;
-	_latch_pin = chip_select;
 }
 #endif
 
@@ -86,9 +85,9 @@ void Dout::init()
 	_change_flag = true;
 #elif defined(USE_DOUT_SPI_DRIVER)
 	// Chip select pin setup
-	pinMode(_latch_pin, OUTPUT);
+	pinMode(DOUT_LATCH_PIN, OUTPUT);
 	// 74H595 latched out by default
-	digitalWrite(_latch_pin, HIGH);	
+	digitalWrite(DOUT_LATCH_PIN, HIGH);	
 	// Initing a common shared SPI device for all uMODULAR modules using SPI bus
 	_spi_device->begin();
 	_change_flag = true;
@@ -167,7 +166,7 @@ void Dout::flush()
 	//_spi_device->notUsingInterrupt(255);
 	_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
 	// active device
-	digitalWrite(_latch_pin, LOW);
+	digitalWrite(DOUT_LATCH_PIN, LOW);
 	// Transfer byte a byte, in inverse order
 	i=_chain_size-1;
 	while(i >= 0) {
@@ -175,7 +174,7 @@ void Dout::flush()
 		i--;
 	}
 	// deactive device
-	digitalWrite(_latch_pin, HIGH);
+	digitalWrite(DOUT_LATCH_PIN, HIGH);
 	_spi_device->endTransaction(); 
 #endif
 	// wait for the next change request
@@ -186,7 +185,6 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 {
 	uint8_t chain_group, chain_group_index;
 	uint8_t * buffer = nullptr;
-	//--remote_port;
 
 	if ( _remote_digital_output_port == 0 ) 
 		return;	
