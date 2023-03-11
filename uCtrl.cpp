@@ -35,7 +35,7 @@
 //
 #if defined(TEENSYDUINO)
 	IntervalTimer _uctrlTimer;
-#endif
+#endif // defined(TEENSYDUINO)
 //
 // Seedstudio XIAO M0 port
 //
@@ -43,14 +43,14 @@
 	// 16 bits timer
 	#include <TimerTC3.h>
 	// uses TimerTc3
-#endif
+#endif // defined(SEEED_XIAO_M0)
 //
 // ESP32 family
 //
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 	hw_timer_t * _uctrlTimer = NULL;
 	#define TIMER_ID	1
-#endif
+#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 
 //
 // multicore archs
@@ -61,9 +61,9 @@
 //
 // singlecore archs
 //
-#else
+#else // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 	#define ATOMIC(X) noInterrupts(); X; interrupts();
-#endif
+#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 
 //
 // Generic AVR timer
@@ -84,7 +84,7 @@ void enableTimer()
 		TCCR3B |= (0 << CS32) | (0 << CS31) | (1 << CS30);
 		// enable timer compare interrupt
 		TIMSK3 |= (1 << OCIE3A);
-#else
+#else // defined(__AVR_ATmega32U4__)	
 		// avr general timer2 - 8bits
 		TCCR2A = 0; // set entire TCCR2A register to 0
 		TCCR2B = 0; // same for TCCR2B
@@ -107,18 +107,18 @@ void enableTimer()
 		// Prescaler 128
 		TCCR2B |= (1 << CS22) | (1 << CS20);
 		*/
-#endif
+#endif // defined(__AVR_ATmega32U4__)	
 	)
 }
 // ARM timers
-#else
+#else // defined(ARDUINO_ARCH_AVR)
 
 	// forward declaration of ISR
 	#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 		void ARDUINO_ISR_ATTR ucrtISR();
-	#else
+	#else // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 		void ucrtISR();
-	#endif
+	#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 	
 void enableTimer()
 {
@@ -130,14 +130,14 @@ void enableTimer()
 		// As a general guideline, interrupt routines that run longer should be given 
 		// lower priority (higher numerical values).
 		_uctrlTimer.priority(80);
-	#endif
+	#endif // defined(TEENSYDUINO)
 
 	#if defined(SEEED_XIAO_M0)
 		TimerTc3.initialize(250);
 
 		// attach to generic uclock ISR
 		TimerTc3.attachInterrupt(ucrtISR);
-	#endif
+	#endif // defined(SEEED_XIAO_M0)
 
 	#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 		_uctrlTimer = timerBegin(TIMER_ID, 80, true);
@@ -150,9 +150,9 @@ void enableTimer()
 
 		// activate it!
 		timerAlarmEnable(_uctrlTimer);
-	#endif
+	#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 }
-#endif
+#endif // defined(ARDUINO_ARCH_AVR)
 
 namespace uctrl {
 
@@ -168,7 +168,7 @@ uCtrlClass::~uCtrlClass()
 
 }
 
-#ifdef USE_EXT_RAM
+#if defined(USE_EXT_RAM)
 bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
 {
 	if ( ram == nullptr ) {
@@ -182,9 +182,9 @@ bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
 		return false;
 	}
 }
-#endif
+#endif // defined(USE_EXT_RAM)
 
-#ifdef USE_STORAGE
+#if defined(USE_STORAGE)
 bool uCtrlClass::initStorage(SPIClass * spi_device, uint8_t chip_select)
 {
 	if ( storage == nullptr ) {
@@ -198,9 +198,9 @@ bool uCtrlClass::initStorage(SPIClass * spi_device, uint8_t chip_select)
 		return false;
 	}	
 }
-#endif
+#endif // defined(USE_STORAGE)
 
-#ifdef USE_SDCARD
+#if defined(USE_SDCARD)
 bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select)
 {
 	if ( sdcard == nullptr ) {
@@ -214,9 +214,9 @@ bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select)
 		return false;
 	}	
 }
-#endif
+#endif // defined(USE_SDCARD)
 
-#ifdef USE_DEVICE
+#if defined(USE_DEVICE)
 bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size, uint16_t device_label_buffer_size)
 {
 	if ( device == nullptr ) {
@@ -230,9 +230,9 @@ bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, u
 		return false;
 	}
 }
-#endif
+#endif // defined(USE_DEVICE)
 
-#ifdef USE_PAGE
+#if defined(USE_PAGE)
 bool uCtrlClass::initPage()
 {
 	if ( page == nullptr ) {
@@ -246,14 +246,15 @@ bool uCtrlClass::initPage()
 		return false;
 	}
 }
-#endif
+#endif // defined(USE_PAGE)
 
-#ifdef USE_OLED
-#ifdef USE_OLED_U8G2
+#if defined(USE_OLED)
+
+#if defined(USE_OLED_U8G2)
 bool uCtrlClass::initOled(U8G2 * display)
-#else
+#else // defined(USE_OLED_U8G2)
 bool uCtrlClass::initOled(U8X8 * display)
-#endif
+#endif // defined(USE_OLED_U8G2)
 {
 	if ( oled == nullptr ) {
 		oled = &oled_module;
@@ -268,8 +269,8 @@ bool uCtrlClass::initOled(U8X8 * display)
 	}
 }
 
-#ifdef USE_EXT_RAM
-#ifdef USE_DEVICE
+#if defined(USE_EXT_RAM)
+#if defined(USE_DEVICE)
 void uCtrlClass::processDisplay()
 {
 	if ( device->showDataFeedback() == true ) {
@@ -283,11 +284,12 @@ void uCtrlClass::processDisplay()
 		}			
 	}
 }
-#endif 
-#endif 
-#endif 
+#endif // defined(USE_DEVICE)
+#endif // defined(USE_EXT_RAM)
 
-#ifdef USE_MIDI
+#endif // #if defined(USE_OLED)
+
+#if defined(USE_MIDI)
 bool uCtrlClass::initMidi()
 {
 	if ( midi == nullptr ) {
@@ -308,9 +310,9 @@ void uCtrlClass::processMidi()
 		midi->read(port);
 	}
 }
-#endif
+#endif // defined(USE_MIDI)
 
-#ifdef USE_DOUT
+#if defined(USE_DOUT)
 bool uCtrlClass::initDout(SPIClass * spi_device)
 {
 	if ( dout == nullptr ) {
@@ -322,15 +324,15 @@ bool uCtrlClass::initDout(SPIClass * spi_device)
 		if (spi_device != nullptr) {
 			dout->setSpi(spi_device);
 		}
-#endif
+#endif // defined(USE_DOUT_SPI_DRIVER)
 		return true;
 	} else {
 		return false;
 	}
 }
-#endif
+#endif // defined(USE_DOUT)
 
-#ifdef USE_DIN
+#if defined(USE_DIN)
 bool uCtrlClass::initDin(SPIClass * spi_device)
 {
 	if ( din == nullptr ) {
@@ -342,15 +344,15 @@ bool uCtrlClass::initDin(SPIClass * spi_device)
 		if (spi_device != nullptr) {
 			din->setSpi(spi_device);
 		}
-#endif
+#endif // defined(USE_DIN_SPI_DRIVER)
 		return true;
 	} else {
 		return false;
 	}
 }
-#endif
+#endif // defined(USE_DIN)
 
-#ifdef USE_AIN
+#if defined(USE_AIN)
 bool uCtrlClass::initAin(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 {
 	if ( ain == nullptr ) {
@@ -358,10 +360,7 @@ bool uCtrlClass::initAin(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 	}
 	
 	if ( ain != nullptr ) {
-// #ifdef USE_AIN_4067
-#ifdef USE_AIN_4051
 		ain->setMuxPins(pin1, pin2, pin3, pin4);
-#endif
 		return true;
 	} else {
 		return false;
@@ -379,26 +378,26 @@ void uCtrlClass::processAin()
 	// 
 	for ( port=0; port < size_of_ports; port++ ) {
 
-#ifdef USE_DEVICE
+#if defined(USE_DEVICE)
 		value = ain->getData(port, device->getCtrlAdcMin(port), device->getCtrlAdcMax(port));
-#else
+#else // defined(USE_DEVICE)
 		value = ain->getData(port);
-#endif
+#endif // defined(USE_DEVICE)
 	
 		if ( value > -1 ) {
 
-#ifdef USE_DEVICE
+#if defined(USE_DEVICE)
 			// make midi signal smooth as posible
 			if ( device->handleAnalogEvent(port+1, value, 1) == true ) {
 				//continue;
 			}
-#else
+#else // defined(USE_DEVICE)
 			// ain callback is processed inside a timmer interrupt, so always be short inside it!
 			if ( ain->callback != nullptr ) {
 				ain->callback(port+1, value, 1);
 				continue;
 			}   
-#endif
+#endif // defined(USE_DEVICE)
 
 			// add event to non interrupted queue in case no device control setup
 			uint8_t tail = (_ain_event_queue.tail+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.tail+1);
@@ -413,9 +412,9 @@ void uCtrlClass::processAin()
 		
 	}
 }
-#endif
+#endif // defined(USE_AIN)
 
-#ifdef USE_CAP_TOUCH
+#if defined(USE_CAP_TOUCH)
 bool uCtrlClass::initCapTouch(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 {
 	if ( touch == nullptr ) {
@@ -429,44 +428,44 @@ bool uCtrlClass::initCapTouch(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t 
 		return false;
 	}
 }
-#endif
+#endif // defined(USE_CAP_TOUCH)
 
 void uCtrlClass::init()
 {
 	// init of hardware configuration
 	// if we have sdcard support, then retrive hardware config info from ucontrol.cfg on sdcard root filesystem
-#ifdef USE_SDCARD
+#if defined(USE_SDCARD)
 	// load default config
-#else
+#else // defined(USE_SDCARD)
 	// load factory defaults
-#endif
+#endif // defined(USE_SDCARD)
 
-#ifdef USE_AIN
+#if defined(USE_AIN)
 	ain->init();
 	_ain_event_queue.head = 0;
 	_ain_event_queue.tail = 0;
 	_ain_event_queue.size = 8;		
-#endif
+#endif // defined(USE_AIN)
 
-#ifdef USE_CAP_TOUCH
+#if defined(USE_CAP_TOUCH)
 	touch->init();
-#endif
+#endif // defined(USE_CAP_TOUCH)
 
-#ifdef USE_DIN
+#if defined(USE_DIN)
 	din->init();
-#endif
+#endif // defined(USE_DIN)
 	
-#ifdef USE_DOUT
+#if defined(USE_DOUT)
 	dout->init();
-#endif
+#endif // defined(USE_DOUT)
 			
-#ifdef USE_PAGE
+#if defined(USE_PAGE)
 	// default page and subpge
 	if (page->getPageSize() > 0) {
 		page->setPage(0);
 		page->setSubPage(0);
 	}
-#endif
+#endif // defined(USE_PAGE)
 	
 	// ...
 	enableTimer();
@@ -481,20 +480,20 @@ void uCtrlClass::run()
 
 	// timmer dependent UI visual effects
 	uint32_t time = millis();
-#ifdef USE_DOUT
+#if defined(USE_DOUT)
 	uCtrl.dout->setTimer(time);
-#endif
-#ifdef USE_OLED
+#endif // defined(USE_DOUT)
+#if defined(USE_OLED)
 	uCtrl.oled->setTimer(time);
-#endif
+#endif // defined(USE_OLED)
 
-#ifdef USE_OLED
-#ifdef USE_OLED_U8G2
+#if defined(USE_OLED)
+#if defined(USE_OLED_U8G2)
 	oled->clearDisplay();
-#endif
-#endif
+#endif // defined(USE_OLED_U8G2)
+#endif // defined(USE_OLED)
 
-#ifdef USE_DIN 
+#if defined(USE_DIN) 
 	// din
 	// read while empty
 	while ( din->event_queue.head != din->event_queue.tail )
@@ -506,14 +505,14 @@ void uCtrlClass::run()
 			din->event_queue.head = head
 		)
 
-#ifdef USE_DEVICE
+#if defined(USE_DEVICE)
 	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
 			continue;
 	   }
-#endif
+#endif // defined(USE_DEVICE)
 
-#ifdef USE_PAGE
-	#if defined(USE_AIN) && defined(USE_PAGE_COMPONENT)
+#if defined(USE_PAGE)
+#if defined(USE_AIN) && defined(USE_PAGE_COMPONENT)
 		// before each processEvent we need to: check if pot_ctrl is needed
 		if(page->_use_nav_pot) {
 			// if it is, check if it is inc or dec commands... 
@@ -531,18 +530,19 @@ void uCtrlClass::run()
 				discard_ain_data = true;
 			}
 		}
-	#endif
+#endif // defined(USE_AIN) && defined(USE_PAGE_COMPONENT)
 		page->processEvent(port, value, uctrl::module::DIGITAL_EVENT);
-#endif
+#endif // defined(USE_PAGE)
+
 	   if ( din->callback != nullptr ) {
 			din->callback(port, value);
 	   }
 	}
 	// set port_ref in case other digital modules were initialized
 	port_ref = din->sizeOf();
-#endif
+#endif // defined(USE_DIN) 
 
-#ifdef USE_CAP_TOUCH
+#if defined(USE_CAP_TOUCH)
 	// touch
 	// read while empty
 	while ( touch->event_queue.head != touch->event_queue.tail )
@@ -555,14 +555,14 @@ void uCtrlClass::run()
 			touch->event_queue.head = head
 		)
 
-#ifdef USE_DEVICE
+#if defined(USE_DEVICE)
 	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
 			continue;
 	   }
-#endif                 
+#endif // defined(USE_DEVICE)                
 
-#ifdef USE_PAGE
-	#ifdef USE_AIN 
+#if defined(USE_PAGE)
+#if defined(USE_AIN) 
 		// before each processEvent we need to: check if pot_ctrl is needed
 		if(page->_use_nav_pot) {
 			// if it is, check if it is inc or dec commands... 
@@ -580,16 +580,17 @@ void uCtrlClass::run()
 				discard_ain_data = true;
 			}
 		}
-	#endif
+#endif // defined(USE_AIN)
 		page->processEvent(port, (uint16_t)value, uctrl::module::DIGITAL_EVENT);
-#endif
+#endif // defined(USE_PAGE)
+
 		if ( touch->callback != nullptr ) {
 			touch->callback(port, value);
 		}
 	}
-#endif
+#endif // defined(USE_CAP_TOUCH)
 
-#ifdef USE_AIN 
+#if defined(USE_AIN) 
    // ain:
    // read while empty
    while ( _ain_event_queue.head != _ain_event_queue.tail )
@@ -601,7 +602,7 @@ void uCtrlClass::run()
 			_ain_event_queue.head = head
 		)
 
-#ifdef USE_PAGE_COMPONENT
+#if defined(USE_PAGE_COMPONENT)
 		if (discard_ain_data) {
 			if (port == page->_nav_ctrl_port.pot) {
 				if (ain->isLocked(page->_nav_ctrl_port.pot-1) == false) {
@@ -611,9 +612,9 @@ void uCtrlClass::run()
 				}
 			}
 		}
-#endif
+#endif // defined(USE_PAGE_COMPONENT)
 
-#ifdef USE_DEVICE
+#if defined(USE_DEVICE)
 			// device process are done inside interrupt to keep smooth for realtime controllers events
 			// EDIT MODE HANDLER
 			if ( device->getCtrlMode() == 2 ) {
@@ -623,48 +624,49 @@ void uCtrlClass::run()
 			if ( device->handleAnalogEvent(port, value, 0) == true ) {
 				continue;
 			}
-#endif
+#endif // defined(USE_DEVICE)
 
-#ifdef USE_PAGE
+#if defined(USE_PAGE)
 		page->processEvent(port, value, uctrl::module::ANALOG_EVENT);
-#endif
+#endif // defined(USE_PAGE)
+
 		if ( ain->callback != nullptr ) {
 			ain->callback(port, value, 0);
 		}
 	}
-
-#endif         
+#endif // defined(USE_AIN)    
      
-#ifdef USE_PAGE                
+#if defined(USE_PAGE)                
 	if ( page != nullptr ) {
-#ifdef USE_PAGE_COMPONENT
+#if defined(USE_PAGE_COMPONENT)
 		page->clearComponentMap();
-#endif
+#endif // defined(USE_PAGE_COMPONENT)
 		page->processView();
 	}
-#endif         
-#ifdef USE_OLED
-#ifdef USE_EXT_RAM
-#ifdef USE_DEVICE
-    processDisplay();
-#endif 
-#endif 
-#ifdef USE_OLED_U8G2
-	oled->refreshDisplay();
-#endif
-#endif 
+#endif // defined(USE_PAGE)   
 
-#ifdef USE_DOUT
+#if defined(USE_OLED)
+#if defined(USE_EXT_RAM)
+#if defined(USE_DEVICE)
+    processDisplay();
+#endif // defined(USE_DEVICE)
+#endif // defined(USE_EXT_RAM)
+#if defined(USE_OLED_U8G2)
+	oled->refreshDisplay();
+#endif // defined(USE_OLED_U8G2)
+#endif // defined(USE_OLED)
+
+#if defined(USE_DOUT)
 	uCtrl.dout->flushBuffer();
-#endif                 	
+#endif // defined(USE_DOUT)        	
 }
 
 uint8_t uCtrlClass::getAnalogPorts()
 {
 
-#ifdef USE_AIN
+#if defined(USE_AIN)
 	return ain->sizeOf();
-#endif
+#endif // defined(USE_AIN)
 
 	return 0;
 }
@@ -672,9 +674,9 @@ uint8_t uCtrlClass::getAnalogPorts()
 uint8_t uCtrlClass::getDigitalPorts()
 {
 
-#ifdef USE_DIN
+#if defined(USE_DIN)
 	return din->sizeOf();
-#endif
+#endif // defined(USE_DIN)
 
 	return 0;
 }
@@ -682,20 +684,20 @@ uint8_t uCtrlClass::getDigitalPorts()
 uint8_t uCtrlClass::getOutputPorts()
 {
 
-#ifdef USE_MIDI
+#if defined(USE_MIDI)
 	return midi->sizeOf();
-#endif
+#endif // defined(USE_MIDI)
 
 	return 0;
 	
 /*
-#ifdef UMODULAR_DMX		
+#if defined(UMODULAR_DMX)	
 
-#endif
+#endif // defined(UMODULAR_DMX)
 	
-#ifdef UMODULAR_CV	
+#if defined(UMODULAR_CV)	
 
-#endif
+#endif // defined(UMODULAR_CV)
 */
 		
 }
@@ -750,16 +752,16 @@ void ucrtISR()
 		}
 	}
 
-#ifdef USE_DIN
+#if defined(USE_DIN)
 	// ~2ms call
 	if (++_timerCounterDin == 8) {
 		_timerCounterDin = 0;
 		uCtrl.din->read(1);
 		return;
 	}
-#endif
+#endif // defined(USE_DIN)
 
-#ifdef USE_CAP_TOUCH	
+#if defined(USE_CAP_TOUCH)	
 	// ~3ms call
 	if (++_timerCapTouch == 12) 
 	{
@@ -767,9 +769,9 @@ void ucrtISR()
 		uCtrl.touch->read();
 		return;
 	}
-#endif
+#endif // defined(USE_CAP_TOUCH)
 
-#ifdef USE_AIN	
+#if defined(USE_AIN)
 	// ~10ms call
 	if (++_timerCounterAin == 40) 
 	{
@@ -777,15 +779,15 @@ void ucrtISR()
 		uCtrl.processAin();
 		return;
 	}
-#endif
+#endif // defined(USE_AIN)
 
-#ifdef USE_DOUT
+#if defined(USE_DOUT)
 	// ~30ms call
 	if (++_timerCounterDout == 120) {
 		_timerCounterDout = 0;
 		uCtrl.dout->flush();
 		return;
 	}
-#endif
+#endif // defined(USE_DOUT)
 
 }

@@ -1,8 +1,8 @@
 # uCtrl
 
-uCtrl is the base library of [uMODULAR](https://github.com/midilab/uMODULAR) hardware project. It provides driver layer for all uMODULAR modules and user interface layer to easly create, extend and share more advanced Arduino applications.
+uCtrl is the codebase library of [uMODULAR](https://github.com/midilab/uMODULAR) hardware project. It provides driver layer for all uMODULAR modules and user interface layer to easly create, extend and share more advanced Arduino applications.
 
-This library also enables realtime-like functionality inside Arduino ecosystem by using hardware timer interruption to create time predictable task management.
+This library also enables realtime-like functionality inside Arduino ecosystem by using hardware timer interruption to create time predictable task management with resource-safe access via library interface.
 
 uCtrl is a choice for robust, portable and fast-making musical instruments, sequencers, audio/video controllers and other related machines for Arduino platform.
 
@@ -484,7 +484,7 @@ Make use of i2c or spi devices.
 
 Make use of epprom and/or sdcard.
 
-Storage abstration for for Epprom and Sdcard usage. Sdcard library helper using [greiman's SdFat library](https://github.com/greiman/SdFat/)
+Storage abstraction for for Epprom and Sdcard usage. Sdcard library helper using [greiman's SdFat library](https://github.com/greiman/SdFat/)
 *link or image to the sdcard options schematic
 
 ## Ram

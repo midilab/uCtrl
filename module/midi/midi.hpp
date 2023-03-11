@@ -4,9 +4,8 @@
 #include <Arduino.h>
 
 // MIDI Support
-//#include <MIDI.h>
 #include "MIDI/MIDI.h"
-#if defined(__AVR_ATmega32U4__) && defined(USE_USB_MIDI)
+#if defined(__AVR_ATmega32U4__)
 #include "USB-MIDI/USB-MIDI.h"
 #endif
 
@@ -25,22 +24,26 @@ class Midi
         ~Midi();
 
 		void init();	
-#if defined(USE_USB_MIDI)
-	#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
+		void plug(midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> * device);
+#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
 		void plug(usb_midi_class * device);
-	#elif defined(__AVR_ATmega32U4__)
+#elif defined(__AVR_ATmega32U4__)
 		void plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device);
-	#endif
 #endif
-		void plug(midi::MidiInterface<midi::SerialMIDI<HardwareSerial> > * device);
 		bool read(uint8_t port);
 		void readAllPorts(uint8_t interrupted = 0);
 		void write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted = 0);
-#if (defined(TEENSYDUINO) || defined(__AVR_ATmega32U4__)) && defined(USE_USB_MIDI)
-		void writeUsb(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted);
-#endif
 		void writeAllPorts(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted = 0);
 		uint8_t sizeOf();	
+
+		template<typename T>
+		void initMidiInterface(T * device);
+
+		template<typename T>
+		void writeMidiInterface(T * device, uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted);
+
+		template<typename T>
+		bool readMidiInterface(T * device);
 
         uint8_t _port_size = 0;
         uint8_t _port = 0;
@@ -48,14 +51,9 @@ class Midi
 
         uctrl::protocol::midi::MIDI_MESSAGE _message;
 
-#if defined(USE_USB_MIDI)
-	#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
-		usb_midi_class * _usb_port_if = nullptr;
-	#elif defined(__AVR_ATmega32U4__)
-		midi::MidiInterface<usbMidi::usbMidiTransport> * _usb_port_if = nullptr;
-	#endif
-#endif
-		midi::MidiInterface<midi::SerialMIDI<HardwareSerial> > * _midi_port_if[MAX_MIDI_DEVICE] = {nullptr};
+		// keep only the address of devices, type conversion is done in compile time 
+		// using templates of initMidiInterface<>(), writeMidiInterface<>(), readMidiInterface<>()
+		void * _midi_port_if[MAX_MIDI_DEVICE] = {nullptr};
 
 		void sendMessage(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted = 0, uint8_t config = 0);
 

@@ -139,7 +139,7 @@ void Device::init(uint8_t device_number, uint16_t event_buffer_size, uint8_t sys
 			_remote.din_port[i].event_address = 1023; //-1;
 			_remote.din_port[i].device_id = 0;
 			_remote.din_port[i].mode = 0;
-#ifndef LOW_RESOURCE_MCU				
+#if defined(USE_DEVICE_LABELS)			
 			_remote.din_port[i].value = 0;
 			_remote.din_port[i].behaviour = 0;
 			_remote.din_port[i].increment_base = 0;	
@@ -191,7 +191,7 @@ bool Device::handleDigitalEvent(uint8_t port, uint16_t value, uint8_t interrupte
 
     if ( _remote.din_port[port].event_address != 1023 ) { //!= -1 ) {  
         //_ctrl.port = port+1;
-#ifndef LOW_RESOURCE_MCU	
+#if defined(USE_DEVICE_LABELS)
         switch (_remote.din_port[port].behaviour) {	
             
             // PRESS WITH INCREMENT?
@@ -284,7 +284,7 @@ void Device::clearMap(uint8_t device_id)
 	}		
 	device_id--;
 	_device[device_id].buffer_size = 0;
-#ifndef LOW_RESOURCE_MCU		
+#if defined(USE_DEVICE_LABELS)
 	_device[device_id].label_buffer_size = 0;
 #endif
 }
@@ -419,7 +419,7 @@ void Device::getDeviceMapEventData(uint8_t device_id, uint16_t event_address, CO
 	getEvent(_device[device_id].buffer_address + event_address, event_buffer);
 }
 
-#ifndef LOW_RESOURCE_MCU	
+#if defined(USE_DEVICE_LABELS)
 // public access to get general info about a controller data. generally accessed from UI
 uint8_t * Device::getDeviceName(uint8_t device_id)
 {
@@ -772,7 +772,7 @@ void Device::dinMap(uint8_t port, uint8_t device_id, uint16_t controllerAddress,
 	
 	noInterrupts();
 	_remote.din_port[port].event_address = controllerAddress;
-#ifndef LOW_RESOURCE_MCU
+#if defined(USE_DEVICE_LABELS)
 	_remote.din_port[port].behaviour = button_behaviour; 
 #endif	
 	interrupts();
@@ -782,7 +782,7 @@ void Device::dinMap(uint8_t port, uint8_t device_id, uint16_t controllerAddress,
 		return;
 	}    
         
-#ifndef LOW_RESOURCE_MCU			
+#if defined(USE_DEVICE_LABELS)		
 	// calculates the absolute incremental value based on event max and min values:
 	getDeviceMapEventData(_remote.din_port[port].device_id, (uint16_t)_remote.din_port[port].event_address, &event);
 	

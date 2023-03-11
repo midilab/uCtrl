@@ -30,64 +30,63 @@ Midi::~Midi()
 	
 }
 
-void Midi::plug(midi::MidiInterface<midi::SerialMIDI<HardwareSerial> > * device)
-{
-	uint8_t port = _port_size;
-	
-	_midi_port_if[port] = device;
-	
-	_midi_port_if[port]->begin(MIDI_CHANNEL_OMNI);
+template<typename T>
+void Midi::initMidiInterface(T * device) {
+
+	device->begin();
 
 	// Setup MIDI Callbacks to handle incomming messages
-	_midi_port_if[port]->setHandleNoteOn(handleNoteOn);
-	_midi_port_if[port]->setHandleNoteOff(handleNoteOff);
-	_midi_port_if[port]->setHandleControlChange(handleCC);
+	device->setHandleNoteOn(handleNoteOn);
+	device->setHandleNoteOff(handleNoteOff);
+	device->setHandleControlChange(handleCC);
 
-	//_midi_port_if[port]->setHandleAfterTouchPoly(handleAfterTouchPoly);
-	//_midi_port_if[port]->setHandleAfterTouchChannel(handleAfterTouchChannel);
-	_midi_port_if[port]->setHandlePitchBend(handlePitchBend);
-	_midi_port_if[port]->setHandleSystemExclusive(handleSystemExclusive);
-		
-	_midi_port_if[port]->setHandleClock(handleClock);
-	_midi_port_if[port]->setHandleStart(handleStart);
-	_midi_port_if[port]->setHandleStop(handleStop);
-	_midi_port_if[port]->turnThruOff();	
+	//device->setHandleAfterTouchPoly(handleAfterTouchPoly);
+	//device->setHandleAfterTouchChannel(handleAfterTouchChannel);
+	device->setHandleSystemExclusive(handleSystemExclusive);
+
+	device->setHandleClock(handleClock);
+	device->setHandleStart(handleStart);
+	device->setHandleStop(handleStop);
+}
+
+void Midi::plug(midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> * device)
+{
+	_midi_port_if[_port_size] = (void *) device;
+
+	initMidiInterface<midi::MidiInterface<midi::SerialMIDI<HardwareSerial>>>((midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> *)_midi_port_if[_port_size]);
+	device->setHandlePitchBend(handlePitchBend);
+	device->turnThruOff();	
 
 	_port_size++;
 }
 
-#if defined(USE_USB_MIDI)
 #if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
 void Midi::plug(usb_midi_class * device)
-#elif defined(__AVR_ATmega32U4__)
-void Midi::plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device)
-#endif
 {
-	if ( _usb_port_if == nullptr ) {
+	if ( _usb_port == 255 ) {
 		
-		_usb_port_if = device;
 		_usb_port = _port_size;
 		
-		_usb_port_if->begin();
+		_midi_port_if[_usb_port] = (void *) device;
 
-		// Setup MIDI Callbacks to handle incomming messages
-		_usb_port_if->setHandleNoteOn(handleNoteOn);
-		_usb_port_if->setHandleNoteOff(handleNoteOff);
-		_usb_port_if->setHandleControlChange(handleCC);
+		initMidiInterface<usb_midi_class>((usb_midi_class *)_midi_port_if[_usb_port]);
+		device->setHandlePitchChange(handlePitchBend);
 
-		//_usb_port_if->setHandleAfterTouchPoly(handleAfterTouchPoly);
-		//_usb_port_if->setHandleAfterTouchChannel(handleAfterTouchChannel);
-#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
-		_usb_port_if->setHandlePitchChange(handlePitchBend);
+		_port_size++;
+	}
+}
 #elif defined(__AVR_ATmega32U4__)
-		_usb_port_if->setHandlePitchBend(handlePitchBend);
-#endif
-		_usb_port_if->setHandleSystemExclusive(handleSystemExclusive);
-			
-		_usb_port_if->setHandleClock(handleClock);
-		_usb_port_if->setHandleStart(handleStart);
-		_usb_port_if->setHandleStop(handleStop);
-		//device->turnThruOff();	
+void Midi::plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device)
+{
+	if ( _usb_port == 255 ) {
+		
+		_usb_port = _port_size;
+		
+		_midi_port_if[_usb_port] = (void *) device;
+
+		initMidiInterface<midi::MidiInterface<usbMidi::usbMidiTransport>>((midi::MidiInterface<usbMidi::usbMidiTransport> *)_midi_port_if[_usb_port]);
+		device->setHandlePitchBend(handlePitchBend);
+		device->turnThruOff();	
 
 		_port_size++;
 	}
@@ -113,6 +112,11 @@ void Midi::sendMessage(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, 
 	}
 }
 
+template<typename T>
+bool Midi::readMidiInterface(T * device) {
+	return device->read();
+}
+
 // do only read if the port are not in realtime mode
 bool Midi::read(uint8_t port)
 {
@@ -124,13 +128,15 @@ bool Midi::read(uint8_t port)
 	
 	_port = port;
 
-#if (defined(TEENSYDUINO) || defined(__AVR_ATmega32U4__)) && defined(USE_USB_MIDI)
 	if ( _usb_port == port ) {
-		return _usb_port_if->read();
-	}
+#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
+		return readMidiInterface<usb_midi_class>((usb_midi_class *)_midi_port_if[port]);
+#elif defined(__AVR_ATmega32U4__)
+		return readMidiInterface<midi::MidiInterface<usbMidi::usbMidiTransport>>((midi::MidiInterface<usbMidi::usbMidiTransport> *)_midi_port_if[port]);
 #endif
+	}
 
-	return _midi_port_if[port]->read();
+	return readMidiInterface<midi::MidiInterface<midi::SerialMIDI<HardwareSerial>>>((midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> *)_midi_port_if[port]);
 }
 
 void Midi::readAllPorts(uint8_t interrupted)
@@ -150,6 +156,133 @@ void Midi::writeAllPorts(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t inte
 	}
 }
 
+template<typename T>
+void Midi::writeMidiInterface(T * device, uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted) {
+
+    // packages with interrupted 1 are marked to be handled with interruptions disable to avoid MIDI override data with MIDI messages sent via some timer interruption
+
+    // MIDI Handle
+    switch (msg->type) {
+
+		//Realtime
+		case uctrl::protocol::midi::Clock:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendRealTime(midi::Clock))
+			} else {
+				device->sendRealTime(midi::Clock);
+			}
+			break;   
+
+		case uctrl::protocol::midi::Start:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendRealTime(midi::Start))
+			} else {
+				device->sendRealTime(midi::Start);
+			}
+			break;  
+
+		case uctrl::protocol::midi::Stop:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendRealTime(midi::Stop))
+			} else {
+				device->sendRealTime(midi::Stop);
+			}
+			break;   
+
+		// Non-realtime 
+		case uctrl::protocol::midi::NoteOn:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendNoteOn(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				device->sendNoteOn(msg->data1, msg->data2, msg->channel+1);
+			}
+			break;
+
+		case uctrl::protocol::midi::NoteOff:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendNoteOff(msg->data1, 0, msg->channel+1))
+			} else {
+				device->sendNoteOff(msg->data1, 0, msg->channel+1);
+			}
+			break;
+
+		case uctrl::protocol::midi::ControlChange:   
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendControlChange(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				device->sendControlChange(msg->data1, msg->data2, msg->channel+1);
+			}
+			break;
+
+		case uctrl::protocol::midi::ProgramChange:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendProgramChange(msg->data1, msg->channel+1))
+			} else {
+				device->sendProgramChange(msg->data1, msg->channel+1);
+			}
+			break;
+						
+		case uctrl::protocol::midi::Nrpn:  
+			if ( interrupted == 0 ) { 
+				ATOMIC(
+					// param select
+					device->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
+					device->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
+					// send value
+					device->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
+					device->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
+				)
+			} else {
+				// param select
+				device->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
+				device->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
+				// send value
+				device->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
+				device->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
+			}
+			break;
+		
+		case uctrl::protocol::midi::PitchBend:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendPitchBend(msg->data1, msg->channel+1))
+			} else {
+				//device->sendPitchBend((int16_t)(((uint8_t)msg->data1 << 8 ) | ((uint8_t)msg->data2 & 0xff)), msg->channel+1);
+				device->sendPitchBend(msg->data1, msg->channel+1);
+			}
+			break;
+
+		case uctrl::protocol::midi::Sysex:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendSysEx(msg->data1, msg->sysex))
+			} else {
+				device->sendSysEx(msg->data1, msg->sysex);
+			}
+			break;
+
+
+		case uctrl::protocol::midi::AfterTouchPoly:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendPolyPressure(msg->data1, msg->data2, msg->channel+1))
+			} else {
+				device->sendPolyPressure(msg->data1, msg->data2, msg->channel+1);
+			}
+			break;
+			
+		case uctrl::protocol::midi::AfterTouchChannel:
+			if ( interrupted == 0 ) { 
+				ATOMIC(device->sendAfterTouch(msg->data1, msg->channel+1))
+			} else {
+				device->sendAfterTouch(msg->data1, msg->channel+1);
+			}
+			break;
+
+		default:
+			break;
+    
+    }
+	
+}
+
 void Midi::write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted)
 {
     // no outside range interface array access allowed here
@@ -164,259 +297,17 @@ void Midi::write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_
 	interrupted = 0;
 #endif
 
-#if (defined(TEENSYDUINO) || defined(__AVR_ATmega32U4__)) && defined(USE_USB_MIDI)
 	if ( _usb_port == port ) {
-		writeUsb(msg, interrupted);
+#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
+		writeMidiInterface<usb_midi_class>((usb_midi_class *)_midi_port_if[port], msg, interrupted);
+#elif defined(__AVR_ATmega32U4__)
+		writeMidiInterface<midi::MidiInterface<usbMidi::usbMidiTransport>>((midi::MidiInterface<usbMidi::usbMidiTransport> *)_midi_port_if[port], msg, interrupted);
+#endif
 		return;
 	}
-#endif
 
-    // packages with interrupted 1 are marked to be handled with interruptions disable to avoid MIDI override data with MIDI messages sent via some timer interruption
-
-    // MIDI Handle
-    switch (msg->type) {
-
-		//Realtime
-		case uctrl::protocol::midi::Clock:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendRealTime(midi::Clock))
-			} else {
-				_midi_port_if[port]->sendRealTime(midi::Clock);
-			}
-			break;   
-
-		case uctrl::protocol::midi::Start:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendRealTime(midi::Start))
-			} else {
-				_midi_port_if[port]->sendRealTime(midi::Start);
-			}
-			break;  
-
-		case uctrl::protocol::midi::Stop:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendRealTime(midi::Stop))
-			} else {
-				_midi_port_if[port]->sendRealTime(midi::Stop);
-			}
-			break;   
-
-		// Non-realtime 
-		case uctrl::protocol::midi::NoteOn:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendNoteOn(msg->data1, msg->data2, msg->channel+1))
-			} else {
-				_midi_port_if[port]->sendNoteOn(msg->data1, msg->data2, msg->channel+1);
-			}
-			break;
-
-		case uctrl::protocol::midi::NoteOff:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendNoteOff(msg->data1, 0, msg->channel+1))
-			} else {
-				_midi_port_if[port]->sendNoteOff(msg->data1, 0, msg->channel+1);
-			}
-			break;
-
-		case uctrl::protocol::midi::ControlChange:   
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendControlChange(msg->data1, msg->data2, msg->channel+1))
-			} else {
-				_midi_port_if[port]->sendControlChange(msg->data1, msg->data2, msg->channel+1);
-			}
-			break;
-
-		case uctrl::protocol::midi::ProgramChange:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendProgramChange(msg->data1, msg->channel+1))
-			} else {
-				_midi_port_if[port]->sendProgramChange(msg->data1, msg->channel+1);
-			}
-			break;
-						
-		case uctrl::protocol::midi::Nrpn:  
-			if ( interrupted == 0 ) { 
-				ATOMIC(
-					// param select
-					_midi_port_if[port]->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
-					_midi_port_if[port]->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
-					// send value
-					_midi_port_if[port]->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
-					_midi_port_if[port]->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
-				)
-			} else {
-				// param select
-				_midi_port_if[port]->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
-				_midi_port_if[port]->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
-				// send value
-				_midi_port_if[port]->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
-				_midi_port_if[port]->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
-			}
-			break;
-		
-		case uctrl::protocol::midi::PitchBend:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendPitchBend(msg->data1, msg->channel+1))
-			} else {
-				//_midi_port_if[port]->sendPitchBend((int16_t)(((uint8_t)msg->data1 << 8 ) | ((uint8_t)msg->data2 & 0xff)), msg->channel+1);
-				_midi_port_if[port]->sendPitchBend(msg->data1, msg->channel+1);
-			}
-			break;
-
-		case uctrl::protocol::midi::Sysex:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendSysEx(msg->data1, msg->sysex))
-			} else {
-				_midi_port_if[port]->sendSysEx(msg->data1, msg->sysex);
-			}
-			break;
-
-
-		case uctrl::protocol::midi::AfterTouchPoly:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendPolyPressure(msg->data1, msg->data2, msg->channel+1))
-			} else {
-				_midi_port_if[port]->sendPolyPressure(msg->data1, msg->data2, msg->channel+1);
-			}
-			break;
-			
-		case uctrl::protocol::midi::AfterTouchChannel:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_midi_port_if[port]->sendAfterTouch(msg->data1, msg->channel+1))
-			} else {
-				_midi_port_if[port]->sendAfterTouch(msg->data1, msg->channel+1);
-			}
-			break;
-
-		default:
-			break;
-    
-    }
-	
+	writeMidiInterface<midi::MidiInterface<midi::SerialMIDI<HardwareSerial>>>((midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> *)_midi_port_if[port], msg, interrupted);
 }
-
-#if (defined(TEENSYDUINO) || defined(__AVR_ATmega32U4__)) && defined(USE_USB_MIDI)
-void Midi::writeUsb(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted)
-{
-    // MIDI Handle
-    switch (msg->type) {
-
-		//Realtime
-		case uctrl::protocol::midi::Clock:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendRealTime(midi::Clock))
-			} else {
-				_usb_port_if->sendRealTime(midi::Clock);
-				//_usb_port_if->send_now();
-			}
-			break;   
-
-		case uctrl::protocol::midi::Start:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendRealTime(midi::Start))
-			} else {
-				_usb_port_if->sendRealTime(midi::Start);
-				//_usb_port_if->send_now();
-			}
-			break;  
-
-		case uctrl::protocol::midi::Stop:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendRealTime(midi::Stop))
-			} else {
-				_usb_port_if->sendRealTime(midi::Stop);
-				//_usb_port_if->send_now();
-			}
-			break;   
-
-		// Non-realtime 
-		case uctrl::protocol::midi::NoteOn:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendNoteOn(msg->data1, msg->data2, msg->channel+1))
-			} else {
-				_usb_port_if->sendNoteOn(msg->data1, msg->data2, msg->channel+1);
-			}
-			break;
-
-		case uctrl::protocol::midi::NoteOff:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendNoteOff(msg->data1, 0, msg->channel+1))
-			} else {
-				_usb_port_if->sendNoteOff(msg->data1, 0, msg->channel+1);
-			}
-			break;
-
-		case uctrl::protocol::midi::ControlChange:   
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendControlChange(msg->data1, msg->data2, msg->channel+1))
-			} else {
-				_usb_port_if->sendControlChange(msg->data1, msg->data2, msg->channel+1);
-			}
-			break;
-
-		case uctrl::protocol::midi::ProgramChange:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendProgramChange(msg->data1, msg->channel+1))
-			} else {
-				_usb_port_if->sendProgramChange(msg->data1, msg->channel+1);
-			}
-			break;
-						
-		case uctrl::protocol::midi::Nrpn:  
-			if ( interrupted == 0 ) { 
-				ATOMIC(
-					// param select
-					_usb_port_if->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
-					_usb_port_if->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
-					// send value
-					_usb_port_if->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
-					_usb_port_if->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
-				)
-			} else {
-				// param select
-				_usb_port_if->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
-				_usb_port_if->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
-				// send value
-				_usb_port_if->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
-				_usb_port_if->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
-			}   
-			break;
-		
-		case uctrl::protocol::midi::PitchBend:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendPitchBend(msg->data1, msg->channel+1))
-			} else {
-				_usb_port_if->sendPitchBend(msg->data1, msg->channel+1);
-			}
-			break;
-
-		case uctrl::protocol::midi::Sysex:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendSysEx(msg->data1, msg->sysex))
-			} else {
-				_usb_port_if->sendSysEx(msg->data1, msg->sysex);
-			}
-			break;
-
-		case uctrl::protocol::midi::AfterTouchPoly:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendPolyPressure(msg->data1, msg->data2, msg->channel+1))
-			} else {
-				_usb_port_if->sendPolyPressure(msg->data1, msg->data2, msg->channel+1);
-			}
-			break;
-			
-		case uctrl::protocol::midi::AfterTouchChannel:
-			if ( interrupted == 0 ) { 
-				ATOMIC(_usb_port_if->sendAfterTouch(msg->data1, msg->channel+1))
-			} else {
-				_usb_port_if->sendAfterTouch(msg->data1, msg->channel+1);
-			}
-			break;
-    }
-    
-}
-#endif
 
 // MIDI Arduino library callbacks
 void Midi::handleNoteOn(byte channel, byte pitch, byte velocity) 
