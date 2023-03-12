@@ -110,9 +110,17 @@ This module can handle single ADC ports on your microcontroller or multiplexed A
 // enables the driver
 #define USE_AIN
 
+//#define ANALOG_AVG_READS
+
 // for multiplexed support uncomment the needed driver
-//#define USE_AIN_4051_DRIVER
+#define USE_AIN_4051_DRIVER
 //#define USE_AIN_4067_DRIVER
+// pinout setup for CI driver
+#define AIN_MUX_CTRL_A    45
+#define AIN_MUX_CTRL_B    47
+#define AIN_MUX_CTRL_C    49
+// D is only needed when using 4067 driver
+//#define AIN_MUX_CTRL_D    45
 
 #endif
 ```
@@ -134,69 +142,56 @@ typedef enum {
 // get change values from connected potentiometers
 void ainInput(uint8_t port, uint16_t value, uint8_t interrupted)
 {
-    switch (port) {
-        case POT_1:
-            // do something with port 1 value(0 ~ 1023)
-            break;
-        case POT_2:
-            // do something with port 2 value(0 ~ 1023)
-            break;
-        case POT_3:
-            // do something with port 3 value(0 ~ 1023)
-            break;
-        case POT_4:
-            // do something with port 4 value(0 ~ 1023)
-            break;
-        //...
-        //...
-    }
-}
-
-// this plugs 4x 4051 making 32 potentiometers avaliable
-void setAinMultiplexed4051()
-{
-    // initAin(uint8_t MUX_CTRL_PIN_A, uint8_t MUX_CTRL_PIN_B, uint8_t MUX_CTRL_PIN_C)
-    uCtrl.initAin(D3, D4, D5);
-    // plug(uint8_t MUX_ANALOG_PORT_PIN_X)
-    uCtrl.ain->plug(A0);
-    uCtrl.ain->plug(A1);
-    uCtrl.ain->plug(A2);
-    uCtrl.ain->plug(A3);
-}
-
-// this plugs 2x 4067 making 32 potentiometers avaliable
-void setAinMultiplexed4067()
-{
-    // initAin(uint8_t MUX_CTRL_PIN_A, uint8_t MUX_CTRL_PIN_B, uint8_t MUX_CTRL_PIN_C, uint8_t MUX_CTRL_PIN_D)
-    uCtrl.initAin(D3, D4, D5, D6);
-    // plug(uint8_t MUX_ANALOG_PORT_PIN_X)
-    uCtrl.ain->plug(A0);
-    uCtrl.ain->plug(A1);
-}
-
-// this plugs 4 microntroller ADC ports making 4 potentiometers avaliable
-void setAinSingle()
-{
-    uCtrl.initAin();
-    // plug(uint8_t MUX_ANALOG_PORT_PIN_X)
-    uCtrl.ain->plug(A1);
-    uCtrl.ain->plug(A0);
-    uCtrl.ain->plug(A2);
-    uCtrl.ain->plug(A3);
+  switch (port) {
+    case POT_1:
+      // do something with port 1 value(0 ~ 1023 | setMaxAdcValue)
+      break;
+    case POT_2:
+      // do something with port 2 value(0 ~ 1023 | setMaxAdcValue)
+      break;
+    case POT_3:
+      // do something with port 3 value(0 ~ 1023 | setMaxAdcValue)
+      break;
+    case POT_4:
+      // do something with port 4 value(0 ~ 1023 | setMaxAdcValue)
+      break;
+    //...
+    //...
+  }
 }
 
 void setup() 
 {
-    setAinSingle();
-    //setAinMultiplexed4051();
-    //setAinMultiplexed4067();
-    uCtrl.ain->setCallback(ainInput);
-    // most arduinos max is 1024.
-    // you can lower or raiser this value for your needs
-    uCtrl.ain->setMaxAdcValue(128);
+  // always call module init before setup it
+  uCtrl.initAin();
+  
+  // just plug the hardware analog ports ADC
+  uCtrl.ain->plug(A1);
+  uCtrl.ain->plug(A0);
+  uCtrl.ain->plug(A1);
+  uCtrl.ain->plug(A0);
+  
+  // if no multiplex driver defined at modules.h the code bellow plugs 4 microntroller ADC ports making 4 potentiometers avaliable
+  // if 4067 multiplexer driver defined at modules.h the code bellow plugs 4x 4051 making 32 potentiometers avaliable
+  // if 4067 multiplexer driver defined at modules.h the code bellow plugs 4x 4067 making 64 potentiometers avaliable
 
-    // only init uCtrl after all modules setup
-    uCtrl.init();
+  // callback where you receive potentiometer changes
+  uCtrl.ain->setCallback(ainInput);
+  // you can use this RT callback in case too much processing is done
+  // on your applicatiuon side and that took effect on changes speed
+  // but use this only if needed! dealing with RT means dealing with shared resources
+  //uCtrl.ain->setRTCallback(ainInput);
+  
+  // most arduinos max is 1024 and also the default if not set
+  // you can lower or raiser this value for your needs.
+  // midi controllers only need max 128(if you dont plan to make use of NRPN or sysex extensions)
+  uCtrl.ain->setMaxAdcValue(128);
+  // define ANALOG_AVG_READS at modules.h for noisy environments
+  // and use setAvgReads to the count numbers of times to read the input
+  //uCtrl.ain->setAvgReads(8);
+  
+  // only init uCtrl after all modules setup
+  uCtrl.init();
 }
 
 void loop()

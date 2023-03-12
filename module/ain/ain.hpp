@@ -65,7 +65,7 @@ class Ain
 		int16_t readPortAvg(uint8_t remote_port);
 		void setAvgReads(uint8_t average);
 #endif
-		uint16_t rangeMe(uint16_t value, uint16_t min, uint16_t max, uint8_t adc_calc = 0);
+		inline uint16_t rangeMe(uint16_t value, uint16_t min, uint16_t max);
 		void lockControl(uint8_t remote_port);
 		void lockAllControls();
 		bool isLocked(uint8_t remote_port);
@@ -73,16 +73,21 @@ class Ain
 		void invertRead(bool state);		
 		uint8_t sizeOf();
 
-		// default callback
+		// callback called by uCtrl using realtime buffer outside timer interrupt
 		void (*callback)(uint8_t port, uint16_t value, uint8_t interrupted);
 		void setCallback(void (*action_callback)(uint8_t port, uint16_t value, uint8_t interrupted)) {
 			callback = action_callback;
+		}
+		// callback called by uCtrl at procesing time inside timer interrupt(use this with care and responsability! ATOMIC() shared resources and volatile then)
+		void (*rtCallback)(uint8_t port, uint16_t value, uint8_t interrupted);
+		void setRTCallback(void (*action_callback)(uint8_t port, uint16_t value, uint8_t interrupted)) {
+			rtCallback = action_callback;
 		}
 		
 		void setMaxAdcValue(uint16_t max_adc_value);
 	
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		void setMuxPins(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
+		void setMuxPins();
 		void selectMuxPort(uint8_t port);
 		int8_t _mux_control_pin_1 = -1;
 		int8_t _mux_control_pin_2 = -1;

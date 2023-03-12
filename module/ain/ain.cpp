@@ -37,6 +37,7 @@ namespace uctrl { namespace module {
 Ain::Ain()
 {
 	callback = nullptr;
+	rtCallback = nullptr;
 }
 
 Ain::~Ain()
@@ -55,27 +56,26 @@ void Ain::setMaxAdcValue(uint16_t max_adc_value)
 }
 
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-void Ain::setMuxPins(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
+void Ain::setMuxPins()
 {
-
 	// setup pin 1
-	_mux_control_pin_1 = pin1;
+	_mux_control_pin_1 = AIN_MUX_CTRL_A;
 	pinMode(_mux_control_pin_1, OUTPUT);
 	digitalWrite(_mux_control_pin_1, LOW);
 
 	// setup pin 2
-	_mux_control_pin_2 = pin2;
+	_mux_control_pin_2 = AIN_MUX_CTRL_B;
 	pinMode(_mux_control_pin_2, OUTPUT);
 	digitalWrite(_mux_control_pin_2, LOW);
 
 	// setup pin 3
-	_mux_control_pin_3 = pin3;
+	_mux_control_pin_3 = AIN_MUX_CTRL_C;
 	pinMode(_mux_control_pin_3, OUTPUT);
 	digitalWrite(_mux_control_pin_3, LOW);
 
 #if defined(USE_AIN_4067_DRIVER)
 	// setup pin 4
-	_mux_control_pin_4 = pin4;
+	_mux_control_pin_4 = AIN_MUX_CTRL_D;
 	pinMode(_mux_control_pin_4, OUTPUT);
 	digitalWrite(_mux_control_pin_4, LOW);
 #endif
@@ -169,13 +169,9 @@ void Ain::lockAllControls()
 	} while (i);
 }
 
-uint16_t Ain::rangeMe(uint16_t value, uint16_t min, uint16_t max, uint8_t adc_calc)
+inline uint16_t Ain::rangeMe(uint16_t value, uint16_t min, uint16_t max)
 {
-	if ( adc_calc == 1 ) {
-		return (value / (_adc_max_resolution / ((max - min) + 1))) + min;
-	} else {
-		return (value / (_user_adc_max_resolution / ((max - min) + 1))) + min;
-	}
+	return (value / (_adc_max_resolution / ((max - min) + 1))) + min;
 }
 
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
@@ -261,16 +257,17 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 
 	// do we need to invert reads?(pot with gnd and vcc swapped)
 	if (_invert_read) {
-		input_data = _user_adc_max_resolution - input_data;
+		input_data = _adc_max_resolution - input_data;
 	}
 
-	if ( min == 0 && max == 0 ) {
-		max = _user_adc_max_resolution - 1;
+	// value remap?
+	max = _user_adc_max_resolution != _adc_max_resolution ? _user_adc_max_resolution-1 : _adc_max_resolution;
+	if ( min == 0 && max == _adc_max_resolution ) {
 		value = input_data;
 		last_value = _analog_input_last_state[remote_port];
 	} else {
-		value = rangeMe(input_data, min, max, 1);
-		last_value = rangeMe(_analog_input_last_state[remote_port], min, max, 1);		
+		value = rangeMe(input_data, min, max);
+		last_value = rangeMe(_analog_input_last_state[remote_port], min, max);		
 	}
 
 	// Process only the registered host_ports
