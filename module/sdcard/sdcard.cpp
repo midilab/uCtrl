@@ -33,7 +33,7 @@ void SdCard::plug()
   // ???
 }				
 
-void SdCard::init(SPIClass * spi_device, uint8_t chip_select)
+void SdCard::init(SPIClass * spi_device)
 {  
   _buffer_count = 0;
 
@@ -47,8 +47,8 @@ void SdCard::init(SPIClass * spi_device, uint8_t chip_select)
     // init sdcard
     sdSpi.setDevice(spi_device);
     // SHARED_SPI, DEDICATED_SPI
-    if (!_sd_fat.begin(SdSpiConfig(chip_select, SHARED_SPI, SD_SCK_MHZ(4), &sdSpi))) {
-    //if (!_sd_fat.begin(chip_select)) {
+    if (!_sd_fat.begin(SdSpiConfig(SDCARD_CHIP_SELECT, SHARED_SPI, SD_SCK_MHZ(4), &sdSpi))) {
+    //if (!_sd_fat.begin(SDCARD_CHIP_SELECT)) {
       //_sd_fat.initErrorHalt();
       _sd_fat.initErrorPrint();
     }

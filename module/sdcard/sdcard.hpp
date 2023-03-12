@@ -18,7 +18,7 @@ class SdCard
         ~SdCard();  
         
         void plug();					
-        void init(SPIClass * spi_device = nullptr, uint8_t chip_select = 0);	
+        void init(SPIClass * spi_device = nullptr);	
         bool openFile(const char * path, uint8_t oflags);
         bool readTextLine(char * line, char * str, size_t size, uint8_t field_num, char field_delim);
         bool closeFile();
@@ -41,7 +41,7 @@ class SdCard
 #endif
         //SPI_DRIVER_SELECT == 3  // Must be set in SdFat/SdFatConfig.h for SPI device refrence usage
         SdFat _sd_fat;    
-        
+
 #if defined(TEENSYDUINO)
         FsFile _file; // for teensyduino
 #else

@@ -94,10 +94,10 @@
  */
 #if defined(__AVR__) && FLASHEND < 0X8000
 // 32K AVR boards.
-#define ENABLE_DEDICATED_SPI 1
+#define ENABLE_DEDICATED_SPI 0
 #else  // defined(__AVR__) && FLASHEND < 0X8000
 // All other boards.
-#define ENABLE_DEDICATED_SPI 1
+#define ENABLE_DEDICATED_SPI 0
 #endif  // defined(__AVR__) && FLASHEND < 0X8000
 //------------------------------------------------------------------------------
 /**
