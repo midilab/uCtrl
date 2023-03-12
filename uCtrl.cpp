@@ -169,14 +169,14 @@ uCtrlClass::~uCtrlClass()
 }
 
 #if defined(USE_EXT_RAM)
-bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
+bool uCtrlClass::initRam(SPIClass * device)
 {
 	if ( ram == nullptr ) {
 		ram = &ram_module;
 	}
 	
 	if ( ram != nullptr ) {
-		ram->init(device, chip_select);
+		ram->init(device);
 		return true;
 	} else {
 		return false;
@@ -185,14 +185,14 @@ bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
 #endif // defined(USE_EXT_RAM)
 
 #if defined(USE_STORAGE)
-bool uCtrlClass::initStorage(SPIClass * spi_device, uint8_t chip_select)
+bool uCtrlClass::initStorage(SPIClass * spi_device)
 {
 	if ( storage == nullptr ) {
 		storage = &storage_module;
 	}
 	
 	if ( storage != nullptr ) {
-		storage->init(spi_device, chip_select);
+		storage->init(spi_device);
 		return true;
 	} else {
 		return false;
@@ -201,14 +201,14 @@ bool uCtrlClass::initStorage(SPIClass * spi_device, uint8_t chip_select)
 #endif // defined(USE_STORAGE)
 
 #if defined(USE_SDCARD)
-bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select)
+bool uCtrlClass::initSdCard(SPIClass * spi_device)
 {
 	if ( sdcard == nullptr ) {
 		sdcard = &sdcard_module;
 	}
 	
 	if ( sdcard != nullptr ) {
-		sdcard->init(spi_device, chip_select);
+		sdcard->init(spi_device);
 		return true;
 	} else {
 		return false;
@@ -353,14 +353,16 @@ bool uCtrlClass::initDin(SPIClass * spi_device)
 #endif // defined(USE_DIN)
 
 #if defined(USE_AIN)
-bool uCtrlClass::initAin(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
+bool uCtrlClass::initAin()
 {
 	if ( ain == nullptr ) {
 		ain = &ain_module;
 	}
 	
 	if ( ain != nullptr ) {
-		ain->setMuxPins(pin1, pin2, pin3, pin4);
+#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
+		ain->setMuxPins();
+#endif
 		return true;
 	} else {
 		return false;
@@ -393,8 +395,8 @@ void uCtrlClass::processAin()
 			}
 #else // defined(USE_DEVICE)
 			// ain callback is processed inside a timmer interrupt, so always be short inside it!
-			if ( ain->callback != nullptr ) {
-				ain->callback(port+1, value, 1);
+			if ( ain->rtCallback != nullptr ) {
+				ain->rtCallback(port+1, value, 1);
 				continue;
 			}   
 #endif // defined(USE_DEVICE)

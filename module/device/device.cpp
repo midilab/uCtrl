@@ -94,9 +94,8 @@ void Device::init(uint8_t device_number, uint16_t event_buffer_size, uint8_t sys
 
 	_device_event_size = floor(_remote_event_buffer_size / _device_number);
 
-	// initing track(s) structure
+	// initing devices structure
 	for ( uint8_t i = 0; i < _device_number; i++ ) {
-		// Initing device structure
 		_device[i].active = 0;
 		_device[i].port = 0;
 		_device[i].chn = 0;
@@ -108,7 +107,7 @@ void Device::init(uint8_t device_number, uint16_t event_buffer_size, uint8_t sys
 #endif	
 	}
 
-	// Alloc port(s) memory pointers
+	// Alloc ports memory pointers
 	// Each port costs 2 bytes on arduino platform(the size of a memory pointer)  
 	// ADC ports    
 	port_size = uCtrl.getAnalogPorts();
@@ -116,7 +115,7 @@ void Device::init(uint8_t device_number, uint16_t event_buffer_size, uint8_t sys
 
 		_remote.adc_port = (ADC_PORT_DATA*) malloc( sizeof(ADC_PORT_DATA) * port_size );
 		
-		// Initing ports(s) to NULL
+		// Initing ports to NULL
 		for ( uint8_t i=0; i < port_size; i++ ) {
 			_remote.adc_port[i].event_address = 1023; //-1;
 			_remote.adc_port[i].device_id = 0;

@@ -117,12 +117,12 @@ class uCtrlClass
 	//
 #if defined(USE_EXT_RAM)
 	// external ram module
-	bool initRam(SPIClass * device, uint8_t chip_select);
+	bool initRam(SPIClass * device);
 	uctrl::module::Ram * ram = nullptr;		
 #endif // defined(USE_EXT_RAM)
 
 #if defined(USE_STORAGE)
-	bool initStorage(SPIClass * spi_device = nullptr, uint8_t chip_select = 1);
+	bool initStorage(SPIClass * spi_device = nullptr);
 	uctrl::module::Storage * storage = nullptr;		
 #endif // defined(USE_STORAGE)
 
@@ -163,7 +163,7 @@ class uCtrlClass
 	
 #if defined(USE_AIN)
 	// ain module
-	bool initAin(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
+	bool initAin();
 	void processAin();
 	uctrl::module::Ain * ain = nullptr;
     volatile EVENT_QUEUE _ain_event_queue;	
@@ -177,7 +177,7 @@ class uCtrlClass
 	
 #if defined(USE_SDCARD)
 	// sdcard module
-	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 0);	
+	bool initSdCard(SPIClass * spi_device = nullptr);	
 	uctrl::module::SdCard * sdcard;
 #endif // defined(USE_SDCARD)
 	

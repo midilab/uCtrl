@@ -13,7 +13,6 @@
 	
 namespace uctrl { namespace module { 
 
-#define MAX_USB_MIDI_DEVICE 1
 #define MAX_MIDI_DEVICE 6
 
 class Midi
