@@ -55,8 +55,8 @@ typedef struct
 } EVENT_QUEUE;
 
 #if defined(USE_DIN_SPI_DRIVER)
-//#define SPI_SPEED_DIN         4000000
-#define SPI_SPEED_DIN         2000000
+#define SPI_SPEED_DIN         4000000
+//#define SPI_SPEED_DIN         2000000
 #define SPI_MODE_DIN          SPI_MODE0
 #endif
 
