@@ -138,20 +138,20 @@ typedef enum {
 };
 
 // get change values from connected potentiometers
-void ainInput(uint8_t port, uint16_t value, uint8_t interrupted)
+void ainInput(uint8_t port, uint16_t value)
 {
   switch (port) {
     case POT_1:
-      // do something with port 1 value(0 ~ 1023 | setMaxAdcValue)
+      // do something with port 1 value(0 ~ 1023)
       break;
     case POT_2:
-      // do something with port 2 value(0 ~ 1023 | setMaxAdcValue)
+      // do something with port 2 value(0 ~ 1023)
       break;
     case POT_3:
-      // do something with port 3 value(0 ~ 1023 | setMaxAdcValue)
+      // do something with port 3 value(0 ~ 1023)
       break;
     case POT_4:
-      // do something with port 4 value(0 ~ 1023 | setMaxAdcValue)
+      // do something with port 4 value(0 ~ 1023)
       break;
     //...
     //...
@@ -265,7 +265,7 @@ typedef enum {
 };
 
 // get change values from connected push buttons or encoders
-void dinInput(uint8_t port, uint16_t value, uint8_t interrupted)
+void dinInput(uint8_t port, uint16_t value)
 {
   switch (port) {
     case BUTTON_1:
@@ -355,7 +355,6 @@ This module can handle single Digital output ports on your microcontroller or mu
 // for direct usage of microcontroller Digital output port pin
 // USE_DOUT_MAX_PORTS is default to 8 if you dont set it
 //
-#define USE_DOUT_PORT_PIN
 //#define USE_DOUT_MAX_PORTS   8
 
 // 2 driver options for multiplexed output: SPI and BITBANG.
@@ -365,8 +364,8 @@ This module can handle single Digital output ports on your microcontroller or mu
 // using SPI hardware wich is the recommended way in case you have 
 // a Free or shared SPI device.
 //
-//#define USE_DOUT_SPI_DRIVER
-//#define DOUT_LATCH_PIN   D7
+#define USE_DOUT_SPI_DRIVER
+#define DOUT_LATCH_PIN   8
 
 //
 // using bitbang in case you dont have a free SPI. 
@@ -374,9 +373,9 @@ This module can handle single Digital output ports on your microcontroller or mu
 // this options requires you to define the latch, data and clock pins of 595.
 //
 //#define USE_DOUT_BITBANG_DRIVER
-//#define DOUT_LATCH_PIN   D7
-//#define DOUT_DATA_PIN    D8
-//#define DOUT_CLOCK_PIN   D9
+//#define DOUT_LATCH_PIN   7
+//#define DOUT_DATA_PIN    8
+//#define DOUT_CLOCK_PIN   9
 
 #endif
 ```
@@ -387,63 +386,49 @@ YourSketch.ino
 #include "src/uCtrl/uCtrl.h"
 
 typedef enum {
-  LED_1,
-  LED_2,
-  LED_3,
-  LED_4,
+  ON_BOARD_LED_1,
+  ON_BOARD_LED_2,
+  SR_LED_1,
+  SR_LED_2,
+  SR_LED_3,
+  SR_LED_4,
   //...,
   //...,
 };
 
-// this plugs 1x 595 using SPI device, making 8 digital outputs avaliable
-void setDoutMultiplexedSpi()
-{
-    // initDout(spi device)
-    uCtrl.initDout(&SPI);
-    // plugSR(uint8_t number of 595's to plug)
-    uCtrl.dout->plugSR(1);
-}
-
-// this plugs 2x 595 using bitbang driver, making 16 digital outputs avaliable
-void setDoutMultiplexedBitbang()
-{
-    uCtrl.initDout();
-    // plugSR(uint8_t number of 165's to plug)
-    uCtrl.dout->plugSR(2);
-}
-
-// this plugs 4 microntroller Digital ports making 4 digital outputs avaliable
-void setDoutSingle()
-{
-    uCtrl.initDout();
-    // plug(uint8_t DIGITAL_PORT_PIN_X)
-    uCtrl.dout->plug(D2);
-    uCtrl.dout->plug(D3);
-    uCtrl.dout->plug(D4);
-    uCtrl.dout->plug(D5);
-}
-
 void setup() 
 {
-    setDoutSingle();
-    //setDoutMultiplexedSpi();
-    //setDoutMultiplexedBitbang();
+  // this initiation signature is for microcontroller ports or bitbang 595 shiftregister drivers
+  //uCtrl.initDout();
+  // if you're going to use SPI driver you need to pass the 
+  // spi device you want to initDout
+  // initDout(spi device)
+  uCtrl.initDout(&SPI);
+  
+  // this plugs 2 microntroller Digital ports making 2 digital outputs avaliable
+  uCtrl.dout->plug(5);
+  uCtrl.dout->plug(6);
 
-    // only init uCtrl after all modules setup
-    uCtrl.init();
+  // this plugs 1x 595, making 8 digital outputs avaliable
+  // plugSR(uint8_t number of 595's to plug)
+  uCtrl.dout->plugSR(1);
 
-    // now you can use the uCtrl interface to set states on the outputs
-    // set all leds off
-    uCtrl.dout->writeAll(LOW); 
-    // set all leds on
-    //uCtrl.dout->writeAll(HIGH); 
-    // set LED_1 on
-    uCtrl.dout->write(LED_1, HIGH); 
+  // only init uCtrl after all modules setup
+  uCtrl.init();
+
+  // now you can use the uCtrl interface to set states on the outputs
+  // set all leds off
+  uCtrl.dout->writeAll(LOW); 
+  // set all leds on
+  //uCtrl.dout->writeAll(HIGH); 
 }
 
 void loop()
 {
   uCtrl.run();
+
+  // set SR_LED_1 on
+  uCtrl.dout->write(SR_LED_1, HIGH); 
 }
 ```
 

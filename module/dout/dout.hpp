@@ -60,9 +60,7 @@ class Dout
         void write(uint8_t remote_port, uint8_t value, uint8_t interrupted = 0);
         void writeAll(uint8_t value, uint8_t interrupted = 0);		
         uint8_t sizeOf();	
-#if defined(USE_DOUT_PORT_PIN)
         void plug(uint8_t setup);
-#endif
 #if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
         void plugSR(uint8_t setup);
 #endif
@@ -73,9 +71,8 @@ class Dout
         uint8_t * _digital_output_state = nullptr;
         volatile uint8_t * _digital_output_buffer = nullptr;
 #endif
-#if defined(USE_DOUT_PORT_PIN)
+        // used for direct microcontroller digital output pins
 	uint8_t _dout_pin[USE_DOUT_MAX_PORTS] = {0};
-#endif	
 
         uint8_t _remote_digital_output_port = 0; 
 

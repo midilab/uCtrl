@@ -112,6 +112,7 @@ class Din
 
     	volatile EVENT_QUEUE event_queue;	
 
+		// used for direct microcontroller digital input pins
 		uint8_t _button_pin[USE_DIN_MAX_PORTS] = {0};
 
 #if defined(USE_DIN_SPI_DRIVER)

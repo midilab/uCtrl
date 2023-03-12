@@ -74,13 +74,13 @@ class Ain
 		uint8_t sizeOf();
 
 		// callback called by uCtrl using realtime buffer outside timer interrupt
-		void (*callback)(uint8_t port, uint16_t value, uint8_t interrupted);
-		void setCallback(void (*action_callback)(uint8_t port, uint16_t value, uint8_t interrupted)) {
+		void (*callback)(uint8_t port, uint16_t value);
+		void setCallback(void (*action_callback)(uint8_t port, uint16_t value)) {
 			callback = action_callback;
 		}
 		// callback called by uCtrl at procesing time inside timer interrupt(use this with care and responsability! ATOMIC() shared resources and volatile then)
-		void (*rtCallback)(uint8_t port, uint16_t value, uint8_t interrupted);
-		void setRTCallback(void (*action_callback)(uint8_t port, uint16_t value, uint8_t interrupted)) {
+		void (*rtCallback)(uint8_t port, uint16_t value);
+		void setRTCallback(void (*action_callback)(uint8_t port, uint16_t value)) {
 			rtCallback = action_callback;
 		}
 		

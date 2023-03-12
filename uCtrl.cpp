@@ -396,7 +396,7 @@ void uCtrlClass::processAin()
 #else // defined(USE_DEVICE)
 			// ain callback is processed inside a timmer interrupt, so always be short inside it!
 			if ( ain->rtCallback != nullptr ) {
-				ain->rtCallback(port+1, value, 1);
+				ain->rtCallback(port+1, value);
 				continue;
 			}   
 #endif // defined(USE_DEVICE)
@@ -633,7 +633,7 @@ void uCtrlClass::run()
 #endif // defined(USE_PAGE)
 
 		if ( ain->callback != nullptr ) {
-			ain->callback(port, value, 0);
+			ain->callback(port, value);
 		}
 	}
 #endif // defined(USE_AIN)    

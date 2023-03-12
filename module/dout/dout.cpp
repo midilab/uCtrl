@@ -56,7 +56,6 @@ void Dout::setSpi(SPIClass * spi_device)
 }
 #endif
 
-#if defined(USE_DOUT_PORT_PIN)
 // call first all plug() for pin register, then plugSR if needed
 void Dout::plug(uint8_t setup)
 {
@@ -65,7 +64,6 @@ void Dout::plug(uint8_t setup)
 		++_chain_size_pin;
 	}
 }
-#endif
 
 #if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 void Dout::plugSR(uint8_t setup)
@@ -96,8 +94,7 @@ void Dout::init()
 	// total remote out port
 	_remote_digital_output_port = (_chain_size * 8) + _chain_size_pin;
 
-#if defined(USE_DOUT_PORT_PIN)
-	// any plug() for direct pin register on DIN?
+	// any plug() for direct pin register on DOUT?
 	if (_chain_size_pin > 0) {
 		// walk port reference structure and setup PINs as PULLUP/INPUT
 		for (uint8_t i=0; i < _chain_size_pin; i++ ) {
@@ -106,7 +103,6 @@ void Dout::init()
 		}
 		//_change_flag = false;
 	}
-#endif
 
 #if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 	// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
@@ -194,14 +190,12 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 	if ( _remote_digital_output_port == 0 ) 
 		return;	
 	
-#if defined(USE_DOUT_PORT_PIN)
 	if (remote_port < _chain_size_pin) {
 		digitalWrite(_dout_pin[remote_port], value);
 		return;
 	}
 	// fix reference for bitmap read later
 	remote_port -= _chain_size_pin;
-#endif
 
 #if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 
@@ -243,11 +237,9 @@ void Dout::writeAll(uint8_t value, uint8_t interrupted)
 		return;	
 	}
 
-#if defined(USE_DOUT_PORT_PIN)
 	for (uint8_t i=0; i < _chain_size_pin; i++) {
 		digitalWrite(_dout_pin[i], value);
 	}
-#endif
 
 #if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 	if ( value == 0 ) {
