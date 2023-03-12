@@ -16,13 +16,12 @@ Ram::~Ram()
 
 }
 
-void Ram::init(SPIClass * device, uint8_t chip_select)
+void Ram::init(SPIClass * device)
 {
   //EXT_RAM_CHIP_SELECT
-  _spi_device = device;
-  _chip_select = chip_select;      
-  pinMode (_chip_select, OUTPUT);
-  digitalWrite(_chip_select, HIGH);  
+  _spi_device = device;   
+  pinMode (EXT_RAM_CHIP_SELECT, OUTPUT);
+  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);  
   
   _buffer_address_id_pointer = 0;
   _buffer_address_pointer = 0;
@@ -79,7 +78,7 @@ static void Ram::read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_
   } 
 
   ram_module._spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE));
-  digitalWrite(ram_module._chip_select, LOW);
+  digitalWrite(EXT_RAM_CHIP_SELECT, LOW);
   
   // send address request
   //_spi_device->transfer(&_set_address[interrupted], 4);
@@ -99,7 +98,7 @@ static void Ram::read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_
     
   ram_module._spi_device->transfer(&buffer[start_at], size_to_read);
   
-  digitalWrite(ram_module._chip_select, HIGH);     
+  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);     
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
@@ -111,21 +110,13 @@ static void Ram::read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_
 static void Ram::write(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_id, uint8_t interrupted, uint8_t size_to_write, uint8_t start_at)
 {
   uint32_t memory_address = ram_module._buffer_layout[buffer_id].buffer_address + ((uint32_t)buffer_address * (uint32_t)ram_module._buffer_layout[buffer_id].buffer_size) + (uint32_t)start_at;
-  
-  //_runtime_buffer_address[interrupted] = _buffer_layout[buffer_id].buffer_address + ((uint32_t)buffer_address * (uint32_t)_buffer_layout[buffer_id].buffer_size) + (uint32_t)start_at;
-  //_set_address[interrupted].byte1 = WRITE;
-  //_set_address[interrupted].byte2 = (uint8_t)(_runtime_buffer_address[interrupted] >> 16);
-  //_set_address[interrupted].byte3 = (uint8_t)(_runtime_buffer_address[interrupted] >> 8);
-  //_set_address[interrupted].byte4 = (uint8_t)_runtime_buffer_address[interrupted];
-  
+
   if ( interrupted == 0 ) { 
-    //ram_module._tmpSREG = SREG;
-    //cli(); 
     ram_module._spi_device->usingInterrupt(255);
   } 
 
   ram_module._spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE)); 
-  digitalWrite(ram_module._chip_select, LOW);  
+  digitalWrite(EXT_RAM_CHIP_SELECT, LOW);  
 
   // send address request
   //_spi_device->transfer(&_set_address[interrupted], 4);
@@ -145,11 +136,10 @@ static void Ram::write(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer
   
   //_spi_device->transfer(&buffer[start_at], size_to_write);
   
-  digitalWrite(ram_module._chip_select, HIGH);  
+  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);  
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
-  //  SREG = ram_module._tmpSREG;
     ram_module._spi_device->notUsingInterrupt(255);
   }  
 }
@@ -159,13 +149,11 @@ static void Ram::fill(uint8_t fill, uint16_t buffer_address, uint8_t buffer_id, 
   uint32_t memory_address = ram_module._buffer_layout[buffer_id].buffer_address + ((uint32_t)buffer_address * (uint32_t)ram_module._buffer_layout[buffer_id].buffer_size) + (uint32_t)start_at;
   
   if ( interrupted == 0 ) { 
-    //ram_module._tmpSREG = SREG;
-    //cli(); 
     ram_module._spi_device->usingInterrupt(255);
   } 
 
   ram_module._spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE)); 
-  digitalWrite(ram_module._chip_select, LOW);  
+  digitalWrite(EXT_RAM_CHIP_SELECT, LOW);  
 
   // send address request
   ram_module._spi_device->transfer(WRITE);
@@ -184,41 +172,27 @@ static void Ram::fill(uint8_t fill, uint16_t buffer_address, uint8_t buffer_id, 
   
   //_spi_device->transfer(&buffer[start_at], size_to_write);
   
-  digitalWrite(ram_module._chip_select, HIGH);  
+  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);  
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
-    //SREG = ram_module._tmpSREG;
     ram_module._spi_device->notUsingInterrupt(255);
   }  
 }
   
 void Ram::setMode(uint8_t mode)
 {
-
-  //_tmpSREG = SREG;
-  //cli();
   _spi_device->usingInterrupt(255);
 
   _spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE));
-  digitalWrite(_chip_select, LOW);
+  digitalWrite(EXT_RAM_CHIP_SELECT, LOW);
   
   _spi_device->transfer(RDMR);
   _spi_device->transfer(mode);
   
-  digitalWrite(_chip_select, HIGH);     
+  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);     
   _spi_device->endTransaction();
-
-  //_spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE));
-  //digitalWrite(_chip_select, LOW);
   
-  //_spi_device->transfer(WRMR);
-  //_spi_device->transfer(mode);
-  
-  //digitalWrite(_chip_select, HIGH);     
-  //_spi_device->endTransaction();
-  
-  //SREG = _tmpSREG;
   _spi_device->notUsingInterrupt(255);
 } 
       
