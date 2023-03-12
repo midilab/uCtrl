@@ -49,7 +49,6 @@ uint8_t Din::sizeOf()
 	return _remote_digital_port;
 }			
 
-#if defined(USE_DIN_PORT_PIN)
 // call first all plug() for pin register, then plugSR if needed
 void Din::plug(uint8_t setup)
 {
@@ -59,7 +58,6 @@ void Din::plug(uint8_t setup)
 		_chain_size_pin = floor(_remote_digital_port/8)+1;
 	}
 }
-#endif
 
 #if defined(USE_DIN_SPI_DRIVER) || defined(USE_DIN_BITBANG_DRIVER)
 void Din::plugSR(uint8_t setup)
@@ -122,7 +120,6 @@ void Din::init()
 	// init total chain size 
 	_chain_size = (_chain_size_pin + _chain_size_sr);
 
-#if defined(USE_DIN_PORT_PIN)
 	// any plug() for direct pin register on DIN?
 	if (_chain_size_pin > 0) {
 		uint8_t remote_pin_port = _remote_digital_port - (_chain_size_sr * 8);
@@ -132,7 +129,6 @@ void Din::init()
 		}
 		_chain_pin_gap = 8 - (_remote_digital_port % 8);
 	}
-#endif
 
 	// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
 	// Each bit represents the value state readed by digital inputs	
@@ -178,7 +174,6 @@ void Din::read(uint8_t interrupted)
 	static bool state_change;
 	state_change = false;
 
-#if defined(USE_DIN_PORT_PIN)
 	// any direct pin registered to read?
 	if (_chain_size_pin > 0) {
 		// Read port per port
@@ -199,7 +194,6 @@ void Din::read(uint8_t interrupted)
 			}
 		}
 	}
-#endif
 
 #if defined(USE_DIN_BITBANG_DRIVER)
 	//if ( interrupted == 0 ) {
@@ -301,6 +295,9 @@ void Din::processQueue()
 									// odd: channel_b/increment
 									value = value > !BIT_VALUE(_digital_input_last_state[i], j-1) ? 1 : 0;
 								}
+								// just 1 state... drop zeros
+								if (value == 0)
+									continue;
 							}
 						}
 					}

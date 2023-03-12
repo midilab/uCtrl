@@ -84,9 +84,7 @@ class Din
 		int8_t getDataRaw(uint8_t port);
 		int8_t getData(uint8_t port);				
 		uint8_t sizeOf();	
-#if defined(USE_DIN_PORT_PIN)
 		void plug(uint8_t setup);
-#endif
 #if defined(USE_DIN_SPI_DRIVER) || defined(USE_DIN_BITBANG_DRIVER)
 		void plugSR(uint8_t setup);
 #endif
@@ -114,9 +112,7 @@ class Din
 
     	volatile EVENT_QUEUE event_queue;	
 
-#if defined(USE_DIN_PORT_PIN)
 		uint8_t _button_pin[USE_DIN_MAX_PORTS] = {0};
-#endif	
 
 #if defined(USE_DIN_SPI_DRIVER)
 		SPIClass * _spi_device = nullptr;

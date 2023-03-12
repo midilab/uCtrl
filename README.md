@@ -17,7 +17,6 @@ The following microcontrollers and boards are supported and were tested:
 
 ## Modules avaliable
 
-[PAGE](#page): Modular User Interface programming using pages and components.  
 [AIN](#ain): Wire up to 64 potentiometers.  
 [DIN](#din): Wire up to 64 push buttons or rotary encoders.  
 [DOUT](#dout): Wire up to 64 leds or any other digital output.  
@@ -26,6 +25,7 @@ The following microcontrollers and boards are supported and were tested:
 [OLED](#oled): Connect a OLED screen.  
 [STORAGE](#storage): Make use of epprom and/or connect a sdcard.  
 [RAM](#ram): Make use of external SRAM.  
+[PAGE](#page): Modular User Interface programming using pages and components.  
 
 ## How to use?
 
@@ -110,8 +110,6 @@ This module can handle single ADC ports on your microcontroller or multiplexed A
 // enables the driver
 #define USE_AIN
 
-//#define ANALOG_AVG_READS
-
 // for multiplexed support uncomment the needed driver
 #define USE_AIN_4051_DRIVER
 //#define USE_AIN_4067_DRIVER
@@ -186,9 +184,9 @@ void setup()
   // you can lower or raiser this value for your needs.
   // midi controllers only need max 128(if you dont plan to make use of NRPN or sysex extensions)
   uCtrl.ain->setMaxAdcValue(128);
-  // define ANALOG_AVG_READS at modules.h for noisy environments
-  // and use setAvgReads to the count numbers of times to read the input
-  //uCtrl.ain->setAvgReads(8);
+  // the more you read input samples the lower the noise, but more processing too.
+  // use only if needed and dont go too far!
+  uCtrl.ain->setAvgReads(8);
   
   // only init uCtrl after all modules setup
   uCtrl.init();
@@ -214,16 +212,15 @@ This module can handle single Digital ports on your microcontroller or multiplex
 #ifndef __U_CTRL_MODULES_H__
 #define __U_CTRL_MODULES_H__
 
+//
+// all pins are setup with internal pullup resistor
+// so wire you button between microcontroller pin and GND(no need for resistor)
+//
+
 // enables the driver
 #define USE_DIN
 
-//
-// for direct usage of microcontroller Digital port pin
-// all pins are setup with internal pullup resistor
-// so wire you button between microcontroller pin and GND(no need for resistor)
-// USE_DIN_MAX_PORTS is default to 16 if you dont set it
-//
-#define USE_DIN_PORT_PIN
+// how many microncontrollers direct Input digital pins you need?
 //#define USE_DIN_MAX_PORTS   8
 
 // 2 driver options for multiplexed button input: SPI and BITBANG.
@@ -233,8 +230,8 @@ This module can handle single Digital ports on your microcontroller or multiplex
 // using SPI hardware wich is the recommended way in case you have 
 // a Free or shared SPI device.
 //
-//#define USE_DIN_SPI_DRIVER
-//#define DIN_LATCH_PIN   D4
+#define USE_DIN_SPI_DRIVER
+#define DIN_LATCH_PIN     9 
 
 //
 // using bitbang in case you dont have a free SPI. 
@@ -242,9 +239,9 @@ This module can handle single Digital ports on your microcontroller or multiplex
 // this options requires you to define the latch, data and clock pins of 165.
 //
 //#define USE_DIN_BITBANG_DRIVER
-//#define DIN_LATCH_PIN   D4
-//#define DIN_DATA_PIN    D5
-//#define DIN_CLOCK_PIN   D6
+//#define DIN_LATCH_PIN   4
+//#define DIN_DATA_PIN    5
+//#define DIN_CLOCK_PIN   6
 
 #endif
 ```
@@ -259,6 +256,10 @@ typedef enum {
   BUTTON_2,
   ENCODER_DEC,
   ENCODER_INC,
+  SR_BUTTON_1,
+  SR_BUTTON_2,
+  SR_BUTTON_3,
+  SR_BUTTON_4,
   //...,
   //...,
 };
@@ -266,66 +267,65 @@ typedef enum {
 // get change values from connected push buttons or encoders
 void dinInput(uint8_t port, uint16_t value, uint8_t interrupted)
 {
-    switch (port) {
-        case BUTTON_1:
-            // do something with BUTTON_1 value(HIGH | LOW)
-            break;
-        case BUTTON_2:
-            // do something with BUTTON_2 value(HIGH | LOW)
-            break;
-        case ENCODER_DEC:
-            // do something with ENCODER_DEC value(HIGH)
-            break;
-        case ENCODER_INC:
-            // do something with ENCODER_INC value(HIGH)
-            break;
-        //...
-        //...
-    }
-}
-
-// this plugs 1x 165 using SPI device, making 8 push buttons avaliable
-void setDinMultiplexedSpi()
-{
-    // initDin(spi device)
-    uCtrl.initDin(&SPI);
-    // plugSR(uint8_t number of 165's to plug)
-    uCtrl.din->plugSR(1);
-}
-
-// this plugs 2x 165 using bitbang driver, making 16 push buttons avaliable
-void setDinMultiplexedBitbang()
-{
-    uCtrl.initDin();
-    // plugSR(uint8_t number of 165's to plug)
-    uCtrl.din->plugSR(2);
-}
-
-// this plugs 4 microntroller Digital ports making 4 push buttons avaliable
-void setDinSingle()
-{
-    uCtrl.initDin();
-    // plug(uint8_t DIGITAL_PORT_PIN_X)
-    uCtrl.din->plug(D2);
-    uCtrl.din->plug(D3);
-    uCtrl.din->plug(D4);
-    uCtrl.din->plug(D5);
+  switch (port) {
+    case BUTTON_1:
+      // do something with BUTTON_1 value(HIGH | LOW)
+      break;
+    case BUTTON_2:
+      // do something with BUTTON_2 value(HIGH | LOW)
+      break;
+    case ENCODER_DEC:
+      // do something with ENCODER_DEC value(HIGH)
+      break;
+    case ENCODER_INC:
+      // do something with ENCODER_INC value(HIGH)
+      break;
+    case SR_BUTTON_1:
+      // do something with SR_BUTTON_1 value(HIGH | LOW)
+      break;
+    case SR_BUTTON_2:
+      // do something with SR_BUTTON_2 value(HIGH | LOW)
+      break;
+    case SR_BUTTON_3:
+      // do something with SR_BUTTON_3 value(HIGH | LOW)
+      break;
+    case SR_BUTTON_4:
+      // do something with SR_BUTTON_4 value(HIGH | LOW)
+      break;
+    //...
+    //...
+  }
 }
 
 void setup() 
 {
-    setDinSingle();
-    //setDinMultiplexedSpi();
-    //setDinMultiplexedBitbang();
-    uCtrl.din->setCallback(dinInput);
+  // this initiation signature is for microcontroller ports or bitbang 165 shiftregister drivers
+  //uCtrl.initDin();
+  // if you're going to use SPI driver you need to pass the 
+  // spi device you want to initDin
+  // initDin(spi device)
+  uCtrl.initDin(&SPI);
+  
+  uCtrl.din->plug(13);
+  uCtrl.din->plug(12);
+  uCtrl.din->plug(26);
+  uCtrl.din->plug(28);
+  // this plugs 4 microntroller Digital ports making 4 push buttons avaliable
 
-    // encoders setup?
-    // in pair and sequential pins always! 
-    // pairs starting with even ids: 0 and 1, 2 and 3, 4 and 5
-    uCtrl.din->encoder(ENCODER_DEC, ENCODER_INC);
-
-    // only init uCtrl after all modules setup
-    uCtrl.init();
+  // this plugs 1x 165, making 8 push buttons avaliable
+  // plugSR(uint8_t number of 165's to plug)
+  uCtrl.din->plugSR(1);
+  
+  uCtrl.din->setCallback(dinInput);
+  
+  // encoders setup?
+  // in pair and sequential pins always! 
+  // pairs starting with even ids: 0 and 1, 2 and 3, 4 and 5
+  // call it only after all plug() and plugSR() requests
+  uCtrl.din->encoder(ENCODER_DEC, ENCODER_INC);
+  
+  // only init uCtrl after all modules setup
+  uCtrl.init();
 }
 
 void loop()
