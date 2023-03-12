@@ -41,7 +41,7 @@ Storage::Storage()
 	//EEPROM.begin(4096);
 }
 
-void Storage::init(SPIClass * spi_device, uint8_t chip_select)
+void Storage::init(SPIClass * spi_device)
 {
 	if (spi_device != nullptr) {
 		// we need to activate sdcard support

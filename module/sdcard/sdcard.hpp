@@ -2,9 +2,8 @@
 #define __U_CTRL_SDCARD_HPP__
 
 #include <Arduino.h>
-#include "SdFat/SdFat.h"
-//#include <SdFat.h>
 #include <SPI.h>
+#include "SdFat/SdFat.h"
 
 #include "../../../../modules.h"
 
@@ -19,7 +18,7 @@ class SdCard
         ~SdCard();  
         
         void plug();					
-        void init(SPIClass * spi_device = nullptr, uint8_t chip_select = 0);	
+        void init(SPIClass * spi_device = nullptr);	
         bool openFile(const char * path, uint8_t oflags);
         bool readTextLine(char * line, char * str, size_t size, uint8_t field_num, char field_delim);
         bool closeFile();
@@ -42,12 +41,15 @@ class SdCard
 #endif
         //SPI_DRIVER_SELECT == 3  // Must be set in SdFat/SdFatConfig.h for SPI device refrence usage
         SdFat _sd_fat;    
-        //File _file; // for avr arduinos
-        //FsFile _file; // for teensyduino
-        
+
+#if defined(TEENSYDUINO)
+        FsFile _file; // for teensyduino
+#else
+        File _file; // for avr arduinos
+#endif
         // FAT16/FAT32
         //SdFat32 sd;
-        File32 _file;
+        //File32 _file;
 
         // exFAT
         //SdExFat sd;

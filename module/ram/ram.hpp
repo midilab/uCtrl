@@ -49,7 +49,7 @@ class Ram
         Ram();
         ~Ram(); 
 			
-		void init(SPIClass * device, uint8_t chip_select);
+		void init(SPIClass * device);
 		static int8_t registerBuffer( uint16_t buffer_size, uint16_t buffer_length );	
 		void setMode(uint8_t mode);
 		static void read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_id, uint8_t interrupted = 0, uint8_t size_to_read = 0, uint8_t start_at = 0);
@@ -59,7 +59,6 @@ class Ram
 			
     protected:
 
-		int8_t _chip_select;
 		SPIClass * _spi_device = nullptr;
 
 		uint32_t _buffer_address_pointer = 0;

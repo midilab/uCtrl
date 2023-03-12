@@ -35,51 +35,50 @@
 #include "../../modules.h"
 
 // modules classes includes
-#ifdef USE_OLED
+#if defined(USE_OLED)
 #include "module/oled/oled.hpp"
-#endif
+#endif // defined(USE_OLED)
 
-#ifdef USE_MIDI
+#if defined(USE_MIDI)
 #include "module/midi/midi.hpp"
-#endif
+#endif // defined(USE_MIDI)
 
 // dout 595 or single output for arduino only
-#ifdef USE_DOUT
+#if defined(USE_DOUT)
 #include "module/dout/dout.hpp"
-#endif
+#endif // defined(USE_DOUT)
 
-#ifdef USE_DIN
+#if defined(USE_DIN)
 #include "module/din/din.hpp"
-#endif
+#endif // defined(USE_DIN)
 
-#ifdef USE_AIN
+#if defined(USE_AIN)
 #include "module/ain/ain.hpp"
-#endif
+#endif // defined(USE_AIN)
 
-#ifdef USE_CAP_TOUCH
+#if defined(USE_CAP_TOUCH)
 #include "module/touch/touch.hpp"
-#endif
+#endif // defined(USE_CAP_TOUCH)
 
-//
-#ifdef USE_EXT_RAM
+#if defined(USE_EXT_RAM)
 #include "module/ram/ram.hpp"
-#endif
+#endif // defined(USE_EXT_RAM)
 
-#ifdef USE_STORAGE
+#if defined(USE_STORAGE)
 #include "module/storage/storage.hpp"
-#endif
+#endif // defined(USE_STORAGE)
 
-#ifdef USE_SDCARD
+#if defined(USE_SDCARD)
 #include "module/sdcard/sdcard.hpp"
-#endif
+#endif // defined(USE_SDCARD)
 
-#ifdef USE_PAGE
+#if defined(USE_PAGE)
 #include "module/page/page.hpp"
-#endif
+#endif // defined(USE_PAGE)
 
-#ifdef USE_DEVICE
+#if defined(USE_DEVICE)
 #include "module/device/device.hpp"
-#endif
+#endif // defined(USE_DEVICE)
 
 // tools
 #define BLINK_TIME 250	
@@ -116,84 +115,84 @@ class uCtrlClass
 	//
 	// modules access
 	//
-#ifdef USE_EXT_RAM	
+#if defined(USE_EXT_RAM)
 	// external ram module
-	bool initRam(SPIClass * device, uint8_t chip_select);
+	bool initRam(SPIClass * device);
 	uctrl::module::Ram * ram = nullptr;		
-#endif
+#endif // defined(USE_EXT_RAM)
 
-#ifdef USE_STORAGE
-	bool initStorage(SPIClass * spi_device = nullptr, uint8_t chip_select = 1);
+#if defined(USE_STORAGE)
+	bool initStorage(SPIClass * spi_device = nullptr);
 	uctrl::module::Storage * storage = nullptr;		
-#endif
+#endif // defined(USE_STORAGE)
 
-#ifdef USE_OLED	
+#if defined(USE_OLED)	
 	// oled module
-#ifdef USE_OLED_U8G2
+#if defined(USE_OLED_U8G2)
 	bool initOled(U8G2 * display);
-#else
+#else // defined(USE_OLED_U8G2)
 	bool initOled(U8X8 * display);
-#endif
+#endif // defined(USE_OLED_U8G2)
 
-#ifdef USE_EXT_RAM
-#ifdef USE_DEVICE
+#if defined(USE_EXT_RAM)
+#if defined(USE_DEVICE)
 	void processDisplay();
-#endif
-#endif
+#endif // defined(USE_DEVICE)
+#endif // defined(USE_EXT_RAM)
 	uctrl::module::Oled * oled = nullptr;
-#endif	
+#endif	// defined(USE_OLED)
 
-#ifdef USE_MIDI
+#if defined(USE_MIDI)
 	// midi module
 	bool initMidi();
 	void processMidi();
 	uctrl::module::Midi * midi = nullptr;
-#endif
+#endif // defined(USE_MIDI)
 	
-#ifdef USE_DOUT	
+#if defined(USE_DOUT)	
 	// dout module
 	bool initDout(SPIClass * spi_device = nullptr);
 	uctrl::module::Dout * dout = nullptr;
-#endif
+#endif // defined(USE_DOUT)
 	
-#ifdef USE_DIN	
+#if defined(USE_DIN)
 	// din module
 	bool initDin(SPIClass * spi_device = nullptr);
 	uctrl::module::Din * din = nullptr;
-#endif
+#endif // defined(USE_DIN)
 	
-#ifdef USE_AIN	
+#if defined(USE_AIN)
 	// ain module
-	bool initAin(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
+	bool initAin();
 	void processAin();
 	uctrl::module::Ain * ain = nullptr;
     volatile EVENT_QUEUE _ain_event_queue;	
-#endif
+#endif // defined(USE_AIN)
 	
-#ifdef USE_CAP_TOUCH	
+#if defined(USE_CAP_TOUCH)
 	// capacitive touch module
 	bool initCapTouch(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
 	uctrl::module::CapTouch * touch = nullptr;
-#endif
+#endif // defined(USE_CAP_TOUCH)
 	
-#ifdef USE_SDCARD	
+#if defined(USE_SDCARD)
 	// sdcard module
-	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 0);	
+	bool initSdCard(SPIClass * spi_device = nullptr);	
 	uctrl::module::SdCard * sdcard;
-#endif
+#endif // defined(USE_SDCARD)
 	
-#ifdef USE_PAGE	
+#if defined(USE_PAGE)
 	// page module
 	bool initPage();
 	void processPage();
 	uctrl::module::Page * page = nullptr;
-#endif
+#endif // defined(USE_PAGE)
 	
-#ifdef USE_DEVICE	
+#if defined(USE_DEVICE)	
 	// device module
 	bool initDevice(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size = 0, uint16_t device_label_buffer_size = 0);
 	uctrl::module::Device * device = nullptr;
-#endif
+#endif // defined(USE_DEVICE)
         
 	//
 	// Registred Ports query
@@ -220,5 +219,5 @@ class uCtrlClass
 
 extern uctrl::uCtrlClass uCtrl;
 
-#endif
+#endif // __U_CTRL_H__
 
