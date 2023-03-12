@@ -41,7 +41,7 @@ class Storage
 
         Storage();
 
-		void init(SPIClass * spi_device = nullptr, uint8_t chip_select = 1);
+		void init(SPIClass * spi_device = nullptr);
 
 		// epprom
 		bool save(void *data, size_t n, int address = -1);

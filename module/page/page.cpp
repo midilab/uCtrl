@@ -537,14 +537,14 @@ void Page::set(const char * page_name, void (*page_create_callback)(), void (*pa
 
 	_page_data[_page].name = page_name;
 
+#ifdef USE_PAGE_COMPONENT
 	// init selected component memory
 	for (uint8_t i=0; i < USE_PAGE_MAX_SUB_PAGES; i++) {
-#ifdef USE_PAGE_COMPONENT
 		_page_data[_page].sub_page_data[i].selected_component = nullptr;
-#endif
 		_page_data[_page].sub_page_data[i].selector_line = 0;
 		_page_data[_page].sub_page_data[i].selector_grid = 0;
 	}
+#endif
 
 	// never go beyond allocated page size scope for this index
 	if (_page < _pages_size-1) {

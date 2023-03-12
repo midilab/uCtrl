@@ -177,7 +177,7 @@ struct PageComponent
                 return new_value;
         }
 };
-#endif
+#endif // USE_PAGE_COMPONENT
 
 namespace uctrl { namespace module { 
 
@@ -189,14 +189,20 @@ typedef enum {
         ANALOG_EVENT,
 } EVENT_TYPE;
 
+#ifdef USE_PAGE_COMPONENT	
 typedef struct 
 {
         int8_t selector_line = 0;
         int8_t selector_grid = 0;
-#ifdef USE_PAGE_COMPONENT	
         PageComponent * selected_component;
-#endif
 } SUB_PAGE_DATA;
+
+typedef struct 
+{
+        int8_t ctrl_id = -1;
+        void (*callback)() = nullptr;
+} HOOK_CTRL_DATA;
+#endif
 
 typedef struct 
 {
@@ -207,8 +213,6 @@ typedef struct
 	void (*analog_input)(uint8_t, uint16_t, uint8_t) = nullptr;
         uint8_t sub_page_size:4; // max 16 subpages
         uint8_t sub_page:4;
-        // each subpage needs a reference pointer to wich is the selected component of the first one to be selected
-        SUB_PAGE_DATA sub_page_data[USE_PAGE_MAX_SUB_PAGES];
         const char * name = nullptr;
 #ifdef USE_PAGE_COMPONENT
         void (*callback_f1)() = nullptr;
@@ -217,16 +221,10 @@ typedef struct
         const char * f2 = nullptr;
         uint8_t f1_state = 0;
         uint8_t f2_state = 0;
+        // each subpage needs a reference pointer to wich is the selected component of the first one to be selected
+        SUB_PAGE_DATA sub_page_data[USE_PAGE_MAX_SUB_PAGES];
 #endif
 } PAGE_DATA;
-
-#ifdef USE_PAGE_COMPONENT
-typedef struct 
-{
-        int8_t ctrl_id = -1;
-        void (*callback)() = nullptr;
-} HOOK_CTRL_DATA;
-#endif
 
 class Page
 {
