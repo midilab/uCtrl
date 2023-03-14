@@ -36,6 +36,10 @@ namespace uctrl { namespace module {
 #define AUTOLOCK
 #define ANALOG_AVG_READS
 
+#if !defined(USE_AIN_MAX_PORTS)
+#define USE_AIN_MAX_PORTS 8
+#endif
+
 #if defined(USE_AIN_4051_DRIVER) 
 #define AIN_MUX_SIZE	8
 #endif
@@ -61,15 +65,18 @@ class Ain
 			
 		void init();
 		int16_t getData(uint8_t remote_port, uint16_t min = 0, uint16_t max = 0);
+		int16_t readPort(uint8_t remote_port, uint8_t host_analog_port);
 #ifdef ANALOG_AVG_READS
-		int16_t readPortAvg(uint8_t remote_port);
 		void setAvgReads(uint8_t average);
 #endif
 		inline uint16_t rangeMe(uint16_t value, uint16_t min, uint16_t max);
 		void lockControl(uint8_t remote_port);
 		void lockAllControls();
 		bool isLocked(uint8_t remote_port);
-		void plug(uint8_t analog_pin);		
+		void plug(uint8_t setup);
+#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
+		void plugMux(uint8_t setup);
+#endif		
 		void invertRead(bool state);		
 		uint8_t sizeOf();
 
@@ -89,17 +96,13 @@ class Ain
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
 		void setMuxPins();
 		void selectMuxPort(uint8_t port);
-		int8_t _mux_control_pin_1 = -1;
-		int8_t _mux_control_pin_2 = -1;
-		int8_t _mux_control_pin_3 = -1;
-		int8_t _mux_control_pin_4 = -1;
 #endif
 
-		// max of 128 analog ports with 8x 4051
-		int8_t _port[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+		int8_t _port[USE_AIN_MAX_PORTS] = {-1};
 
 		uint8_t _host_analog_port = 0; // uint8_t hard_port[16];
 		uint8_t _remote_analog_port = 0; // uint8_t soft_port[16];
+		uint8_t _direct_pin_size = 0;
 
 		// For arduino ADC max resolution is 10bits(1024)
 		uint16_t _adc_max_resolution = 1024;

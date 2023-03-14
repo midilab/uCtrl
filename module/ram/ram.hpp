@@ -19,9 +19,6 @@ namespace uctrl { namespace module {
 #define BYTE_MODE (0x00 | HOLD)
 #define PAGE_MODE (0x80 | HOLD)
 #define STREAM_MODE (0x40 | HOLD)
-//#define BYTE_MODE 0x00
-//#define PAGE_MODE 0x80
-//#define STREAM_MODE 0x40
 
 // this chip operates at 20MHZ max speed
 // SPI_CLOCK_DIV8	on a 16Mhz avr = 2 Mhz max
@@ -58,21 +55,11 @@ class Ram
 		uint32_t getFreeRam();
 			
     protected:
-
 		SPIClass * _spi_device = nullptr;
-
 		uint32_t _buffer_address_pointer = 0;
 		uint8_t _buffer_address_id_pointer = 0;
-		//uint32_t _runtime_buffer_address[2];
-
-		//uint8_t _tmpSREG;
-
-		//SET_ADDRESS_BUFFER _set_address[2];
 		BUFFER_LAYOUT_RAM _buffer_layout[4];
-
 		uint8_t _counter = 0;
-
-	
 };
 
 } }

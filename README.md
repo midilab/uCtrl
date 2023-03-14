@@ -2,7 +2,7 @@
 
 uCtrl is the codebase library of [uMODULAR](https://github.com/midilab/uMODULAR) hardware project. It provides driver layer for all uMODULAR modules and user interface layer to easly create, extend and share more advanced Arduino applications.
 
-This library also enables realtime-like functionality inside Arduino ecosystem by using hardware timer interruption to create time predictable task management with resource-safe access via library interface.
+This library also enables realtime-like functionality inside Arduino ecosystem by using hardware timer interruption to create time predictable task management with resource-safe access via library API.
 
 uCtrl is a choice for robust, portable and fast-making musical instruments, sequencers, audio/video controllers and other related machines for Arduino platform.
 
@@ -20,7 +20,7 @@ The following microcontrollers and boards are supported and were tested:
 [AIN](#ain): Wire up to 64 potentiometers.  
 [DIN](#din): Wire up to 64 push buttons or rotary encoders.  
 [DOUT](#dout): Wire up to 64 leds or any other digital output.  
-[TOUCH](#touch): Wire up to 32 capcitive touch buttons(teensy arms only for now).  
+[TOUCH](#touch): Wire up to 32 capcitive touch buttons.  
 [MIDI](#midi): Agregate and control MIDI interfaces.  
 [OLED](#oled): Connect a OLED screen.  
 [STORAGE](#storage): Make use of epprom and/or connect a sdcard.  
@@ -110,6 +110,9 @@ This module can handle single ADC ports on your microcontroller or multiplexed A
 // enables the driver
 #define USE_AIN
 
+// how many microncontrollers direct ADC pins you need?
+//#define USE_AIN_MAX_PORTS   8
+
 // for multiplexed support uncomment the needed driver
 #define USE_AIN_4051_DRIVER
 //#define USE_AIN_4067_DRIVER
@@ -128,7 +131,7 @@ YourSketch.ino
 #include <Arduino.h>
 #include "src/uCtrl/uCtrl.h"
 
-typedef enum {
+enum {
   POT_1,
   POT_2,
   POT_3,
@@ -142,16 +145,16 @@ void ainInput(uint8_t port, uint16_t value)
 {
   switch (port) {
     case POT_1:
-      // do something with port 1 value(0 ~ 1023)
+      // do something with port 1 value(0 ~ 1023 || setMaxAdcValue)
       break;
     case POT_2:
-      // do something with port 2 value(0 ~ 1023)
+      // do something with port 2 value(0 ~ 1023 || setMaxAdcValue)
       break;
     case POT_3:
-      // do something with port 3 value(0 ~ 1023)
+      // do something with port 3 value(0 ~ 1023 || setMaxAdcValue)
       break;
     case POT_4:
-      // do something with port 4 value(0 ~ 1023)
+      // do something with port 4 value(0 ~ 1023 || setMaxAdcValue)
       break;
     //...
     //...
@@ -163,16 +166,18 @@ void setup()
   // always call module init before setup it
   uCtrl.initAin();
   
-  // just plug the hardware analog ports ADC
-  uCtrl.ain->plug(A1);
+  // just plug the hardware by analog ports ADC
+  // plug() is for microcontroller direct ADC pin
+  // this example adds two ADC ports making 2 potentiometers avaliable for use
   uCtrl.ain->plug(A0);
   uCtrl.ain->plug(A1);
-  uCtrl.ain->plug(A0);
-  
-  // if no multiplex driver defined at modules.h the code bellow plugs 4 microntroller ADC ports making 4 potentiometers avaliable
-  // if 4067 multiplexer driver defined at modules.h the code bellow plugs 4x 4051 making 32 potentiometers avaliable
-  // if 4067 multiplexer driver defined at modules.h the code bellow plugs 4x 4067 making 64 potentiometers avaliable
+  // plugMux() is for multiplexed ADC pin read via 4051/4067
+  // this examples adds two 4051(see modules for 4067) making 16 potentiometers avaliable for use
+  uCtrl.ain->plugMux(A2);
+  uCtrl.ain->plugMux(A3);
 
+  // total 18 potentiometers avaliable: 2 direct connected and 16 via 2x 4051
+  
   // callback where you receive potentiometer changes
   uCtrl.ain->setCallback(ainInput);
   // you can use this RT callback in case too much processing is done
@@ -251,7 +256,7 @@ YourSketch.ino
 #include <Arduino.h>
 #include "src/uCtrl/uCtrl.h"
 
-typedef enum {
+enum {
   BUTTON_1,
   BUTTON_2,
   ENCODER_DEC,
@@ -385,7 +390,7 @@ YourSketch.ino
 #include <Arduino.h>
 #include "src/uCtrl/uCtrl.h"
 
-typedef enum {
+enum {
   ON_BOARD_LED_1,
   ON_BOARD_LED_2,
   SR_LED_1,
@@ -445,7 +450,7 @@ Make use of 4067 to multiplex capacitive buttons.
 ## MIDI
 
 Agregate and control MIDI interfaces.
-Agregator for [Francois Best's Arduino MIDI library](https://github.com/FortySevenEffects/arduino_midi_library) that can handle realtime operations inside uCtrl.  
+Agregator for [Francois Best's Arduino MIDI library](https://github.com/FortySevenEffects/arduino_midi_library) that can handle realtime operations safely inside uCtrl.  
 
 Make use of MIDI circuit.
 *link or image to the midi options schematic

@@ -59,44 +59,55 @@ void Ain::setMaxAdcValue(uint16_t max_adc_value)
 void Ain::setMuxPins()
 {
 	// setup pin 1
-	_mux_control_pin_1 = AIN_MUX_CTRL_A;
-	pinMode(_mux_control_pin_1, OUTPUT);
-	digitalWrite(_mux_control_pin_1, LOW);
+	pinMode(AIN_MUX_CTRL_A, OUTPUT);
+	digitalWrite(AIN_MUX_CTRL_A, LOW);
 
 	// setup pin 2
-	_mux_control_pin_2 = AIN_MUX_CTRL_B;
-	pinMode(_mux_control_pin_2, OUTPUT);
-	digitalWrite(_mux_control_pin_2, LOW);
+	pinMode(AIN_MUX_CTRL_B, OUTPUT);
+	digitalWrite(AIN_MUX_CTRL_B, LOW);
 
 	// setup pin 3
-	_mux_control_pin_3 = AIN_MUX_CTRL_C;
-	pinMode(_mux_control_pin_3, OUTPUT);
-	digitalWrite(_mux_control_pin_3, LOW);
+	pinMode(AIN_MUX_CTRL_C, OUTPUT);
+	digitalWrite(AIN_MUX_CTRL_C, LOW);
 
 #if defined(USE_AIN_4067_DRIVER)
 	// setup pin 4
-	_mux_control_pin_4 = AIN_MUX_CTRL_D;
-	pinMode(_mux_control_pin_4, OUTPUT);
-	digitalWrite(_mux_control_pin_4, LOW);
+	pinMode(AIN_MUX_CTRL_D, OUTPUT);
+	digitalWrite(AIN_MUX_CTRL_D, LOW);
 #endif
 
 }
 #endif
 
-void Ain::plug(uint8_t analog_pin)
+// call first all plug() for pin register, then plugMux()
+void Ain::plug(uint8_t setup)
 {
-	_port[_host_analog_port] = analog_pin;
+	if (_host_analog_port >= USE_AIN_MAX_PORTS) 
+		return;
 
-	// 
-	pinMode(analog_pin, INPUT);
+	_port[_host_analog_port] = setup;
+	pinMode(setup, INPUT);
+
+	++_host_analog_port;
+	++_remote_analog_port;
+	// we should keep the size of registered direct pins to use
+	++_direct_pin_size;
+}
 
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-	_host_analog_port++;
+void Ain::plugMux(uint8_t setup)
+{
+	if (_host_analog_port >= USE_AIN_MAX_PORTS) 
+		return;
+
+	_port[_host_analog_port] = setup;
+	pinMode(setup, INPUT);
+
+	++_host_analog_port;
 	_remote_analog_port += AIN_MUX_SIZE;
-#else
-	_remote_analog_port++;
-#endif	
 }
+#endif
+
 
 void Ain::init() 
 {
@@ -120,24 +131,29 @@ void Ain::init()
 	
 	// first mux scan 	
 	for (uint8_t i=0; i < _remote_analog_port; i++) {
+
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
 		host_analog_port = (uint8_t)i/AIN_MUX_SIZE;
 		selectMuxPort(i);
 #else
 		host_analog_port = i;
 #endif
+
 #ifdef ANALOG_AVG_READS
 		_analog_input_state[i].sum_value = 0;
 		_analog_input_state[i].avg_count = 0;
 #else
 		_analog_input_state[i] = 0;
 #endif
+
 		input_data = analogRead(_port[host_analog_port]);
 		_analog_input_last_state[i] = input_data;
 		_analog_input_lock_control[i] = -1; // locked
+
 #ifdef AUTOLOCK		
 		_analog_input_check_state[i] = 0;
 #endif		
+
 	}
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
 	// since we use the post process of ain as a wait time for mux change port signal to propagate lets select first one
@@ -178,13 +194,13 @@ inline uint16_t Ain::rangeMe(uint16_t value, uint16_t min, uint16_t max)
 void Ain::selectMuxPort(uint8_t port)
 {
 	port = port%AIN_MUX_SIZE;
-			
+	
 	// select the mux port to be readed for 4051 or 4067
-	digitalWrite(_mux_control_pin_1, bitRead(port, 0));
-	digitalWrite(_mux_control_pin_2, bitRead(port, 1));
-	digitalWrite(_mux_control_pin_3, bitRead(port, 2));	
+	digitalWrite(AIN_MUX_CTRL_A, bitRead(port, 0));
+	digitalWrite(AIN_MUX_CTRL_B, bitRead(port, 1));
+	digitalWrite(AIN_MUX_CTRL_C, bitRead(port, 2));	
 #if defined(USE_AIN_4067_DRIVER)
-	digitalWrite(_mux_control_pin_4, bitRead(port, 3));	
+	digitalWrite(AIN_MUX_CTRL_D, bitRead(port, 3));	
 #endif
 }
 #endif
@@ -194,9 +210,9 @@ void Ain::invertRead(bool state)
 	_invert_read = state;
 }
 
-#ifdef ANALOG_AVG_READS
-int16_t Ain::readPortAvg(uint8_t remote_port)
+int16_t Ain::readPort(uint8_t remote_port, uint8_t host_analog_port)
 {
+#ifdef ANALOG_AVG_READS
 	if (_analog_input_state[remote_port].avg_count >= _analog_avg_reads) {
 		int16_t avg_value = _analog_input_state[remote_port].sum_value / _analog_input_state[remote_port].avg_count;
 		_analog_input_state[remote_port].sum_value = 0;
@@ -204,15 +220,19 @@ int16_t Ain::readPortAvg(uint8_t remote_port)
 		return avg_value;
 	} else {
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		_analog_input_state[remote_port].sum_value += analogRead(_port[(uint8_t)(remote_port/AIN_MUX_SIZE)]);
+		_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
 #else 
-		_analog_input_state[remote_port].sum_value += analogRead(_port[remote_port]);
+		_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
 #endif
 		_analog_input_state[remote_port].avg_count++;
 		return -1;
 	}
+#else // ANALOG_AVG_READS
+	return analogRead(_port[host_analog_port]);
+#endif
 }
 
+#ifdef ANALOG_AVG_READS
 void Ain::setAvgReads(uint8_t average)
 {
 	_analog_avg_reads = average;
@@ -221,35 +241,26 @@ void Ain::setAvgReads(uint8_t average)
 
 int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 {
-	uint8_t host_analog_port;
-	int16_t value, last_value;
-	int16_t input_data;
+	uint8_t host_analog_port = 0;
+	int16_t value = 0, last_value = 0, input_data = 0;
 	
+	// is this a direct pin registered to read?
+	if (remote_port < _direct_pin_size) {
+		host_analog_port = remote_port;
+		// get data
+		input_data = readPort(remote_port, host_analog_port);
+	// otherwise its a mux read request
+	} else {
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-
-	// find our indexes
-	host_analog_port = (uint8_t)(remote_port/AIN_MUX_SIZE);	
-
-	// get selected value on last getdata operation(only serial reading incremental+ works)
-	#ifdef ANALOG_AVG_READS
-	input_data = readPortAvg(remote_port);
-	#else
-	input_data = analogRead(_port[host_analog_port]);
-	#endif
-
-	// select next mux port while processing this one
-	selectMuxPort(remote_port+1);
-
-#else
-
-	#ifdef ANALOG_AVG_READS
-	input_data = readPortAvg(remote_port);
-	#else
-	input_data = analogRead(_port[remote_port]);
-	#endif
-	host_analog_port = remote_port;
-
+		uint8_t mux_host_port = remote_port - _direct_pin_size;
+		// find our indexes
+		host_analog_port = (uint8_t)(mux_host_port/AIN_MUX_SIZE) + _direct_pin_size;
+		// get data
+		input_data = readPort(remote_port, host_analog_port);
+		// select next mux port while processing this one
+		selectMuxPort(mux_host_port+1);
 #endif
+	}
 	
 	if (input_data < 0) {
 		return -1;

@@ -196,10 +196,6 @@ void Din::read(uint8_t interrupted)
 	}
 
 #if defined(USE_DIN_BITBANG_DRIVER)
-	//if ( interrupted == 0 ) {
-	//	_tmpSREG = SREG;
-	//	cli();
-	//}
 	// pulsing the chip select pin to start capturing data
 	// force reset for clock edge on rising
 	digitalWriteFast(DIN_CLOCK_PIN, HIGH);
@@ -225,9 +221,6 @@ void Din::read(uint8_t interrupted)
 			state_change = true;
 		}
 	}
-	//if ( interrupted == 0 ) {
-	//	SREG = _tmpSREG;	
-	//}
 #elif defined(USE_DIN_SPI_DRIVER)
 	//if ( interrupted == 0 ) { 
 		//ram_module._tmpSREG = SREG;
