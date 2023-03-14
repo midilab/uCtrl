@@ -94,6 +94,8 @@ Your initial project structure should look like:
 
 A introduction to modules, base schematics and **modules.h** MACRO setup.
 
+All the schematics are available as [PDF or Kicad format here](https://github.com/midilab/uMODULAR/tree/master/lib)
+
 ## AIN
 
 Wire up to 64 potentiometers.  
@@ -101,6 +103,9 @@ Wire up to 64 potentiometers.
 Use this module to create midi controllers or any other user interface with potentiometers.
 
 This module can handle single ADC ports on your microcontroller or multiplexed ADC port via 4051 or 4067 CI.
+
+[AIN 8 Potentiometers Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/pot8.pdf)  
+[AIN 16 Potentiometers Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/pot16.pdf)
 
 **modules.h**
 ```c
@@ -203,14 +208,14 @@ void loop()
 }
 ```
 
-Make use of 4051 or 4067 for multiplexed analog inputs  
-*link or image to the ain options schematic
-
 ## DIN
 
 Wire up to 64 push buttons or rotary encoders.
 
-This module can handle single Digital ports on your microcontroller or multiplexed Digital port via 165 CI.
+This module can handle single Digital Input ports on your microcontroller or multiplexed Digital Input port via 165 CI.
+
+[DIN 8 Push Buttons Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/push8.pdf)  
+[DIN 16 Push Buttons Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/push16.pdf)
 
 **modules.h**
 ```c
@@ -339,14 +344,14 @@ void loop()
 }
 ```
 
-Make use of 165 shift register to expand buttons and/or encoders.  
-*link or image to the din options schematic
-
 ## DOUT
 
 Wire up to 64 leds or any other digital output.
 
 This module can handle single Digital output ports on your microcontroller or multiplexed Digital output port via 595 CI.
+
+[DOUT 8 Leds Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/led8.pdf)  
+[DOUT 16 Leds Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/led16.pdf)
 
 **modules.h**
 ```c
@@ -436,9 +441,6 @@ void loop()
   uCtrl.dout->write(SR_LED_1, HIGH); 
 }
 ```
-
-Make use of 595 shiftregister to expand digital output like leds.  
-*link or image to the dout options schematic
 
 ## Touch
 
