@@ -116,7 +116,7 @@ class Din
 		uint8_t _button_pin[USE_DIN_MAX_PORTS] = {0};
 
 #if defined(USE_DIN_SPI_DRIVER)
-		SPIClass * _spi_device = nullptr;
+		volatile SPIClass * _spi_device = nullptr;
 		void setSpi(SPIClass * spi_device = nullptr);
 #endif
 };

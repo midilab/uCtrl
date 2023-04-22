@@ -129,7 +129,7 @@ void enableTimer()
 		// with 0 the highest and 255 the lowest. Most other interrupts default to 128. 
 		// As a general guideline, interrupt routines that run longer should be given 
 		// lower priority (higher numerical values).
-		_uctrlTimer.priority(80);
+		_uctrlTimer.priority(180);
 	#endif // defined(TEENSYDUINO)
 
 	#if defined(SEEED_XIAO_M0)
@@ -787,7 +787,7 @@ void ucrtISR()
 	// ~30ms call
 	if (++_timerCounterDout == 120) {
 		_timerCounterDout = 0;
-		uCtrl.dout->flush();
+		uCtrl.dout->flush(1);
 		return;
 	}
 #endif // defined(USE_DOUT)

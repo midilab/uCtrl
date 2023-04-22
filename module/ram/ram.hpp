@@ -55,11 +55,10 @@ class Ram
 		uint32_t getFreeRam();
 			
     protected:
-		SPIClass * _spi_device = nullptr;
+		volatile SPIClass * _spi_device = nullptr;
 		uint32_t _buffer_address_pointer = 0;
 		uint8_t _buffer_address_id_pointer = 0;
-		BUFFER_LAYOUT_RAM _buffer_layout[4];
-		uint8_t _counter = 0;
+		volatile BUFFER_LAYOUT_RAM _buffer_layout[4];
 };
 
 } }

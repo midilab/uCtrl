@@ -222,11 +222,10 @@ void Din::read(uint8_t interrupted)
 		}
 	}
 #elif defined(USE_DIN_SPI_DRIVER)
-	//if ( interrupted == 0 ) { 
-		//ram_module._tmpSREG = SREG;
-		//cli();
-		_spi_device->usingInterrupt(255);
-	//} 
+	if ( interrupted == 0 ) { 
+		noInterrupts();
+		//_spi_device->usingInterrupt(255);
+	} 
 	_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
 	// pulsing the chip select pin to start capturing data
 	digitalWrite(DIN_LATCH_PIN, LOW);
@@ -241,10 +240,10 @@ void Din::read(uint8_t interrupted)
 		}
 	}
 	_spi_device->endTransaction();
-	//if ( interrupted == 0 ) { 
-		//SREG = _tmpSREG;
-		_spi_device->notUsingInterrupt(255);
-	//}  
+	if ( interrupted == 0 ) { 
+		interrupts();
+		//_spi_device->notUsingInterrupt(255);
+	}  
 #endif
 
 	if (state_change) {
