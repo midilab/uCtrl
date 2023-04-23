@@ -16,6 +16,24 @@
 #include "sdspi.hpp"
 #endif
 
+
+//
+// multicore archs
+//
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	portMUX_TYPE _uctrlTimerMux = portMUX_INITIALIZER_UNLOCKED;
+	#define ATOMIC(X) portENTER_CRITICAL_ISR(&_uctrlTimerMux); X; portEXIT_CRITICAL_ISR(&_uctrlTimerMux);
+	#define ATOMIC_START portENTER_CRITICAL_ISR(&_uctrlTimerMux);
+	#define ATOMIC_END portEXIT_CRITICAL_ISR(&_uctrlTimerMux);
+//
+// singlecore archs
+//
+#else // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	#define ATOMIC(X) noInterrupts(); X; interrupts();
+	#define ATOMIC_START noInterrupts();
+	#define ATOMIC_END interrupts();
+#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+
 namespace uctrl { namespace module {
 
 SdCard::SdCard()
@@ -58,40 +76,58 @@ void SdCard::init(SPIClass * spi_device)
   //_cache = (uint8_t*)_sd_fat.vol()->cacheAddress()->data;
 }
 
-bool SdCard::openFile(const char * path, uint8_t oflags)
+bool SdCard::openFile(const char * path, uint8_t oflags, uint8_t interrupted = 0)
 {
   if ( oflags == 1 ) {
     oflags = O_WRITE | O_CREAT;
+    if ( interrupted == 0 ) ATOMIC_START
     _sd_fat.remove(path);
+    if ( interrupted == 0 ) ATOMIC_END
   } else if ( oflags == 0 ) {
     oflags = O_READ;
   }
-  if ( _file = _sd_fat.open(path, oflags) ) {
+
+  if ( interrupted == 0 ) ATOMIC_START
+  _file = _sd_fat.open(path, oflags);
+  if ( interrupted == 0 ) ATOMIC_END
+
+  if (_file) {
     return true;
   }
   return false;
 }
 
-bool SdCard::closeFile()
+bool SdCard::closeFile(uint8_t interrupted = 0)
 {
   if (_file) {
+
+    if ( interrupted == 0 ) ATOMIC_START
     _file.close();
+    if ( interrupted == 0 ) ATOMIC_END
+
     return true;
   }
   return false;
 }
 
-uint8_t * SdCard::getData(size_t buffer_size)
+uint8_t * SdCard::getData(size_t buffer_size, uint8_t interrupted = 0)
 {
-  if ( _file.read(_cache, buffer_size) < buffer_size ) {
+  uint8_t ret = 0;
+  if ( interrupted == 0 ) ATOMIC_START
+  ret = _file.read(_cache, buffer_size);
+  if ( interrupted == 0 ) ATOMIC_END
+  
+  if ( ret < buffer_size ) {
     return NULL;
   } else {
     return _cache;
   }
 }
 
-bool SdCard::setData(uint8_t * buffer, size_t buffer_size)
+bool SdCard::setData(uint8_t * buffer, size_t buffer_size, uint8_t interrupted = 0)
 {
+  uint8_t ret = 0;
+
   // buffer == NULL is the end of file setData
   if ( buffer == NULL ) {
     // zeroing our buffer count
@@ -101,12 +137,20 @@ bool SdCard::setData(uint8_t * buffer, size_t buffer_size)
   
   // if we reach the 512 bytes boundary flush our data 
   if ( (_buffer_count + buffer_size) > 512 ) {
+
+    if ( interrupted == 0 ) ATOMIC_START
     _file.flush();
+    if ( interrupted == 0 ) ATOMIC_END
+    
     _buffer_count = 0;
   }
     
   // write data to sdcard
-  if ( _file.write(buffer, buffer_size) < buffer_size ) {
+  if ( interrupted == 0 ) ATOMIC_START
+  ret = _file.write(buffer, buffer_size);
+  if ( interrupted == 0 ) ATOMIC_END
+  
+  if ( ret < buffer_size ) {
     return NULL;
   }
   
@@ -146,15 +190,26 @@ bool SdCard::readTextLine(char * line, char * str, size_t size, uint8_t field_nu
   return true;
 }
 
-bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num)
+bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num, uint8_t interrupted = 0)
 {
-  if ( (!_file.available() && field_num == 0) || size > BUFFER_SIZE) {
+  uint8_t ret = 0;
+
+  if ( interrupted == 0 ) ATOMIC_START
+  ret = _file.available();
+  if ( interrupted == 0 ) ATOMIC_END
+
+  if ( (!ret && field_num == 0) || size > BUFFER_SIZE) {
       return false;
   }
   
   // do only process next file line into _cache if field_num == 0
   if ( field_num == 0 ) {
-    if ( _file.fgets(_cache, BUFFER_SIZE) <= 0 ) { // EOF=0 error=-1
+
+    if ( interrupted == 0 ) ATOMIC_START
+    ret = _file.fgets(_cache, BUFFER_SIZE);
+    if ( interrupted == 0 ) ATOMIC_END
+
+    if ( ret <= 0 ) { // EOF=0 error=-1
       return false;
     }
   }
@@ -162,18 +217,28 @@ bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num)
   return readTextLine(_cache, string, size, field_num, ',');
 }
 
-bool SdCard::getConfig(int16_t * number, uint8_t field_num)
+bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted = 0)
 {
   char buf[BUFFER_SIZE];
   char * ptr;
-  
-  if ( !_file.available() && field_num == 0 ) {
+  uint8_t ret = 0;
+
+  if ( interrupted == 0 ) ATOMIC_START
+  ret = _file.available();
+  if ( interrupted == 0 ) ATOMIC_END
+
+  if ( !ret && field_num == 0 ) {
       return false;
   } 
   
   // do only process next file line into _cache if field_num == 0
-  if ( field_num == 0 ) {
-    if ( _file.fgets(_cache, BUFFER_SIZE) <= 0 ) { // EOF=0 error=-1
+  if ( field_num == 0 ) {   
+
+    if ( interrupted == 0 ) ATOMIC_START
+    ret = _file.fgets(_cache, BUFFER_SIZE);
+    if ( interrupted == 0 ) ATOMIC_END
+
+    if ( ret <= 0 ) { // EOF=0 error=-1
       return false;
     }
   }
@@ -188,18 +253,28 @@ bool SdCard::getConfig(int16_t * number, uint8_t field_num)
   return false;
 }
 
-bool SdCard::getConfig(float * number, uint8_t field_num)
+bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted = 0)
 {
   char buf[BUFFER_SIZE];
   char * ptr;
+  uint8_t ret = 0;
   
-  if ( !_file.available() && field_num == 0 ) {
+  if ( interrupted == 0 ) ATOMIC_START
+  ret = _file.available();
+  if ( interrupted == 0 ) ATOMIC_END
+
+  if ( !ret && field_num == 0 ) {
       return false;
   } 
   
   // do only process next file line into _cache if field_num == 0
   if ( field_num == 0 ) {
-    if ( _file.fgets(_cache, BUFFER_SIZE) <= 0 ) { // EOF=0 error=-1
+    
+    if ( interrupted == 0 ) ATOMIC_START
+    ret = _file.fgets(_cache, BUFFER_SIZE);
+    if ( interrupted == 0 ) ATOMIC_END
+
+    if ( ret <= 0 ) { // EOF=0 error=-1
       return false;
     }
   }
@@ -212,27 +287,43 @@ bool SdCard::getConfig(float * number, uint8_t field_num)
   return false;  
 }
 
-bool SdCard::setConfig(char * string, uint8_t size, uint8_t field_num)
+bool SdCard::setConfig(char * string, uint8_t size, uint8_t field_num, uint8_t interrupted = 0)
 {
+  if ( interrupted == 0 ) ATOMIC_START 
   // write data to sdcard
+  //bool result = _file.println(string);
   _file.println(string);
+	if ( interrupted == 0 ) ATOMIC_END
 
+  //return result;
   return true;
 }
 
-bool SdCard::remove(char * path)
+bool SdCard::remove(char * path, uint8_t interrupted = 0)
 {
-  return _sd_fat.remove(path);
+  if ( interrupted == 0 ) ATOMIC_START 
+  bool result = _sd_fat.remove(path);
+  if ( interrupted == 0 ) ATOMIC_END
+
+  return result;
 }
 
-bool SdCard::chdir(char * path)
+bool SdCard::chdir(char * path, uint8_t interrupted = 0)
 {
-  return _sd_fat.chdir(path);
+  if ( interrupted == 0 ) ATOMIC_START 
+  bool result = _sd_fat.chdir(path);
+	if ( interrupted == 0 ) ATOMIC_END
+
+  return result;
 }
 
-bool SdCard::exists(char * path)
+bool SdCard::exists(char * path, uint8_t interrupted = 0)
 {
-  return _sd_fat.exists(path);
+	if ( interrupted == 0 ) ATOMIC_START 
+  bool result = _sd_fat.exists(path);
+	if ( interrupted == 0 ) ATOMIC_END
+
+  return result;
 }	
 
 
