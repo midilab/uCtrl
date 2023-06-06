@@ -1,11 +1,11 @@
 # uCtrl
 
-uCtrl is the codebase library of [uMODULAR](https://github.com/midilab/uMODULAR) hardware project. It provides driver layer for all uMODULAR modules and user interface layer to easly create, extend and share more advanced Arduino applications.
-
-This library also enables realtime-like functionality inside Arduino ecosystem by using hardware timer interruption to create time predictable task management with resource-safe access via library API.
-
-uCtrl is a choice for robust, portable and fast-making musical instruments, sequencers, audio/video controllers and other related machines for Arduino platform.
-
+uCtrl is a comprehensive codebase library for the [uMODULAR](https://github.com/midilab/uMODULAR) hardware project. It offers a driver layer for all uMODULAR modules and a user interface layer that simplifies the creation, extension, and sharing of advanced Arduino/PlatformIO applications.  
+  
+With uCtrl, you can achieve realtime-like functionality within the Arduino/PlatformIO ecosystem by leveraging hardware timer interruptions for precise task management. The library provides a resource-safe access through its API, ensuring efficient and reliable operation.  
+  
+Choose uCtrl for developing robust, portable, and high-performance musical instruments, sequencers, audio/video controllers, and other related machines on the Arduino/PlatformIO platform.  
+  
 ## Supported microcontrollers
 
 The following microcontrollers and boards are supported and were tested:
@@ -102,7 +102,7 @@ Wire up to 64 potentiometers.
 
 Use this module to create midi controllers or any other user interface with potentiometers.
 
-This module can handle single ADC ports on your microcontroller or multiplexed ADC port via 4051 or 4067 CI.
+This module can handle single ADC ports on your microcontroller or multiplexed ADC ports via 4051 or 4067 CI.
 
 [AIN 8 Potentiometers Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/pot8.pdf)  
 [AIN 16 Potentiometers Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/pot16.pdf)
