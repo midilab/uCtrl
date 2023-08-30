@@ -117,7 +117,8 @@ class Din
 
 #if defined(USE_DIN_SPI_DRIVER)
 		volatile SPIClass * _spi_device = nullptr;
-		void setSpi(SPIClass * spi_device = nullptr);
+		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
+		uint8_t _latch_pin;
 #endif
 };
 

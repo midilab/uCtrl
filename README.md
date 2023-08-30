@@ -121,12 +121,6 @@ This module can handle single ADC ports on your microcontroller or multiplexed A
 // for multiplexed support uncomment the needed driver
 #define USE_AIN_4051_DRIVER
 //#define USE_AIN_4067_DRIVER
-// pinout setup for CI driver
-#define AIN_MUX_CTRL_A    45
-#define AIN_MUX_CTRL_B    47
-#define AIN_MUX_CTRL_C    49
-// D is only needed when using 4067 driver
-//#define AIN_MUX_CTRL_D    45
 
 #endif
 ```
@@ -169,7 +163,16 @@ void ainInput(uint8_t port, uint16_t value)
 void setup() 
 {
   // always call module init before setup it
-  uCtrl.initAin();
+  // If you're using 4051 or 4067 multiplexers initAin with
+  // mux control pins to be used as parameters
+  // for 4051
+  // initAin(int mux_ctrl_a, int mux_ctrl_b, int mux_ctrl_c)
+  uCtrl.initAin(6,7,8);
+  // for 4067
+  // initAin(int mux_ctrl_a, int mux_ctrl_b, int mux_ctrl_c, int mux_ctrl_d)
+  //uCtrl.initAin(6,7,8,9);
+  // for microcontroller analog ports only(no mux)
+  //uCtrl.initAin();
   
   // just plug the hardware by analog ports ADC
   // plug() is for microcontroller direct ADC pin
@@ -309,12 +312,13 @@ void dinInput(uint8_t port, uint16_t value)
 
 void setup() 
 {
-  // this initiation signature is for microcontroller ports or bitbang 165 shiftregister drivers
-  //uCtrl.initDin();
   // if you're going to use SPI driver you need to pass the 
-  // spi device you want to initDin
-  // initDin(spi device)
-  uCtrl.initDin(&SPI);
+  // spi device you want to initDin and latch_pin to be used
+  // for 165 shiftregisters
+  // initDin(spi device, int latch_pin)
+  uCtrl.initDin(&SPI, 6);
+  // otherwise you can just initDin without parameters
+  //uCtrl.initDin();
   
   uCtrl.din->plug(13);
   uCtrl.din->plug(12);
@@ -375,7 +379,6 @@ This module can handle single Digital output ports on your microcontroller or mu
 // a Free or shared SPI device.
 //
 #define USE_DOUT_SPI_DRIVER
-#define DOUT_LATCH_PIN   8
 
 //
 // using bitbang in case you dont have a free SPI. 
@@ -408,12 +411,13 @@ enum {
 
 void setup() 
 {
-  // this initiation signature is for microcontroller ports or bitbang 595 shiftregister drivers
-  //uCtrl.initDout();
   // if you're going to use SPI driver you need to pass the 
-  // spi device you want to initDout
-  // initDout(spi device)
-  uCtrl.initDout(&SPI);
+  // spi device you want to initDout and latch_pin to be used
+  // for 595 shiftregisters
+  // initDout(spi device, int latch_pin)
+  uCtrl.initDout(&SPI, 8);
+  // otherwise you can just initDout without parameters
+  //uCtrl.initDout();
   
   // this plugs 2 microntroller Digital ports making 2 digital outputs avaliable
   uCtrl.dout->plug(5);

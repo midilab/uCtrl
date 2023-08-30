@@ -93,9 +93,12 @@ class Ain
 		
 		void setMaxAdcValue(uint16_t max_adc_value);
 	
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		void setMuxPins();
+#if defined(USE_AIN_4051)
+		void setMuxPins(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
 		void selectMuxPort(uint8_t port);
+		int8_t _mux_control_pin_1 = -1;
+		int8_t _mux_control_pin_2 = -1;
+		int8_t _mux_control_pin_3 = -1;
 #endif
 
 		int8_t _port[USE_AIN_MAX_PORTS] = {-1};

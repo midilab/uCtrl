@@ -151,19 +151,19 @@ class uCtrlClass
 	
 #if defined(USE_DOUT)	
 	// dout module
-	bool initDout(SPIClass * spi_device = nullptr);
+	bool initDout(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
 	uctrl::module::Dout * dout = nullptr;
 #endif // defined(USE_DOUT)
 	
 #if defined(USE_DIN)
 	// din module
-	bool initDin(SPIClass * spi_device = nullptr);
+	bool initDin(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
 	uctrl::module::Din * din = nullptr;
 #endif // defined(USE_DIN)
 	
 #if defined(USE_AIN)
 	// ain module
-	bool initAin();
+	bool initAin(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
 	void processAin();
 	uctrl::module::Ain * ain = nullptr;
     volatile EVENT_QUEUE _ain_event_queue;	

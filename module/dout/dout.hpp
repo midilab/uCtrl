@@ -86,7 +86,8 @@ class Dout
 
 #if defined(USE_DOUT_SPI_DRIVER)
 	volatile SPIClass * _spi_device = nullptr;
-	void setSpi(SPIClass * spi_device = nullptr);
+	void setSpi(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
+        int8_t _latch_pin = -1;
 #endif
 
 };

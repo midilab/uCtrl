@@ -56,24 +56,28 @@ void Ain::setMaxAdcValue(uint16_t max_adc_value)
 }
 
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-void Ain::setMuxPins()
+void Ain::setMuxPins(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 {
 	// setup pin 1
-	pinMode(AIN_MUX_CTRL_A, OUTPUT);
-	digitalWrite(AIN_MUX_CTRL_A, LOW);
+	_mux_control_pin_1 = pin1;
+	pinMode(_mux_control_pin_1, OUTPUT);
+	digitalWrite(_mux_control_pin_1, LOW);
 
 	// setup pin 2
-	pinMode(AIN_MUX_CTRL_B, OUTPUT);
-	digitalWrite(AIN_MUX_CTRL_B, LOW);
+	_mux_control_pin_2 = pin2;
+	pinMode(_mux_control_pin_2, OUTPUT);
+	digitalWrite(_mux_control_pin_2, LOW);
 
 	// setup pin 3
-	pinMode(AIN_MUX_CTRL_C, OUTPUT);
-	digitalWrite(AIN_MUX_CTRL_C, LOW);
+	_mux_control_pin_3 = pin3;
+	pinMode(_mux_control_pin_3, OUTPUT);
+	digitalWrite(_mux_control_pin_3, LOW);
 
 #if defined(USE_AIN_4067_DRIVER)
 	// setup pin 4
-	pinMode(AIN_MUX_CTRL_D, OUTPUT);
-	digitalWrite(AIN_MUX_CTRL_D, LOW);
+	_mux_control_pin_4 = pin4;
+	pinMode(_mux_control_pin_4, OUTPUT);
+	digitalWrite(_mux_control_pin_4, LOW);
 #endif
 
 }
@@ -196,11 +200,11 @@ void Ain::selectMuxPort(uint8_t port)
 	port = port%AIN_MUX_SIZE;
 	
 	// select the mux port to be readed for 4051 or 4067
-	digitalWrite(AIN_MUX_CTRL_A, bitRead(port, 0));
-	digitalWrite(AIN_MUX_CTRL_B, bitRead(port, 1));
-	digitalWrite(AIN_MUX_CTRL_C, bitRead(port, 2));	
+	digitalWrite(_mux_control_pin_1, bitRead(port, 0));
+	digitalWrite(_mux_control_pin_2, bitRead(port, 1));
+	digitalWrite(_mux_control_pin_3, bitRead(port, 2));	
 #if defined(USE_AIN_4067_DRIVER)
-	digitalWrite(AIN_MUX_CTRL_D, bitRead(port, 3));	
+	digitalWrite(_mux_control_pin_4, bitRead(port, 3));	
 #endif
 }
 #endif

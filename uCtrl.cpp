@@ -313,7 +313,7 @@ void uCtrlClass::processMidi()
 #endif // defined(USE_MIDI)
 
 #if defined(USE_DOUT)
-bool uCtrlClass::initDout(SPIClass * spi_device)
+bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin)
 {
 	if ( dout == nullptr ) {
 		dout = &dout_module;
@@ -322,7 +322,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device)
 	if ( dout != nullptr ) {
 #if defined(USE_DOUT_SPI_DRIVER)		
 		if (spi_device != nullptr) {
-			dout->setSpi(spi_device);
+			dout->setSpi(spi_device, latch_pin);
 		}
 #endif // defined(USE_DOUT_SPI_DRIVER)
 		return true;
@@ -333,7 +333,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device)
 #endif // defined(USE_DOUT)
 
 #if defined(USE_DIN)
-bool uCtrlClass::initDin(SPIClass * spi_device)
+bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin)
 {
 	if ( din == nullptr ) {
 		din = &din_module;
@@ -342,7 +342,7 @@ bool uCtrlClass::initDin(SPIClass * spi_device)
 	if ( din != nullptr ) {
 #if defined(USE_DIN_SPI_DRIVER)		
 		if (spi_device != nullptr) {
-			din->setSpi(spi_device);
+			din->setSpi(spi_device, latch_pin);
 		}
 #endif // defined(USE_DIN_SPI_DRIVER)
 		return true;
@@ -353,7 +353,7 @@ bool uCtrlClass::initDin(SPIClass * spi_device)
 #endif // defined(USE_DIN)
 
 #if defined(USE_AIN)
-bool uCtrlClass::initAin()
+bool uCtrlClass::initAin(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 {
 	if ( ain == nullptr ) {
 		ain = &ain_module;
@@ -361,7 +361,7 @@ bool uCtrlClass::initAin()
 	
 	if ( ain != nullptr ) {
 #if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		ain->setMuxPins();
+		ain->setMuxPins(pin1, pin2, pin3, pin4);
 #endif
 		return true;
 	} else {
