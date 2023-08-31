@@ -1,7 +1,7 @@
 /*!
  *  @file       ain.cpp
  *  Project     Arduino Library API interface for uMODULAR projects
- *  @brief      Analog input driver module (4051 multiplexer)
+ *  @brief      Analog input driver module, supports uc analog ports and 4051/4067 multiplexers
  *  @version    1.0.0
  *  @author     Romulo Silva
  *  @date       30/10/22

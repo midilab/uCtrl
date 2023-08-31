@@ -244,7 +244,6 @@ This module can handle single Digital Input ports on your microcontroller or mul
 // a Free or shared SPI device.
 //
 #define USE_DIN_SPI_DRIVER
-#define DIN_LATCH_PIN     9 
 
 //
 // using bitbang in case you dont have a free SPI. 
