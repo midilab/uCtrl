@@ -142,12 +142,15 @@ void CapTouch::read()
 		_digital_input_state[group_analog_port] = 0;
 	}
 
-	value = 0;
-	for(uint8_t k=0; k < READ_BUFFER_SIZE; k++) {
-		value += fastTouchRead(_port[group_analog_port]);
+	if (READ_BUFFER_SIZE == 1) {
+		value = fastTouchRead(_port[group_analog_port]) > _capacitance_threshold ? 1 : 0;
+	} else {
+		value = 0;
+		for(uint8_t k=0; k < READ_BUFFER_SIZE; k++) {
+			value += fastTouchRead(_port[group_analog_port]);
+		}
+		value = (value / READ_BUFFER_SIZE) > _capacitance_threshold ? 1 : 0;
 	}
-	value = (value / READ_BUFFER_SIZE) > _capacitance_threshold ? 1 : 0;
-	//value = fastTouchRead(_port[group_analog_port]) > _capacitance_threshold ? 1 : 0;
 
 	// select next mux port while processing this one to avoid crosstalk issues
 	_next_touch_port = ++_next_touch_port % _remote_touch_port;

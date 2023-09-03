@@ -36,7 +36,7 @@ namespace uctrl { namespace module {
 
 #define TOUCH_EVENT_QUEUE_SIZE	4
 
-#define READ_BUFFER_SIZE	4
+#define READ_BUFFER_SIZE	1
 
 typedef struct 
 {
