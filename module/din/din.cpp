@@ -147,7 +147,7 @@ void Din::init()
 
 	event_queue.head = 0;
 	event_queue.tail = 0;
-	event_queue.size = EVENT_QUEUE_SIZE;
+	event_queue.size = DIN_EVENT_QUEUE_SIZE;
 }
 
 #if defined(USE_DIN_SPI_DRIVER)

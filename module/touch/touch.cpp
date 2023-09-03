@@ -32,7 +32,7 @@
 
 #include "touch.hpp"
 
-namespace uctrl { namespace module { namespace touch {
+namespace uctrl { namespace module {
 
 CapTouch::CapTouch()
 {
@@ -107,7 +107,7 @@ void CapTouch::init()
 
 	event_queue.head = 0;
 	event_queue.tail = 0;
-	event_queue.size = EVENT_QUEUE_SIZE;
+	event_queue.size = TOUCH_EVENT_QUEUE_SIZE;
 }
 
 void CapTouch::setThreshold(uint16_t threshold)
@@ -173,7 +173,7 @@ void CapTouch::read()
 	
 }
 
-} } }
+} }
 
-uctrl::module::touch::CapTouch cap_touch_module;
+uctrl::module::CapTouch cap_touch_module;
 #endif

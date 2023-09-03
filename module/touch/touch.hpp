@@ -32,9 +32,9 @@
 #include <Arduino.h>
 #include "FastTouch.h"
 
-namespace uctrl { namespace module { namespace touch {
+namespace uctrl { namespace module {
 
-#define EVENT_QUEUE_SIZE	4
+#define TOUCH_EVENT_QUEUE_SIZE	4
 
 #define READ_BUFFER_SIZE	4
 
@@ -42,15 +42,15 @@ typedef struct
 {
 	uint8_t port;
 	uint8_t value;
-} EVENT_QUEUE_DATA;
+} TOUCH_EVENT_QUEUE_DATA;
 
 typedef struct
 {
-	EVENT_QUEUE_DATA event[EVENT_QUEUE_SIZE];
+	TOUCH_EVENT_QUEUE_DATA event[TOUCH_EVENT_QUEUE_SIZE];
 	volatile uint8_t head;
 	volatile uint8_t tail;
 	uint8_t size; //of the buffer
-} EVENT_QUEUE;
+} TOUCH_EVENT_QUEUE;
 
 // helper
 #define BIT_VALUE(a,n) ((a >> n)  & 0x01)	
@@ -96,12 +96,12 @@ class CapTouch
 
 		uint16_t _capacitance_threshold = 40;
 
-    	volatile EVENT_QUEUE event_queue;	
+    	volatile TOUCH_EVENT_QUEUE event_queue;	
 			
 };		
 			
-} } }
+} }
 
-extern uctrl::module::touch::CapTouch cap_touch_module;
+extern uctrl::module::CapTouch cap_touch_module;
 		
 #endif

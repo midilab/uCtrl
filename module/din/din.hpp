@@ -32,27 +32,27 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-#define EVENT_QUEUE_SIZE	4
+namespace uctrl { namespace module { 
+
+#define DIN_EVENT_QUEUE_SIZE	4
 
 #if !defined(USE_DIN_MAX_PORTS)
 #define USE_DIN_MAX_PORTS 16
 #endif
 
-namespace uctrl { namespace module { 
-
 typedef struct 
 {
 	uint8_t port;
 	uint8_t value;
-} EVENT_QUEUE_DATA;
+} DIN_EVENT_QUEUE_DATA;
 
 typedef struct
 {
-	EVENT_QUEUE_DATA event[EVENT_QUEUE_SIZE];
+	DIN_EVENT_QUEUE_DATA event[DIN_EVENT_QUEUE_SIZE];
 	volatile uint8_t head;
 	volatile uint8_t tail;
 	uint8_t size; //of the buffer
-} EVENT_QUEUE;
+} DIN_EVENT_QUEUE;
 
 #if defined(USE_DIN_SPI_DRIVER)
 #define SPI_SPEED_DIN         4000000
@@ -110,7 +110,7 @@ class Din
 		uint8_t _chain_size_sr = 0;
 		uint8_t _chain_pin_gap = 0;
 
-    	volatile EVENT_QUEUE event_queue;	
+    	volatile DIN_EVENT_QUEUE event_queue;	
 
 		// used for direct microcontroller digital input pins
 		uint8_t _button_pin[USE_DIN_MAX_PORTS] = {0};
