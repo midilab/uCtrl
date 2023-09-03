@@ -28,133 +28,50 @@
 
 #include "uCtrl.h"
 
-// 
-// Timer setup for work clock
 //
-// Teensyduino port
+// General Arduino AVRs port
+//
+#if defined(ARDUINO_ARCH_AVR)
+    #include "platforms/avr.h"
+#endif
+//
+// Teensyduino ARMs port
 //
 #if defined(TEENSYDUINO)
-	IntervalTimer _uctrlTimer;
-#endif // defined(TEENSYDUINO)
+    #include "platforms/teensy.h"
+#endif
 //
 // Seedstudio XIAO M0 port
 //
 #if defined(SEEED_XIAO_M0)
-	// 16 bits timer
-	#include <TimerTC3.h>
-	// uses TimerTc3
-#endif // defined(SEEED_XIAO_M0)
+    #include "platforms/samd.h"
+#endif
 //
 // ESP32 family
 //
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-	hw_timer_t * _uctrlTimer = NULL;
-	#define TIMER_ID	1
-#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-
+    #include "platforms/esp32.h"
+#endif
 //
-// multicore archs
+// STM32XX family
 //
-#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-	portMUX_TYPE _uctrlTimerMux = portMUX_INITIALIZER_UNLOCKED;
-	#define ATOMIC(X) portENTER_CRITICAL_ISR(&_uctrlTimerMux); X; portEXIT_CRITICAL_ISR(&_uctrlTimerMux);
-//
-// singlecore archs
-//
-#else // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-	#define ATOMIC(X) noInterrupts(); X; interrupts();
-#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-
-//
-// Generic AVR timer
-#if defined(ARDUINO_ARCH_AVR)
-void enableTimer()
-{
-	ATOMIC(
-#if defined(__AVR_ATmega32U4__)	
-		// avr general timer3 - 16bits
-		TCCR3A = 0; // set entire TCCR1A register to 0
-		TCCR3B = 0; // same for TCCR1B
-		TCNT3  = 0; // initialize counter value to 0
-		// set compare match register for 4000 Hz increments [250us]
-		OCR3A = 3999; // = 16000000 / (1 * 4000) - 1 (must be <65536)
-		// turn on CTC mode
-		TCCR3B |= (1 << WGM32);
-		// Set CS12, CS11 and CS10 bits for 1 prescaler
-		TCCR3B |= (0 << CS32) | (0 << CS31) | (1 << CS30);
-		// enable timer compare interrupt
-		TIMSK3 |= (1 << OCIE3A);
-#else // defined(__AVR_ATmega32U4__)	
-		// avr general timer2 - 8bits
-		TCCR2A = 0; // set entire TCCR2A register to 0
-		TCCR2B = 0; // same for TCCR2B
-		TCNT2  = 0; // initialize counter value to 0
-		// set compare match register for 4000 Hz increments [250us]
-		OCR2A = 124; // = 16000000 / (32 * 4000) - 1 (must be <256)
-		// turn on CTC mode
-		TCCR2A |= (1 << WGM21);
-		// Set CS22, CS21 and CS20 bits for 32 prescaler
-		TCCR2B |= (0 << CS22) | (1 << CS21) | (1 << CS20);
-		// enable timer compare interrupt
-		TIMSK2 |= (1 << OCIE2A);
-		/* 
-		we can make an option here for those who dont need a input clock sync 
-		instead of running at 250us goes to 1ms will make the interface more responsive for 16mhz AVRs
-		// 1000 Hz (16000000/((124+1)*128))
-		OCR2A = 124;
-		// turn on CTC mode
-		TCCR2A |= (1 << WGM21);
-		// Prescaler 128
-		TCCR2B |= (1 << CS22) | (1 << CS20);
-		*/
-#endif // defined(__AVR_ATmega32U4__)	
-	)
-}
-// ARM timers
-#else // defined(ARDUINO_ARCH_AVR)
-
-	// forward declaration of ISR
-	#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-		void ARDUINO_ISR_ATTR ucrtISR();
-	#else // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-		void ucrtISR();
-	#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-	
-void enableTimer()
-{
-	#if defined(TEENSYDUINO)
-		_uctrlTimer.begin(ucrtISR, 250);
-		// Set the interrupt priority level, controlling which other interrupts
-		// this timer is allowed to interrupt. Lower numbers are higher priority, 
-		// with 0 the highest and 255 the lowest. Most other interrupts default to 128. 
-		// As a general guideline, interrupt routines that run longer should be given 
-		// lower priority (higher numerical values).
-		_uctrlTimer.priority(180);
-	#endif // defined(TEENSYDUINO)
-
-	#if defined(SEEED_XIAO_M0)
-		TimerTc3.initialize(250);
-
-		// attach to generic uclock ISR
-		TimerTc3.attachInterrupt(ucrtISR);
-	#endif // defined(SEEED_XIAO_M0)
-
-	#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-		_uctrlTimer = timerBegin(TIMER_ID, 80, true);
-
-		// attach to generic uclock ISR
-		timerAttachInterrupt(_uctrlTimer, &ucrtISR, true);
-
-		// init clock tick time
-		timerAlarmWrite(_uctrlTimer, 250, true); 
-
-		// activate it!
-		timerAlarmEnable(_uctrlTimer);
-	#endif // defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-}
-#endif // defined(ARDUINO_ARCH_AVR)
+#if defined(ARDUINO_ARCH_STM32)
+    #include "platforms/stm32.h"
+#endif
 
 namespace uctrl {
+
+//
+// Platform specific timer setup/control
+//
+// initTimer(uint32_t us_interval) and setTimer(uint32_t us_interval)
+// are called from architecture specific module included at the
+// header of this file
+void enableTimer()
+{
+    // begin at 250us task
+    initTimer(250);
+}
 
 uCtrlClass::uCtrlClass()
 {
