@@ -36,10 +36,6 @@ namespace uctrl { namespace module {
 
 Storage::Storage()
 {
-#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-	// ESP32 family? maximum EEPROM size is 4096 bytes (4 KB)
-	EEPROM.begin(512);
-#endif
 }
 
 void Storage::init(SPIClass * spi_device)
@@ -47,6 +43,9 @@ void Storage::init(SPIClass * spi_device)
 	if (spi_device != nullptr) {
 		// we need to activate sdcard support
 	}
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	EEPROM.begin(INTERNAL_MEMORY_SIZE);
+#endif
 }
 
 bool Storage::save(void *data, size_t n, int address)

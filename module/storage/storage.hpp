@@ -33,6 +33,11 @@
 #include <SPI.h>
 #include <EEPROM.h>
 
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+// ESP32 family: maximum EEPROM size is 4096 bytes (4 KB)
+#define INTERNAL_MEMORY_SIZE	4095
+#endif
+
 namespace uctrl { namespace module { 
 
 class Storage

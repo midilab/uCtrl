@@ -112,8 +112,10 @@ bool uCtrlClass::initStorage(SPIClass * spi_device)
 		storage->init(spi_device);
 		return true;
 	} else {
-		return false;
+		storage->init();
+		return true;
 	}	
+	return false;
 }
 #endif // defined(USE_STORAGE)
 
