@@ -621,7 +621,7 @@ uint8_t uCtrlClass::getOutputPorts()
 		
 }
 
-}
+} // end namespace uctrl
 
 uctrl::uCtrlClass uCtrl;
 
@@ -651,10 +651,8 @@ ISR(TIMER3_COMPA_vect, ISR_NOBLOCK)
 	#else
 ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) 
 	#endif
-#elif defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-void ARDUINO_ISR_ATTR ucrtISR()
 #else
-void ucrtISR() 
+void uCtrlHandler() 
 #endif
 {
 	// 250us call

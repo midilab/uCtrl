@@ -3,7 +3,7 @@
 #include <TimerTC3.h>
 
 // forward declaration of ISR
-void ucrtISR();
+void uCtrlHandler();
 
 namespace uctrl {
 
@@ -17,7 +17,7 @@ void initTimer(uint32_t init_clock)
     TimerTc3.initialize(init_clock);
 
     // attach to generic uclock ISR
-    TimerTc3.attachInterrupt(ucrtISR);
+    TimerTc3.attachInterrupt(uCtrlHandler);
 }
 
 }

@@ -36,9 +36,10 @@ namespace uctrl { namespace module {
 
 Storage::Storage()
 {
-	//callback = nullptr;
-	// ESP family?
-	//EEPROM.begin(4096);
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	// ESP32 family? maximum EEPROM size is 4096 bytes (4 KB)
+	EEPROM.begin(512);
+#endif
 }
 
 void Storage::init(SPIClass * spi_device)
@@ -55,9 +56,14 @@ bool Storage::save(void *data, size_t n, int address)
 	if (address != -1)
 		_current_address = address;
 
-    for (uint16_t i = 0; i < n; i++) {
+    for (uint16_t i = 0; i < n; i++)
 		EEPROM.put(_current_address++, *src++);
-    }
+
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	// esp32 has no epprom, it emulates using flash area, commit to it!
+	EEPROM.commit();
+#endif
+	
 	return true;
 }
 
@@ -68,17 +74,22 @@ bool Storage::load(void *data, size_t n, int address)
 	if (address != -1)
 		_current_address = address;
 
-    for (uint16_t i = 0; i < n; i++) {
+    for (uint16_t i = 0; i < n; i++)
 		EEPROM.get(_current_address++, *dst++);
-    }
+
 	return true;
 }
 
 bool Storage::copy(int address_from, int address_to, size_t n)
 {
-	for (uint16_t i = 0; i < n; i++) {
+	for (uint16_t i = 0; i < n; i++)
 		EEPROM.write(address_to++, EEPROM.read(address_from++));
-	}
+
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	// esp32 has no epprom, it emulates using flash area, commit to it!
+	EEPROM.commit();
+#endif
+
 	return true;
 }
 

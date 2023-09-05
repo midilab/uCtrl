@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 // forward declaration of ISR
-void ucrtISR();
+void uCtrlHandler();
 
 namespace uctrl {
 
@@ -11,7 +11,7 @@ IntervalTimer _uclockTimer;
 
 void initTimer(uint32_t init_clock)
 {
-    _uclockTimer.begin(ucrtISR, init_clock); 
+    _uclockTimer.begin(uCtrlHandler, init_clock); 
 
     // Set the interrupt priority level, controlling which other interrupts
     // this timer is allowed to interrupt. Lower numbers are higher priority, 

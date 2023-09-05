@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 // forward declaration of ISR
-void ucrtISR();
+void uCtrlHandler();
 
 namespace uctrl {
 
@@ -23,7 +23,7 @@ HardwareTimer * _uclockTimer = new HardwareTimer(TimerInstance);
 void initTimer(uint32_t us_interval)
 {
   _uclockTimer->setOverflow(us_interval, MICROSEC_FORMAT);
-  _uclockTimer->attachInterrupt(ucrtISR);
+  _uclockTimer->attachInterrupt(uCtrlHandler);
   _uclockTimer->resume();
 }
 

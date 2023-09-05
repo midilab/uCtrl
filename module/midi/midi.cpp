@@ -10,8 +10,12 @@ namespace uctrl { namespace module {
 // multicore archs
 //
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-	portMUX_TYPE _uctrlMidiTimerMux = portMUX_INITIALIZER_UNLOCKED;
-	#define ATOMIC(X) portENTER_CRITICAL_ISR(&_uctrlMidiTimerMux); X; portEXIT_CRITICAL_ISR(&_uctrlMidiTimerMux);
+	// mutex to protect the shared resource
+	SemaphoreHandle_t _mutex;
+	// mutex control for task
+	#define ATOMIC(X) xSemaphoreTake(_mutex, portMAX_DELAY); X; xSemaphoreGive(_mutex);
+	//portMUX_TYPE _uctrlMidiTimerMux = portMUX_INITIALIZER_UNLOCKED;
+	//#define ATOMIC(X) portENTER_CRITICAL_ISR(&_uctrlMidiTimerMux); X; portEXIT_CRITICAL_ISR(&_uctrlMidiTimerMux);
 //
 // singlecore archs
 //
@@ -23,6 +27,9 @@ Midi::Midi()
 {
 	_midiInputCallback = nullptr;
 	_midiOutputCallback = nullptr;
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	_mutex = xSemaphoreCreateMutex();
+#endif
 }
 
 Midi::~Midi()
