@@ -446,7 +446,7 @@ void uCtrlClass::run()
 				port == page->_nav_ctrl_port.left || 
 				port == page->_nav_ctrl_port.right) {
 				// if it is. lock ain pot control to avoid mess with inc/dec changes
-				ain->lockControl(page->_nav_ctrl_port.pot-1);
+				ain->lockControl(page->_nav_ctrl_port.pot);
 				// we also need to remove from our event queue any data from nav pot
 				discard_ain_data = true;
 			}
@@ -496,7 +496,7 @@ void uCtrlClass::run()
 				port == page->_nav_ctrl_port.left || 
 				port == page->_nav_ctrl_port.right) {
 				// if it is. lock ain pot control to avoid mess with inc/dec changes
-				ain->lockControl(page->_nav_ctrl_port.pot-1);
+				ain->lockControl(page->_nav_ctrl_port.pot);
 				// we also need to remove from our event queue any data from nav pot
 				discard_ain_data = true;
 			}
@@ -526,7 +526,7 @@ void uCtrlClass::run()
 #if defined(USE_PAGE_COMPONENT)
 		if (discard_ain_data) {
 			if (port == page->_nav_ctrl_port.pot) {
-				if (ain->isLocked(page->_nav_ctrl_port.pot-1) == false) {
+				if (ain->isLocked(page->_nav_ctrl_port.pot) == false) {
 					discard_ain_data = false;
 				} else {
 					continue;
