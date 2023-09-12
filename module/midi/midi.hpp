@@ -4,6 +4,10 @@
 #include <Arduino.h>
 
 // MIDI Support
+#if defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+#include <USB.h>
+#include "ESPNATIVEUSBMIDI/ESPNATIVEUSBMIDI.h"
+#endif
 #include "MIDI/MIDI.h"
 #if defined(__AVR_ATmega32U4__)
 #include "USB-MIDI/USB-MIDI.h"
@@ -28,6 +32,8 @@ class Midi
 		void plug(usb_midi_class * device);
 #elif defined(__AVR_ATmega32U4__)
 		void plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device);
+#elif defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+		void plug(midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> * device);
 #endif
 		bool read(uint8_t port);
 		void readAllPorts(uint8_t interrupted = 0);

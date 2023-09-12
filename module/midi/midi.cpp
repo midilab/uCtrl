@@ -98,6 +98,17 @@ void Midi::plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device)
 		_port_size++;
 	}
 }
+#elif defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+void Midi::plug(midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> * device)
+{
+	_midi_port_if[_port_size] = (void *) device;
+
+	initMidiInterface<midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>>>((midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> *)_midi_port_if[_port_size]);
+	device->setHandlePitchBend(handlePitchBend);
+	device->turnThruOff();	
+
+	_port_size++;
+}
 #endif
 
 uint8_t Midi::sizeOf()
