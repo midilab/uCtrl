@@ -2,12 +2,12 @@
 // Created by jbars on 5/26/2023.
 // Based on https://github.com/adafruit/Adafruit_TinyUSB_Arduino/blob/master/src/arduino/midi/Adafruit_USBD_MIDI.h
 //
-
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 
 #pragma once
+#include "sdkconfig.h"
 
 #if CONFIG_TINYUSB_MIDI_ENABLED
-#include "sdkconfig.h"
 
 #include "esp_event.h"
 #include "class/midi/midi.h"
@@ -52,3 +52,5 @@ private:
 
 
 #endif /* CONFIG_TINYUSB_HID_ENABLED */
+
+#endif /* defined(ARDUINO_ARCH_ESP32) || defined(ESP32) */
