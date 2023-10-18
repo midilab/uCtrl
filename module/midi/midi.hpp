@@ -8,7 +8,17 @@
 #include <USB.h>
 #include "ESPNATIVEUSBMIDI/ESPNATIVEUSBMIDI.h"
 #endif
+/* 
+#if defined(CONFIG_BT_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+#include "BLE-MIDI/BLEMIDI_Transport.h"
+//#include "BLE-MIDI/hardware/BLEMIDI_ESP32_NimBLE.h"
+#include "BLE-MIDI/hardware/BLEMIDI_ESP32.h"
+//#include "BLE-MIDI/hardware/BLEMIDI_nRF52.h"
+//#include "BLE-MIDI/hardware/BLEMIDI_ArduinoBLE.h"
+#endif */
+
 #include "MIDI/MIDI.h"
+
 #if defined(__AVR_ATmega32U4__)
 #include "USB-MIDI/USB-MIDI.h"
 #endif
@@ -28,6 +38,7 @@ class Midi
 
 		void init();	
 		void plug(midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> * device);
+		// handler for USB transport
 #if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
 		void plug(usb_midi_class * device);
 #elif defined(__AVR_ATmega32U4__)
@@ -35,6 +46,12 @@ class Midi
 #elif defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
 		void plug(midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> * device);
 #endif
+/* 
+		// handler for bluetooth transport: esp32 only
+#if defined(CONFIG_BT_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+		void plug(midi::MidiInterface<bleMidi::BLEMIDI_Transport<bleMidi::BLEMIDI_ESP32>, bleMidi::MySettings> * device);
+#endif */
+
 		bool read(uint8_t port);
 		void readAllPorts(uint8_t interrupted = 0);
 		void write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted = 0);

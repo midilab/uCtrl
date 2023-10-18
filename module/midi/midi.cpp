@@ -71,9 +71,7 @@ void Midi::plug(midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> * device)
 void Midi::plug(usb_midi_class * device)
 {
 	if ( _usb_port == 255 ) {
-		
 		_usb_port = _port_size;
-		
 		_midi_port_if[_usb_port] = (void *) device;
 
 		initMidiInterface<usb_midi_class>((usb_midi_class *)_midi_port_if[_usb_port]);
@@ -86,9 +84,7 @@ void Midi::plug(usb_midi_class * device)
 void Midi::plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device)
 {
 	if ( _usb_port == 255 ) {
-		
 		_usb_port = _port_size;
-		
 		_midi_port_if[_usb_port] = (void *) device;
 
 		initMidiInterface<midi::MidiInterface<usbMidi::usbMidiTransport>>((midi::MidiInterface<usbMidi::usbMidiTransport> *)_midi_port_if[_usb_port]);
@@ -101,15 +97,52 @@ void Midi::plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device)
 #elif defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
 void Midi::plug(midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> * device)
 {
+	if ( _usb_port == 255 ) {
+		_usb_port = _port_size;
+		_midi_port_if[_port_size] = (void *) device;
+
+		initMidiInterface<midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>>>((midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> *)_midi_port_if[_port_size]);
+		device->setHandlePitchBend(handlePitchBend);
+		device->turnThruOff();	
+
+		_port_size++;
+	}
+}
+#endif
+
+/* 
+#if defined(CONFIG_BT_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+void Midi::plug(midi::MidiInterface<bleMidi::BLEMIDI_Transport<bleMidi::BLEMIDI_ESP32>, bleMidi::MySettings>  * device)
+{
 	_midi_port_if[_port_size] = (void *) device;
 
-	initMidiInterface<midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>>>((midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> *)_midi_port_if[_port_size]);
+	//initMidiInterface<midi::MidiInterface<bleMidi::BLEMIDI_Transport<bleMidi::BLEMIDI_ESP32>, bleMidi::MySettings>((midi::MidiInterface<bleMidi::BLEMIDI_Transport<bleMidi::BLEMIDI_ESP32>, bleMidi::MySettings> *)_midi_port_if[_port_size]);
+	device->begin();
+
+	// Setup MIDI Callbacks to handle incomming messages
+	device->setHandleNoteOn(handleNoteOn);
+	device->setHandleNoteOff(handleNoteOff);
+	device->setHandleControlChange(handleCC);
+
+	//device->setHandleAfterTouchPoly(handleAfterTouchPoly);
+	//device->setHandleAfterTouchChannel(handleAfterTouchChannel);
+	device->setHandleSystemExclusive(handleSystemExclusive);
+
+	device->setHandleClock(handleClock);
+	device->setHandleStart(handleStart);
+	device->setHandleStop(handleStop);
+	
 	device->setHandlePitchBend(handlePitchBend);
-	device->turnThruOff();	
+	device->turnThruOff();
+
+	// how to handle this for API access?
+  	//BLEMIDI.setHandleConnected(OnConnected); // void OnConnected() {}
+  	//BLEMIDI.setHandleDisconnected(OnDisconnected); // void OnDisconnected() {}
 
 	_port_size++;
 }
 #endif
+ */
 
 uint8_t Midi::sizeOf()
 {
@@ -151,8 +184,13 @@ bool Midi::read(uint8_t port)
 		return readMidiInterface<usb_midi_class>((usb_midi_class *)_midi_port_if[port]);
 #elif defined(__AVR_ATmega32U4__)
 		return readMidiInterface<midi::MidiInterface<usbMidi::usbMidiTransport>>((midi::MidiInterface<usbMidi::usbMidiTransport> *)_midi_port_if[port]);
+#elif defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+		return readMidiInterface<midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>>>((midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> *)_midi_port_if[port]);
 #endif
 	}
+
+	// handle _ble_port too
+	// if ( _ble_port == port ) { ... }
 
 	return readMidiInterface<midi::MidiInterface<midi::SerialMIDI<HardwareSerial>>>((midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> *)_midi_port_if[port]);
 }
@@ -320,6 +358,8 @@ void Midi::write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_
 		writeMidiInterface<usb_midi_class>((usb_midi_class *)_midi_port_if[port], msg, interrupted);
 #elif defined(__AVR_ATmega32U4__)
 		writeMidiInterface<midi::MidiInterface<usbMidi::usbMidiTransport>>((midi::MidiInterface<usbMidi::usbMidiTransport> *)_midi_port_if[port], msg, interrupted);
+#elif defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+		writeMidiInterface<midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>>>((midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> *)_midi_port_if[port], msg, interrupted);
 #endif
 		return;
 	}
