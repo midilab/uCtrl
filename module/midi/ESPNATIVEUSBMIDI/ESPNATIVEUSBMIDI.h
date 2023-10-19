@@ -2,7 +2,7 @@
 // Created by jbars on 5/26/2023.
 // Based on https://github.com/adafruit/Adafruit_TinyUSB_Arduino/blob/master/src/arduino/midi/Adafruit_USBD_MIDI.h
 //
-#if defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 
 #pragma once
 #include "sdkconfig.h"
