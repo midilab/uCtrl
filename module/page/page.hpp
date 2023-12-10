@@ -34,7 +34,6 @@
 // auto defines, change per dinamicly setup
 #define USE_PAGE_COMPONENT
 
-#define MAX_PAGES       6
 
 #ifdef USE_PAGE_COMPONENT	
 
@@ -290,8 +289,7 @@ class Page
         uint8_t _last_page;  
         bool _page_callback_create;
         bool _page_callback_destroy;
-        PAGE_DATA _page_data[MAX_PAGES];
-        //PAGE_DATA * _page_data = nullptr;
+        PAGE_DATA * _page_data = nullptr;
 
 #ifdef USE_PAGE_COMPONENT
         HOOK_CTRL_DATA _shift_hooker[MAX_SHIFT_HOOKERS_SIZE];

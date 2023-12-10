@@ -53,9 +53,25 @@ void Page::init(uint8_t pages_size)
 	}
 
 	// alloc once and forever policy!
-	/* if (_page_data == nullptr) {
+	if (_page_data == nullptr) {
 		_page_data = (PAGE_DATA*) malloc( sizeof(PAGE_DATA) * pages_size );
-	} */
+		// init page memory
+		for (uint8_t i=0; i < pages_size; i++) {
+			_page_data[i].create = nullptr;
+			_page_data[i].destroy = nullptr;
+			_page_data[i].refresh = nullptr;
+			_page_data[i].digital_input = nullptr;
+			_page_data[i].analog_input = nullptr;
+			_page_data[i].name = nullptr;
+			_page_data[i].callback_f1 = nullptr;
+			_page_data[i].callback_f2 = nullptr;
+			_page_data[i].f1 = nullptr;
+			_page_data[i].f2 = nullptr;
+			_page_data[i].f1_state = 0;
+			_page_data[i].f2_state = 0;
+			_page_data[i].sub_page_data = nullptr;
+		}
+	}
 
 	_pages_size = pages_size;
 }
