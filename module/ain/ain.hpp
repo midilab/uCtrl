@@ -1,8 +1,8 @@
 /*!
  *  @file       ain.hpp
  *  Project     Arduino Library API interface for uMODULAR projects
- *  @brief      Analog input driver module (4051 multiplexer)
- *  @version    1.0.0
+ *  @brief      Analog input driver module (4051/4067 multiplexer)
+ *  @version    1.1.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
@@ -40,6 +40,8 @@ namespace uctrl { namespace module {
 #define USE_AIN_MAX_PORTS 8
 #endif
 
+#define USE_AIN_4051_DRIVER
+
 #if defined(USE_AIN_4051_DRIVER) 
 #define AIN_MUX_SIZE	8
 #endif
@@ -74,9 +76,7 @@ class Ain
 		void lockAllControls();
 		bool isLocked(uint8_t remote_port);
 		void plug(uint8_t setup);
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
 		void plugMux(uint8_t setup);
-#endif		
 		void invertRead(bool state);		
 		uint8_t sizeOf();
 
@@ -93,13 +93,12 @@ class Ain
 		
 		void setMaxAdcValue(uint16_t max_adc_value);
 	
-#if defined(USE_AIN_4051_DRIVER)
 		void setMuxPins(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
 		void selectMuxPort(uint8_t port);
 		int8_t _mux_control_pin_1 = -1;
 		int8_t _mux_control_pin_2 = -1;
 		int8_t _mux_control_pin_3 = -1;
-#endif
+		int8_t _mux_control_pin_4 = -1;
 
 		int8_t _port[USE_AIN_MAX_PORTS] = {-1};
 

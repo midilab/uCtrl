@@ -26,10 +26,6 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
-#include "../../../../modules.h"
-
-#ifdef USE_PAGE
-
 #include "page.hpp"
 	
 namespace uctrl { namespace module {
@@ -49,14 +45,17 @@ Page::~Page()
 
 }
 
-void Page::init()
+void Page::init(uint8_t pages_size)
 {
 	// only init once!
 	if (_pages_size != 0) {
 		return;
 	}
 
-	_pages_size = USE_PAGE_MAX_PAGES;
+	// alloc once and forever policy!
+	_page_data = (PAGE_DATA*) malloc( sizeof(PAGE_DATA) * pages_size );
+
+	_pages_size = pages_size;
 }
 
 const char * Page::getPageName(int8_t page_id)
@@ -538,8 +537,9 @@ void Page::set(const char * page_name, void (*page_create_callback)(), void (*pa
 	_page_data[_page].name = page_name;
 
 #ifdef USE_PAGE_COMPONENT
-	// init selected component memory
-	for (uint8_t i=0; i < USE_PAGE_MAX_SUB_PAGES; i++) {
+	// init selected component memory, alloc once and forever policy!
+	_page_data[_page].sub_page_data = (SUB_PAGE_DATA*) malloc( sizeof(SUB_PAGE_DATA) * sub_page_size );
+	for (uint8_t i=0; i < sub_page_size; i++) {
 		_page_data[_page].sub_page_data[i].selected_component = nullptr;
 		_page_data[_page].sub_page_data[i].selector_line = 0;
 		_page_data[_page].sub_page_data[i].selector_grid = 0;
@@ -662,4 +662,3 @@ uint8_t Page::getPage()
 } }
 
 uctrl::module::Page page_module;
-#endif

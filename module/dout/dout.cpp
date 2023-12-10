@@ -2,7 +2,7 @@
  *  @file       dout.cpp
  *  Project     Arduino Library API interface for uMODULAR projects
  *  @brief      Digital output driver module (595 shiftregister)
- *  @version    1.0.0
+ *  @version    1.1.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
@@ -26,10 +26,6 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
-#include "../../../../modules.h"
-
-#ifdef USE_DOUT
-
 #include "dout.hpp"
 
 namespace uctrl { namespace module {
@@ -49,29 +45,30 @@ uint8_t Dout::sizeOf()
 	return _remote_digital_output_port;
 }	
 
-#if defined(USE_DOUT_SPI_DRIVER)
-void Dout::setSpi(SPIClass * spi_device, uint8_t chip_select)
+void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin)
 {
 	_spi_device = spi_device;
-	_latch_pin = chip_select;
+	_latch_pin = latch_pin;
 }
-#endif
 
 // call first all plug() for pin register, then plugSR if needed
 void Dout::plug(uint8_t setup)
 {
-	if (_chain_size_pin < USE_DOUT_MAX_PORTS) {
-		_dout_pin[_chain_size_pin] = setup;
-		++_chain_size_pin;
+	// alloc once and forever policy!
+	if (_dout_pin_map == nullptr) {
+		_dout_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
+	} else {
+		_dout_pin_map = (uint8_t*) realloc( _dout_pin_map, sizeof(uint8_t) * (_chain_size_pin+1) );
 	}
+
+	_dout_pin_map[_chain_size_pin] = setup;
+	++_chain_size_pin;
 }
 
-#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 void Dout::plugSR(uint8_t setup)
 {
 	_chain_size = setup;
 }
-#endif
 
 void Dout::init()
 {
@@ -82,14 +79,6 @@ void Dout::init()
 	// Set SPI slave device 74H595 deactivated by default
 	digitalWrite(DOUT_LATCH_PIN, HIGH);
 	_change_flag = true;
-#elif defined(USE_DOUT_SPI_DRIVER)
-	// Chip select pin setup
-	pinMode(_latch_pin, OUTPUT);
-	// 74H595 latched out by default
-	digitalWrite(_latch_pin, HIGH);	
-	// Initing a common shared SPI device for all uMODULAR modules using SPI bus
-	_spi_device->begin();
-	_change_flag = true;
 #endif
 
 	// total remote out port
@@ -99,24 +88,33 @@ void Dout::init()
 	if (_chain_size_pin > 0) {
 		// walk port reference structure and setup PINs as PULLUP/INPUT
 		for (uint8_t i=0; i < _chain_size_pin; i++ ) {
-			pinMode(_dout_pin[i], OUTPUT);
-			digitalWrite(_dout_pin[i], LOW);
+			pinMode(_dout_pin_map[i], OUTPUT);
+			digitalWrite(_dout_pin_map[i], LOW);
 		}
 		//_change_flag = false;
 	}
 
-#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
-	// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
-	// Each bit represents the value state readed by digital inputs
-	if ( _chain_size > 0 ) {
-		_digital_output_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
-		_digital_output_buffer = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
-		for (uint8_t i=0; i < _chain_size; i++) {
-			_digital_output_state[i] = 0;
-			_digital_output_buffer[i] = 0;
-		}			
+//#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
+	if (_spi_device != nullptr) {
+		// Chip select pin setup
+		pinMode(_latch_pin, OUTPUT);
+		// 74H595 latched out by default
+		digitalWrite(_latch_pin, HIGH);	
+		// Initing a common shared SPI device for all uMODULAR modules using SPI bus
+		_spi_device->begin();
+		_change_flag = true;
+		// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
+		// Each bit represents the value state readed by digital inputs
+		if ( _chain_size > 0 ) {
+			_digital_output_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+			_digital_output_buffer = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+			for (uint8_t i=0; i < _chain_size; i++) {
+				_digital_output_state[i] = 0;
+				_digital_output_buffer[i] = 0;
+			}			
+		}
 	}
-#endif
+//#endif
 }
 
 // should be called only inside non interrupted stack
@@ -127,17 +125,19 @@ void Dout::flushBuffer()
 	if (_change_flag == false) {
 		return;
 	}
-#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
-	noInterrupts();
-	//memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
-	i=_chain_size-1;
-	while(i >= 0) {
-		_digital_output_buffer[i] = _digital_output_state[i];
-		i--;
+//#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
+	if (_spi_device != nullptr) {
+		noInterrupts();
+		//memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
+		i=_chain_size-1;
+		while(i >= 0) {
+			_digital_output_buffer[i] = _digital_output_state[i];
+			i--;
+		}
+		_flush_dout = true;
+		interrupts();
 	}
-	_flush_dout = true;
-	interrupts();
-#endif
+//#endif
 }
 
 void Dout::flush(uint8_t interrupted)
@@ -159,28 +159,29 @@ void Dout::flush(uint8_t interrupted)
 	}
 	// deactive device
 	digitalWrite(DOUT_LATCH_PIN, HIGH);
-#elif defined(USE_DOUT_SPI_DRIVER)
-	if ( interrupted == 0 ) { 
-		noInterrupts();
-		//_spi_device->usingInterrupt(255);
-	} 
-	_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
-	// active device
-	digitalWrite(_latch_pin, LOW);
-	// Transfer byte a byte, in inverse order
-	i=_chain_size-1;
-	while(i >= 0) {
-		_spi_device->transfer(_digital_output_buffer[i]);
-		i--;
+#endif 
+	if (_spi_device != nullptr) {
+		if ( interrupted == 0 ) { 
+			noInterrupts();
+			//_spi_device->usingInterrupt(255);
+		} 
+		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
+		// active device
+		digitalWrite(_latch_pin, LOW);
+		// Transfer byte a byte, in inverse order
+		i=_chain_size-1;
+		while(i >= 0) {
+			_spi_device->transfer(_digital_output_buffer[i]);
+			i--;
+		}
+		// deactive device
+		digitalWrite(_latch_pin, HIGH);
+		_spi_device->endTransaction(); 
+		if ( interrupted == 0 ) { 
+			interrupts();
+			//_spi_device->notUsingInterrupt(255);
+		}
 	}
-	// deactive device
-	digitalWrite(_latch_pin, HIGH);
-	_spi_device->endTransaction(); 
-	if ( interrupted == 0 ) { 
-		interrupts();
-		//_spi_device->notUsingInterrupt(255);
-	}
-#endif
 	// wait for the next change request
 	_flush_dout = false;
 }
@@ -194,42 +195,42 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 		return;	
 	
 	if (remote_port < _chain_size_pin) {
-		digitalWrite(_dout_pin[remote_port], value);
+		digitalWrite(_dout_pin_map[remote_port], value);
 		return;
 	}
 	// fix reference for bitmap read later
 	remote_port -= _chain_size_pin;
 
-#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
-
-	if (interrupted == 0) {
-		buffer = _digital_output_state;
-	} else {
-		buffer = _digital_output_buffer;
-	}
-
-	// The bitmap access key and intramap counter
-	chain_group = floor(remote_port / 8);
-	// Walk in range of bits inside bitmap
-	chain_group_index = remote_port % 8;
-	
-	// state changed?
-	if ( BIT_GET_VALUE(buffer[chain_group], chain_group_index) != value ) {		
-		if ( value == 0) {
-			buffer[chain_group] &= ~(1 << chain_group_index); 
-		} else if (value == 1) {
-			buffer[chain_group] |= (1 << chain_group_index);
-		}
-		
+//#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
+	if (_spi_device != nullptr) {
 		if (interrupted == 0) {
-			_change_flag = true;
+			buffer = _digital_output_state;
 		} else {
-			_flush_dout = true;
-			flush(interrupted);
+			buffer = _digital_output_buffer;
+		}
+
+		// The bitmap access key and intramap counter
+		chain_group = floor(remote_port / 8);
+		// Walk in range of bits inside bitmap
+		chain_group_index = remote_port % 8;
+		
+		// state changed?
+		if ( BIT_GET_VALUE(buffer[chain_group], chain_group_index) != value ) {		
+			if ( value == 0) {
+				buffer[chain_group] &= ~(1 << chain_group_index); 
+			} else if (value == 1) {
+				buffer[chain_group] |= (1 << chain_group_index);
+			}
+			
+			if (interrupted == 0) {
+				_change_flag = true;
+			} else {
+				_flush_dout = true;
+				flush(interrupted);
+			}
 		}
 	}
-
-#endif
+//#endif
 }
 
 void Dout::writeAll(uint8_t value, uint8_t interrupted)
@@ -241,35 +242,37 @@ void Dout::writeAll(uint8_t value, uint8_t interrupted)
 	}
 
 	for (uint8_t i=0; i < _chain_size_pin; i++) {
-		digitalWrite(_dout_pin[i], value);
+		digitalWrite(_dout_pin_map[i], value);
 	}
 
-#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
-	if ( value == 0 ) {
-		value = 0x00;
-	} else if ( value == 1 ) {
-		value = 0xFF;
-	}
+//#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
+	if (_spi_device != nullptr) {
+		if ( value == 0 ) {
+			value = 0x00;
+		} else if ( value == 1 ) {
+			value = 0xFF;
+		}
 
-	if (interrupted == 0) {
-		buffer = _digital_output_state;
-	} else {
-		buffer = _digital_output_buffer;
-	}
+		if (interrupted == 0) {
+			buffer = _digital_output_state;
+		} else {
+			buffer = _digital_output_buffer;
+		}
 
-	for (uint8_t i=0; i < _chain_size; i++) {
-		if (buffer[i] != value) {
-			buffer[i] = value;
+		for (uint8_t i=0; i < _chain_size; i++) {
+			if (buffer[i] != value) {
+				buffer[i] = value;
+			}
+		}
+		
+		if (interrupted == 0) {
+			_change_flag = true;
+		} else {
+			_flush_dout = true;
+			flush(interrupted);
 		}
 	}
-	
-	if (interrupted == 0) {
-		_change_flag = true;
-	} else {
-		_flush_dout = true;
-		flush(interrupted);
-	}
-#endif	
+//#endif	
 }
 
 void Dout::setTimer(uint32_t time) {
@@ -305,4 +308,3 @@ void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
 */
 
 uctrl::module::Dout dout_module;
-#endif

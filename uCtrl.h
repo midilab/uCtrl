@@ -32,49 +32,31 @@
 #include <Arduino.h> 
 #include <SPI.h>
 
-#include "../../modules.h"
-
 // modules classes includes
-#if defined(USE_OLED)
 #include "module/oled/oled.hpp"
-#endif // defined(USE_OLED)
 
-#if defined(USE_MIDI)
 #include "module/midi/midi.hpp"
-#endif // defined(USE_MIDI)
 
 // dout 595 or single output for arduino only
-#if defined(USE_DOUT)
 #include "module/dout/dout.hpp"
-#endif // defined(USE_DOUT)
 
-#if defined(USE_DIN)
 #include "module/din/din.hpp"
-#endif // defined(USE_DIN)
 
-#if defined(USE_AIN)
 #include "module/ain/ain.hpp"
-#endif // defined(USE_AIN)
 
-#if defined(USE_CAP_TOUCH)
 #include "module/touch/touch.hpp"
-#endif // defined(USE_CAP_TOUCH)
 
 #if defined(USE_EXT_RAM)
 #include "module/ram/ram.hpp"
 #endif // defined(USE_EXT_RAM)
 
-#if defined(USE_STORAGE)
 #include "module/storage/storage.hpp"
-#endif // defined(USE_STORAGE)
 
 #if defined(USE_SDCARD)
 #include "module/sdcard/sdcard.hpp"
 #endif // defined(USE_SDCARD)
 
-#if defined(USE_PAGE)
 #include "module/page/page.hpp"
-#endif // defined(USE_PAGE)
 
 #if defined(USE_DEVICE)
 #include "module/device/device.hpp"
@@ -121,12 +103,9 @@ class uCtrlClass
 	uctrl::module::Ram * ram = nullptr;		
 #endif // defined(USE_EXT_RAM)
 
-#if defined(USE_STORAGE)
 	bool initStorage(SPIClass * spi_device = nullptr);
-	uctrl::module::Storage * storage = nullptr;		
-#endif // defined(USE_STORAGE)
+	uctrl::module::Storage * storage = nullptr;	
 
-#if defined(USE_OLED)	
 	// oled module
 #if defined(USE_OLED_U8G2)
 	bool initOled(U8G2 * display);
@@ -140,40 +119,29 @@ class uCtrlClass
 #endif // defined(USE_DEVICE)
 #endif // defined(USE_EXT_RAM)
 	uctrl::module::Oled * oled = nullptr;
-#endif	// defined(USE_OLED)
 
-#if defined(USE_MIDI)
 	// midi module
 	bool initMidi();
 	void processMidi();
 	uctrl::module::Midi * midi = nullptr;
-#endif // defined(USE_MIDI)
 	
-#if defined(USE_DOUT)	
 	// dout module
 	bool initDout(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
 	uctrl::module::Dout * dout = nullptr;
-#endif // defined(USE_DOUT)
 	
-#if defined(USE_DIN)
 	// din module
 	bool initDin(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
 	uctrl::module::Din * din = nullptr;
-#endif // defined(USE_DIN)
 	
-#if defined(USE_AIN)
 	// ain module
 	bool initAin(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
 	void processAin();
 	uctrl::module::Ain * ain = nullptr;
-    volatile EVENT_QUEUE _ain_event_queue;	
-#endif // defined(USE_AIN)
+    volatile EVENT_QUEUE _ain_event_queue;
 	
-#if defined(USE_CAP_TOUCH)
 	// capacitive touch module
 	bool initCapTouch(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
 	uctrl::module::CapTouch * touch = nullptr;
-#endif // defined(USE_CAP_TOUCH)
 	
 #if defined(USE_SDCARD)
 	// sdcard module
@@ -181,12 +149,10 @@ class uCtrlClass
 	uctrl::module::SdCard * sdcard;
 #endif // defined(USE_SDCARD)
 	
-#if defined(USE_PAGE)
 	// page module
-	bool initPage();
+	bool initPage(uint8_t pages_size);
 	void processPage();
 	uctrl::module::Page * page = nullptr;
-#endif // defined(USE_PAGE)
 	
 #if defined(USE_DEVICE)	
 	// device module

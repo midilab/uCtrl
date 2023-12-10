@@ -2,7 +2,7 @@
  *  @file       din.hpp
  *  Project     Arduino Library API interface for uMODULAR projects
  *  @brief      Digital input driver module (165 shiftregister)
- *  @version    1.0.0
+ *  @version    1.1.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
@@ -36,10 +36,6 @@ namespace uctrl { namespace module {
 
 #define DIN_EVENT_QUEUE_SIZE	4
 
-#if !defined(USE_DIN_MAX_PORTS)
-#define USE_DIN_MAX_PORTS 16
-#endif
-
 typedef struct 
 {
 	uint8_t port;
@@ -54,11 +50,9 @@ typedef struct
 	uint8_t size; //of the buffer
 } DIN_EVENT_QUEUE;
 
-#if defined(USE_DIN_SPI_DRIVER)
 #define SPI_SPEED_DIN         4000000
 //#define SPI_SPEED_DIN         2000000
 #define SPI_MODE_DIN          SPI_MODE0
-#endif
 
 // helper
 #define BIT_VALUE(a,n) ((a >> n)  & 0x01)		
@@ -85,9 +79,7 @@ class Din
 		int8_t getData(uint8_t port);				
 		uint8_t sizeOf();	
 		void plug(uint8_t setup);
-#if defined(USE_DIN_SPI_DRIVER) || defined(USE_DIN_BITBANG_DRIVER)
 		void plugSR(uint8_t setup);
-#endif
 		void encoder(uint8_t channel_a, uint8_t channel_b);
 
 		// default callback
@@ -113,13 +105,12 @@ class Din
     	volatile DIN_EVENT_QUEUE event_queue;	
 
 		// used for direct microcontroller digital input pins
-		uint8_t _button_pin[USE_DIN_MAX_PORTS] = {0};
+		//uint8_t _din_pin_map[16] = {0};
+		uint8_t * _din_pin_map = nullptr;
 
-#if defined(USE_DIN_SPI_DRIVER)
 		volatile SPIClass * _spi_device = nullptr;
 		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
 		uint8_t _latch_pin;
-#endif
 };
 
 } }

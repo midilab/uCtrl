@@ -29,6 +29,9 @@
 #ifndef __U_CTRL_OLED_HPP__
 #define __U_CTRL_OLED_HPP__
 
+// default library version
+#define USE_OLED_U8G2
+
 // U8x8 Oled driver library Support
 #ifdef USE_OLED_U8G2
 #include "U8g2/U8g2lib.h"

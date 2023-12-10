@@ -2,7 +2,7 @@
  *  @file       dout.hpp
  *  Project     Arduino Library API interface for uMODULAR projects
  *  @brief      Digital output driver module (595 shiftregister)
- *  @version    1.0.0
+ *  @version    1.1.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
@@ -38,10 +38,6 @@ namespace uctrl { namespace module {
 //#define SPI_SPEED_DOUT         2000000
 #define SPI_MODE_DOUT          SPI_MODE0	
 
-#if !defined(USE_DOUT_MAX_PORTS)
-#define USE_DOUT_MAX_PORTS      8
-#endif
-
 // helper
 #define BIT_GET_VALUE(a,n) ((a >> n)  & 0x01)
 
@@ -61,18 +57,16 @@ class Dout
         void writeAll(uint8_t value, uint8_t interrupted = 0);		
         uint8_t sizeOf();	
         void plug(uint8_t setup);
-#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
         void plugSR(uint8_t setup);
-#endif
         void setTimer(uint32_t time);
         bool blink();
 
-#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
         uint8_t * _digital_output_state = nullptr;
         volatile uint8_t * _digital_output_buffer = nullptr;
-#endif
+
         // used for direct microcontroller digital output pins
-	uint8_t _dout_pin[USE_DOUT_MAX_PORTS] = {0};
+	//uint8_t _dout_pin_map[16] = {0};
+        uint8_t * _dout_pin_map = nullptr;
 
         uint8_t _remote_digital_output_port = 0; 
 
@@ -84,11 +78,9 @@ class Dout
 	bool _blink = false;
 	uint32_t _blink_timer = 0;
 
-#if defined(USE_DOUT_SPI_DRIVER)
 	volatile SPIClass * _spi_device = nullptr;
-	void setSpi(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);
+	void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
         int8_t _latch_pin = -1;
-#endif
 
 };
 

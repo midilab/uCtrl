@@ -2,7 +2,7 @@
  *  @file       ain.cpp
  *  Project     Arduino Library API interface for uMODULAR projects
  *  @brief      Analog input driver module, supports uc analog ports and 4051/4067 multiplexers
- *  @version    1.0.0
+ *  @version    1.1.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
@@ -25,11 +25,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE. 
  */
-
-#include "../../../../modules.h"
-
-#ifdef USE_AIN
-
 #include "ain.hpp"
 
 namespace uctrl { namespace module {
@@ -55,7 +50,6 @@ void Ain::setMaxAdcValue(uint16_t max_adc_value)
 	_user_adc_max_resolution = max_adc_value;
 }
 
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
 void Ain::setMuxPins(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 {
 	// setup pin 1
@@ -81,7 +75,6 @@ void Ain::setMuxPins(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 #endif
 
 }
-#endif
 
 // call first all plug() for pin register, then plugMux()
 void Ain::plug(uint8_t setup)
@@ -98,7 +91,6 @@ void Ain::plug(uint8_t setup)
 	++_direct_pin_size;
 }
 
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
 void Ain::plugMux(uint8_t setup)
 {
 	if (_host_analog_port >= USE_AIN_MAX_PORTS) 
@@ -110,8 +102,6 @@ void Ain::plugMux(uint8_t setup)
 	++_host_analog_port;
 	_remote_analog_port += AIN_MUX_SIZE;
 }
-#endif
-
 
 void Ain::init() 
 {
@@ -194,7 +184,6 @@ inline uint16_t Ain::rangeMe(uint16_t value, uint16_t min, uint16_t max)
 	return (value / (_adc_max_resolution / ((max - min) + 1))) + min;
 }
 
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
 void Ain::selectMuxPort(uint8_t port)
 {
 	port = port%AIN_MUX_SIZE;
@@ -207,7 +196,6 @@ void Ain::selectMuxPort(uint8_t port)
 	digitalWrite(_mux_control_pin_4, bitRead(port, 3));	
 #endif
 }
-#endif
 
 void Ain::invertRead(bool state)
 {
@@ -323,4 +311,3 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 } }
 
 uctrl::module::Ain ain_module;
-#endif

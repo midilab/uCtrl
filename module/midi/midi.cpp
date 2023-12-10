@@ -1,7 +1,3 @@
-#include "../../../../modules.h"
-
-#ifdef USE_MIDI
-
 #include "midi.hpp"
 
 namespace uctrl { namespace module {
@@ -467,4 +463,3 @@ void Midi::handleStop()
 } }
 
 uctrl::module::Midi midi_module;
-#endif
