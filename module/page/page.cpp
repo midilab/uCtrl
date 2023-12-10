@@ -53,7 +53,9 @@ void Page::init(uint8_t pages_size)
 	}
 
 	// alloc once and forever policy!
-	_page_data = (PAGE_DATA*) malloc( sizeof(PAGE_DATA) * pages_size );
+	/* if (_page_data == nullptr) {
+		_page_data = (PAGE_DATA*) malloc( sizeof(PAGE_DATA) * pages_size );
+	} */
 
 	_pages_size = pages_size;
 }

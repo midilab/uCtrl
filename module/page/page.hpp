@@ -34,6 +34,8 @@
 // auto defines, change per dinamicly setup
 #define USE_PAGE_COMPONENT
 
+#define MAX_PAGES       6
+
 #ifdef USE_PAGE_COMPONENT	
 
 #define COMPONENT_LINE  8
@@ -221,7 +223,6 @@ typedef struct
         uint8_t f1_state = 0;
         uint8_t f2_state = 0;
         // each subpage needs a reference pointer to wich is the selected component of the first one to be selected
-        //SUB_PAGE_DATA sub_page_data[USE_PAGE_MAX_SUB_PAGES];
         SUB_PAGE_DATA * sub_page_data = nullptr;
 #endif
 } PAGE_DATA;
@@ -289,8 +290,8 @@ class Page
         uint8_t _last_page;  
         bool _page_callback_create;
         bool _page_callback_destroy;
-        //PAGE_DATA _page_data[USE_PAGE_MAX_PAGES];
-        PAGE_DATA * _page_data = nullptr;
+        PAGE_DATA _page_data[MAX_PAGES];
+        //PAGE_DATA * _page_data = nullptr;
 
 #ifdef USE_PAGE_COMPONENT
         HOOK_CTRL_DATA _shift_hooker[MAX_SHIFT_HOOKERS_SIZE];
