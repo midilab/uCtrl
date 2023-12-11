@@ -134,13 +134,13 @@ class uCtrlClass
 	uctrl::module::Din * din = nullptr;
 	
 	// ain module
-	bool initAin(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
+	bool initAin(int8_t pin1 = -1, int8_t pin2 = -1, int8_t pin3 = -1, int8_t pin4 = -1);
 	void processAin();
 	uctrl::module::Ain * ain = nullptr;
     volatile EVENT_QUEUE _ain_event_queue;
 	
 	// capacitive touch module
-	bool initCapTouch(uint8_t pin1 = 0, uint8_t pin2 = 0, uint8_t pin3 = 0, uint8_t pin4 = 0);
+	bool initCapTouch(int8_t pin1 = -1, int8_t pin2 = -1, int8_t pin3 = -1, int8_t pin4 = -1);
 	uctrl::module::CapTouch * touch = nullptr;
 	
 #if defined(USE_SDCARD)

@@ -50,8 +50,11 @@ void Ain::setMaxAdcValue(uint16_t max_adc_value)
 	_user_adc_max_resolution = max_adc_value;
 }
 
-void Ain::setMuxPins(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
+void Ain::setMuxPins(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 {
+	// start saying this is a 4051 mux pin register
+	_use_mux_driver = MUX_DRIVER_4051;
+
 	// setup pin 1
 	_mux_control_pin_1 = pin1;
 	pinMode(_mux_control_pin_1, OUTPUT);
@@ -67,13 +70,18 @@ void Ain::setMuxPins(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
 	pinMode(_mux_control_pin_3, OUTPUT);
 	digitalWrite(_mux_control_pin_3, LOW);
 
-#if defined(USE_AIN_4067_DRIVER)
 	// setup pin 4
-	_mux_control_pin_4 = pin4;
-	pinMode(_mux_control_pin_4, OUTPUT);
-	digitalWrite(_mux_control_pin_4, LOW);
-#endif
+	// its a 4067 driver if user request to etup pin4
+	if (pin4 != -1) {
+		// setup pin 4
+		_mux_control_pin_4 = pin4;
+		pinMode(_mux_control_pin_4, OUTPUT);
+		digitalWrite(_mux_control_pin_4, LOW);
+		// in case its a 4067, change it
+		_use_mux_driver = MUX_DRIVER_4067;
+	}
 
+	_mux_size = _use_mux_driver == MUX_DRIVER_4051 ? AIN_4051_MUX_SIZE : AIN_4067_MUX_SIZE;
 }
 
 // call first all plug() for pin register, then plugMux()
@@ -100,7 +108,7 @@ void Ain::plugMux(uint8_t setup)
 	pinMode(setup, INPUT);
 
 	++_host_analog_port;
-	_remote_analog_port += AIN_MUX_SIZE;
+	_remote_analog_port += _mux_size;
 }
 
 void Ain::init() 
@@ -126,12 +134,15 @@ void Ain::init()
 	// first mux scan 	
 	for (uint8_t i=0; i < _remote_analog_port; i++) {
 
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		host_analog_port = (uint8_t)i/AIN_MUX_SIZE;
-		selectMuxPort(i);
-#else
-		host_analog_port = i;
-#endif
+//#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
+		if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
+			host_analog_port = (uint8_t)i/_mux_size;
+			selectMuxPort(i);
+		} else {
+//#else
+			host_analog_port = i;
+		}
+//#endif
 
 #ifdef ANALOG_AVG_READS
 		_analog_input_state[i].sum_value = 0;
@@ -149,10 +160,12 @@ void Ain::init()
 #endif		
 
 	}
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-	// since we use the post process of ain as a wait time for mux change port signal to propagate lets select first one
-	selectMuxPort(0);			
-#endif
+//#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
+	if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
+		// since we use the post process of ain as a wait time for mux change port signal to propagate lets select first one
+		selectMuxPort(0);		
+	}	
+//#endif
 }
 
 void Ain::lockControl(uint8_t remote_port)
@@ -186,15 +199,17 @@ inline uint16_t Ain::rangeMe(uint16_t value, uint16_t min, uint16_t max)
 
 void Ain::selectMuxPort(uint8_t port)
 {
-	port = port%AIN_MUX_SIZE;
+	port = port%_mux_size;
 	
 	// select the mux port to be readed for 4051 or 4067
 	digitalWrite(_mux_control_pin_1, bitRead(port, 0));
 	digitalWrite(_mux_control_pin_2, bitRead(port, 1));
 	digitalWrite(_mux_control_pin_3, bitRead(port, 2));	
-#if defined(USE_AIN_4067_DRIVER)
-	digitalWrite(_mux_control_pin_4, bitRead(port, 3));	
-#endif
+//#if defined(USE_AIN_4067_DRIVER)
+	if (_use_mux_driver == MUX_DRIVER_4067) {
+		digitalWrite(_mux_control_pin_4, bitRead(port, 3));	
+	}
+//#endif
 }
 
 void Ain::invertRead(bool state)
@@ -211,11 +226,14 @@ int16_t Ain::readPort(uint8_t remote_port, uint8_t host_analog_port)
 		_analog_input_state[remote_port].avg_count = 0;
 		return avg_value;
 	} else {
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
-#else 
-		_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
-#endif
+//#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
+		if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
+			_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
+		} else {
+//#else 
+			_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
+		}
+//#endif
 		_analog_input_state[remote_port].avg_count++;
 		return -1;
 	}
@@ -243,15 +261,17 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 		input_data = readPort(remote_port, host_analog_port);
 	// otherwise its a mux read request
 	} else {
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		uint8_t mux_host_port = remote_port - _direct_pin_size;
-		// find our indexes
-		host_analog_port = (uint8_t)(mux_host_port/AIN_MUX_SIZE) + _direct_pin_size;
-		// get data
-		input_data = readPort(remote_port, host_analog_port);
-		// select next mux port while processing this one
-		selectMuxPort(mux_host_port+1);
-#endif
+//#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
+		if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
+			uint8_t mux_host_port = remote_port - _direct_pin_size;
+			// find our indexes
+			host_analog_port = (uint8_t)(mux_host_port/_mux_size) + _direct_pin_size;
+			// get data
+			input_data = readPort(remote_port, host_analog_port);
+			// select next mux port while processing this one
+			selectMuxPort(mux_host_port+1);
+		}
+//#endif
 	}
 	
 	if (input_data < 0) {

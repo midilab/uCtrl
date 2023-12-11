@@ -255,15 +255,15 @@ bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin)
 	}
 }
 
-bool uCtrlClass::initAin(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
+bool uCtrlClass::initAin(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 {
 	if ( ain == nullptr ) {
 		ain = &ain_module;
 	}
 	
 	if ( ain != nullptr ) {
-		// pin1 passaed as argument means mux request to register
-		if (pin1 != 0) {
+		// pin1 as argument means mux request to register
+		if (pin1 >= 0) {
 			ain->setMuxPins(pin1, pin2, pin3, pin4);
 		}
 		return true;
@@ -318,7 +318,7 @@ void uCtrlClass::processAin()
 	}
 }
 
-bool uCtrlClass::initCapTouch(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
+bool uCtrlClass::initCapTouch(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 {
 	if ( touch == nullptr ) {
 		touch = &cap_touch_module;
