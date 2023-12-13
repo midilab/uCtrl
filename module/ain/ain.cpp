@@ -71,7 +71,7 @@ void Ain::setMuxPins(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 	digitalWrite(_mux_control_pin_3, LOW);
 
 	// setup pin 4
-	// its a 4067 driver if user request to etup pin4
+	// its a 4067 driver if user request to setup pin4
 	if (pin4 != -1) {
 		// setup pin 4
 		_mux_control_pin_4 = pin4;
@@ -131,41 +131,41 @@ void Ain::init()
 #endif		
 	}
 	
-	// first mux scan 	
-	for (uint8_t i=0; i < _remote_analog_port; i++) {
+	// initing memory and first mux scan 	
+	for (uint8_t remote_port=0; remote_port < _remote_analog_port; remote_port++) {
 
-//#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
-			host_analog_port = (uint8_t)i/_mux_size;
-			selectMuxPort(i);
+		// is this a direct pin registered to read?
+		if (remote_port < _direct_pin_size) {
+			host_analog_port = remote_port;
+		// otherwise its a mux read request
 		} else {
-//#else
-			host_analog_port = i;
+			uint8_t mux_host_port = remote_port - _direct_pin_size;
+			// find our indexes
+			host_analog_port = (uint8_t)(mux_host_port/_mux_size) + _direct_pin_size;
+			selectMuxPort(mux_host_port);
 		}
-//#endif
 
 #ifdef ANALOG_AVG_READS
-		_analog_input_state[i].sum_value = 0;
-		_analog_input_state[i].avg_count = 0;
+		_analog_input_state[remote_port].sum_value = 0;
+		_analog_input_state[remote_port].avg_count = 0;
 #else
-		_analog_input_state[i] = 0;
+		_analog_input_state[remote_port] = 0;
 #endif
 
 		input_data = analogRead(_port[host_analog_port]);
-		_analog_input_last_state[i] = input_data;
-		_analog_input_lock_control[i] = -1; // locked
+		_analog_input_last_state[remote_port] = input_data;
+		_analog_input_lock_control[remote_port] = -1; // locked
 
 #ifdef AUTOLOCK		
-		_analog_input_check_state[i] = 0;
+		_analog_input_check_state[remote_port] = 0;
 #endif		
 
 	}
-//#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
+	
 	if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
 		// since we use the post process of ain as a wait time for mux change port signal to propagate lets select first one
 		selectMuxPort(0);		
 	}	
-//#endif
 }
 
 void Ain::lockControl(uint8_t remote_port)
@@ -205,11 +205,9 @@ void Ain::selectMuxPort(uint8_t port)
 	digitalWrite(_mux_control_pin_1, bitRead(port, 0));
 	digitalWrite(_mux_control_pin_2, bitRead(port, 1));
 	digitalWrite(_mux_control_pin_3, bitRead(port, 2));	
-//#if defined(USE_AIN_4067_DRIVER)
 	if (_use_mux_driver == MUX_DRIVER_4067) {
 		digitalWrite(_mux_control_pin_4, bitRead(port, 3));	
 	}
-//#endif
 }
 
 void Ain::invertRead(bool state)
@@ -226,14 +224,7 @@ int16_t Ain::readPort(uint8_t remote_port, uint8_t host_analog_port)
 		_analog_input_state[remote_port].avg_count = 0;
 		return avg_value;
 	} else {
-//#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
-			_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
-		} else {
-//#else 
-			_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
-		}
-//#endif
+		_analog_input_state[remote_port].sum_value += analogRead(_port[host_analog_port]);
 		_analog_input_state[remote_port].avg_count++;
 		return -1;
 	}
