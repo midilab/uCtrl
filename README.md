@@ -63,36 +63,16 @@ Create a src/ directory inside your sketch, then clone or [download](https://git
 
 unzip **main.zip** and move the unziped folder named **uCtrl-main/** to **YourSketch/src/uCtrl/**
 
-### Setting your sketch
-
-Create a new file on IDE tab for your sketch named **modules.h**
-
-Configure **modules.h** accordly to the needed modules for your application.(see Modules for MACRO setup)
-
-### modules.h
-
-You should have a guard macro for this file:
-
-```c
-#ifndef __U_CTRL_MODULES_H__
-#define __U_CTRL_MODULES_H__
-
-// your uCtrl modules MACRO setup
-
-#endif
-```
-
 ### Initial Project structure 
 
 Your initial project structure should look like:  
 /YourSketch  
 /YourSketch/YourSketch.ino  
-/YourSketch/modules.h  
 /YourSketch/src/uCtrl/  
 
 # Modules
 
-A introduction to modules, base schematics and **modules.h** MACRO setup.
+A introduction to modules and base schematics setup.
 
 All the schematics are available as [PDF or Kicad format here](https://github.com/midilab/uMODULAR/tree/master/lib)
 
@@ -106,24 +86,6 @@ This module can handle single ADC ports on your microcontroller or multiplexed A
 
 [AIN 8 Potentiometers Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/pot8.pdf)  
 [AIN 16 Potentiometers Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/pot16.pdf)
-
-**modules.h**
-```c
-#ifndef __U_CTRL_MODULES_H__
-#define __U_CTRL_MODULES_H__
-
-// enables the driver
-#define USE_AIN
-
-// how many microncontrollers direct ADC pins you need?
-//#define USE_AIN_MAX_PORTS   8
-
-// for multiplexed support uncomment the needed driver
-#define USE_AIN_4051_DRIVER
-//#define USE_AIN_4067_DRIVER
-
-#endif
-```
 
 YourSketch.ino
 ```c++
@@ -219,44 +181,6 @@ This module can handle single Digital Input ports on your microcontroller or mul
 
 [DIN 8 Push Buttons Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/push8.pdf)  
 [DIN 16 Push Buttons Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/push16.pdf)
-
-**modules.h**
-```c
-#ifndef __U_CTRL_MODULES_H__
-#define __U_CTRL_MODULES_H__
-
-//
-// all pins are setup with internal pullup resistor
-// so wire you button between microcontroller pin and GND(no need for resistor)
-//
-
-// enables the driver
-#define USE_DIN
-
-// how many microncontrollers direct Input digital pins you need?
-//#define USE_DIN_MAX_PORTS   8
-
-// 2 driver options for multiplexed button input: SPI and BITBANG.
-// use only one driver option!
-
-//
-// using SPI hardware wich is the recommended way in case you have 
-// a Free or shared SPI device.
-//
-#define USE_DIN_SPI_DRIVER
-
-//
-// using bitbang in case you dont have a free SPI. 
-// this is slower and uses the CPU to process the data transfer.
-// this options requires you to define the latch, data and clock pins of 165.
-//
-//#define USE_DIN_BITBANG_DRIVER
-//#define DIN_LATCH_PIN   4
-//#define DIN_DATA_PIN    5
-//#define DIN_CLOCK_PIN   6
-
-#endif
-```
 
 YourSketch.ino
 ```c++
@@ -355,42 +279,6 @@ This module can handle single Digital output ports on your microcontroller or mu
 
 [DOUT 8 Leds Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/led8.pdf)  
 [DOUT 16 Leds Schematic](https://github.com/midilab/uMODULAR/blob/master/lib/led16.pdf)
-
-**modules.h**
-```c
-#ifndef __U_CTRL_MODULES_H__
-#define __U_CTRL_MODULES_H__
-
-// enables the driver
-#define USE_DOUT
-
-//
-// for direct usage of microcontroller Digital output port pin
-// USE_DOUT_MAX_PORTS is default to 8 if you dont set it
-//
-//#define USE_DOUT_MAX_PORTS   8
-
-// 2 driver options for multiplexed output: SPI and BITBANG.
-// use only one driver option!
-
-//
-// using SPI hardware wich is the recommended way in case you have 
-// a Free or shared SPI device.
-//
-#define USE_DOUT_SPI_DRIVER
-
-//
-// using bitbang in case you dont have a free SPI. 
-// this is slower and uses the CPU to process the data transfer.
-// this options requires you to define the latch, data and clock pins of 595.
-//
-//#define USE_DOUT_BITBANG_DRIVER
-//#define DOUT_LATCH_PIN   7
-//#define DOUT_DATA_PIN    8
-//#define DOUT_CLOCK_PIN   9
-
-#endif
-```
 
 YourSketch.ino
 ```c++
