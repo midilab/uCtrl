@@ -26,10 +26,6 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
-#include "../../../../modules.h"
-
-#ifdef USE_STORAGE
-
 #include "storage.hpp"
 
 namespace uctrl { namespace module {
@@ -105,4 +101,3 @@ bool Storage::load(void *data, size_t n, const char * path)
 } }
 
 uctrl::module::Storage storage_module;
-#endif

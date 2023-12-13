@@ -101,7 +101,7 @@ bool uCtrlClass::initRam(SPIClass * device)
 }
 #endif // defined(USE_EXT_RAM)
 
-#if defined(USE_STORAGE)
+//#if defined(USE_STORAGE)
 bool uCtrlClass::initStorage(SPIClass * spi_device)
 {
 	if ( storage == nullptr ) {
@@ -117,7 +117,7 @@ bool uCtrlClass::initStorage(SPIClass * spi_device)
 	}	
 	return false;
 }
-#endif // defined(USE_STORAGE)
+//#endif // defined(USE_STORAGE)
 
 #if defined(USE_SDCARD)
 bool uCtrlClass::initSdCard(SPIClass * spi_device)
@@ -151,23 +151,19 @@ bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, u
 }
 #endif // defined(USE_DEVICE)
 
-#if defined(USE_PAGE)
-bool uCtrlClass::initPage()
+bool uCtrlClass::initPage(uint8_t pages_size)
 {
 	if ( page == nullptr ) {
 		page = &page_module;
 	}
 	
 	if ( page != nullptr ) {
-		page->init();
+		page->init(pages_size);
 		return true;
 	} else {
 		return false;
 	}
 }
-#endif // defined(USE_PAGE)
-
-#if defined(USE_OLED)
 
 #if defined(USE_OLED_U8G2)
 bool uCtrlClass::initOled(U8G2 * display)
@@ -206,9 +202,6 @@ void uCtrlClass::processDisplay()
 #endif // defined(USE_DEVICE)
 #endif // defined(USE_EXT_RAM)
 
-#endif // #if defined(USE_OLED)
-
-#if defined(USE_MIDI)
 bool uCtrlClass::initMidi()
 {
 	if ( midi == nullptr ) {
@@ -229,29 +222,23 @@ void uCtrlClass::processMidi()
 		midi->read(port);
 	}
 }
-#endif // defined(USE_MIDI)
 
-#if defined(USE_DOUT)
 bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin)
 {
 	if ( dout == nullptr ) {
 		dout = &dout_module;
 	}
 	
-	if ( dout != nullptr ) {
-#if defined(USE_DOUT_SPI_DRIVER)		
+	if ( dout != nullptr ) {	
 		if (spi_device != nullptr) {
 			dout->setSpi(spi_device, latch_pin);
 		}
-#endif // defined(USE_DOUT_SPI_DRIVER)
 		return true;
 	} else {
 		return false;
 	}
 }
-#endif // defined(USE_DOUT)
 
-#if defined(USE_DIN)
 bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin)
 {
 	if ( din == nullptr ) {
@@ -259,29 +246,26 @@ bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin)
 	}
 	
 	if ( din != nullptr ) {
-#if defined(USE_DIN_SPI_DRIVER)		
 		if (spi_device != nullptr) {
 			din->setSpi(spi_device, latch_pin);
 		}
-#endif // defined(USE_DIN_SPI_DRIVER)
 		return true;
 	} else {
 		return false;
 	}
 }
-#endif // defined(USE_DIN)
 
-#if defined(USE_AIN)
-bool uCtrlClass::initAin(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
+bool uCtrlClass::initAin(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 {
 	if ( ain == nullptr ) {
 		ain = &ain_module;
 	}
 	
 	if ( ain != nullptr ) {
-#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		ain->setMuxPins(pin1, pin2, pin3, pin4);
-#endif
+		// pin1 as argument means mux request to register
+		if (pin1 >= 0) {
+			ain->setMuxPins(pin1, pin2, pin3, pin4);
+		}
 		return true;
 	} else {
 		return false;
@@ -333,10 +317,8 @@ void uCtrlClass::processAin()
 		
 	}
 }
-#endif // defined(USE_AIN)
 
-#if defined(USE_CAP_TOUCH)
-bool uCtrlClass::initCapTouch(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4)
+bool uCtrlClass::initCapTouch(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 {
 	if ( touch == nullptr ) {
 		touch = &cap_touch_module;
@@ -349,7 +331,6 @@ bool uCtrlClass::initCapTouch(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t 
 		return false;
 	}
 }
-#endif // defined(USE_CAP_TOUCH)
 
 void uCtrlClass::init()
 {
@@ -361,32 +342,32 @@ void uCtrlClass::init()
 	// load factory defaults
 #endif // defined(USE_SDCARD)
 
-#if defined(USE_AIN)
-	ain->init();
-	_ain_event_queue.head = 0;
-	_ain_event_queue.tail = 0;
-	_ain_event_queue.size = 8;		
-#endif // defined(USE_AIN)
-
-#if defined(USE_CAP_TOUCH)
-	touch->init();
-#endif // defined(USE_CAP_TOUCH)
-
-#if defined(USE_DIN)
-	din->init();
-#endif // defined(USE_DIN)
-	
-#if defined(USE_DOUT)
-	dout->init();
-#endif // defined(USE_DOUT)
-			
-#if defined(USE_PAGE)
-	// default page and subpge
-	if (page->getPageSize() > 0) {
-		page->setPage(0);
-		page->setSubPage(0);
+	if (ain != nullptr) {
+		ain->init();
+		_ain_event_queue.head = 0;
+		_ain_event_queue.tail = 0;
+		_ain_event_queue.size = 8;
 	}
-#endif // defined(USE_PAGE)
+
+	if (touch != nullptr) {
+		touch->init();
+	}
+
+	if (din != nullptr) {
+		din->init();
+	}
+	
+	if (dout != nullptr) {
+		dout->init();
+	}
+			
+	if (page != nullptr) {
+		// default page and subpge
+		if (page->getPageSize() > 0) {
+			page->setPage(0);
+			page->setSubPage(0);
+		}
+	}
 	
 	// ...
 	enableTimer();
@@ -401,141 +382,140 @@ void uCtrlClass::run()
 
 	// timmer dependent UI visual effects
 	uint32_t time = millis();
-#if defined(USE_DOUT)
-	uCtrl.dout->setTimer(time);
-#endif // defined(USE_DOUT)
-#if defined(USE_OLED)
-	uCtrl.oled->setTimer(time);
-#endif // defined(USE_OLED)
-
-#if defined(USE_OLED)
+	if (dout != nullptr) {
+		uCtrl.dout->setTimer(time);
+	}
+	if ( oled != nullptr ) {
+		uCtrl.oled->setTimer(time);
 #if defined(USE_OLED_U8G2)
-	oled->clearDisplay();
+		uCtrl.oled->clearDisplay();
 #endif // defined(USE_OLED_U8G2)
-#endif // defined(USE_OLED)
+	}
 
-#if defined(USE_DIN) 
 	// din
-	// read while empty
-	while ( din->event_queue.head != din->event_queue.tail )
-	{
-		port = din->event_queue.event[din->event_queue.head].port;
-		value = din->event_queue.event[din->event_queue.head].value; 
-		head = (din->event_queue.head+1)%(din->event_queue.size);
-		ATOMIC(
-			din->event_queue.head = head
-		)
+	if (din != nullptr) {
+		// read while empty
+		while ( din->event_queue.head != din->event_queue.tail )
+		{
+			port = din->event_queue.event[din->event_queue.head].port;
+			value = din->event_queue.event[din->event_queue.head].value; 
+			head = (din->event_queue.head+1)%(din->event_queue.size);
+			ATOMIC(
+				din->event_queue.head = head
+			)
 
-#if defined(USE_DEVICE)
-	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
-			continue;
-	   }
-#endif // defined(USE_DEVICE)
+	#if defined(USE_DEVICE)
+		if ( device->handleDigitalEvent(port, value, 0) == true ) {
+				continue;
+		}
+	#endif // defined(USE_DEVICE)
 
-#if defined(USE_PAGE)
-#if defined(USE_AIN) && defined(USE_PAGE_COMPONENT)
-		// before each processEvent we need to: check if pot_ctrl is needed
-		if(page->_use_nav_pot) {
-			// if it is, check if it is inc or dec commands... 
-			if (port == page->_nav_ctrl_port.incrementer || 
-				port == page->_nav_ctrl_port.decrementer ||
-				port == page->_nav_ctrl_port.incrementer_secondary || 
-				port == page->_nav_ctrl_port.decrementer_secondary ||
-				port == page->_nav_ctrl_port.up || 
-				port == page->_nav_ctrl_port.down ||
-				port == page->_nav_ctrl_port.left || 
-				port == page->_nav_ctrl_port.right) {
-				// if it is. lock ain pot control to avoid mess with inc/dec changes
-				ain->lockControl(page->_nav_ctrl_port.pot);
-				// we also need to remove from our event queue any data from nav pot
-				discard_ain_data = true;
+		if (page != nullptr) {
+			if (ain != nullptr) {
+	#if defined(USE_PAGE_COMPONENT)
+				// before each processEvent we need to: check if pot_ctrl is needed
+				if(page->_use_nav_pot) {
+					// if it is, check if it is inc or dec commands... 
+					if (port == page->_nav_ctrl_port.incrementer || 
+						port == page->_nav_ctrl_port.decrementer ||
+						port == page->_nav_ctrl_port.incrementer_secondary || 
+						port == page->_nav_ctrl_port.decrementer_secondary ||
+						port == page->_nav_ctrl_port.up || 
+						port == page->_nav_ctrl_port.down ||
+						port == page->_nav_ctrl_port.left || 
+						port == page->_nav_ctrl_port.right) {
+						// if it is. lock ain pot control to avoid mess with inc/dec changes
+						ain->lockControl(page->_nav_ctrl_port.pot);
+						// we also need to remove from our event queue any data from nav pot
+						discard_ain_data = true;
+					}
+				}
+	#endif // defined(USE_PAGE_COMPONENT)
 			}
+			page->processEvent(port, value, uctrl::module::DIGITAL_EVENT);
 		}
-#endif // defined(USE_AIN) && defined(USE_PAGE_COMPONENT)
-		page->processEvent(port, value, uctrl::module::DIGITAL_EVENT);
-#endif // defined(USE_PAGE)
 
-	   if ( din->callback != nullptr ) {
-			din->callback(port, value);
-	   }
+		if ( din->callback != nullptr ) {
+				din->callback(port, value);
+		}
+		}
+		// set port_ref in case other digital modules were initialized
+		port_ref = din->sizeOf();
 	}
-	// set port_ref in case other digital modules were initialized
-	port_ref = din->sizeOf();
-#endif // defined(USE_DIN) 
 
-#if defined(USE_CAP_TOUCH)
-	// touch
-	// read while empty
-	while ( touch->event_queue.head != touch->event_queue.tail )
-	{
-		// use port_ref in case din were initialized
-		port = touch->event_queue.event[touch->event_queue.head].port+port_ref;
-		value = touch->event_queue.event[touch->event_queue.head].value; 
-		head = (touch->event_queue.head+1)%(touch->event_queue.size);
-		ATOMIC(
-			touch->event_queue.head = head
-		)
+	if (touch != nullptr) {
+		// touch
+		// read while empty
+		while ( touch->event_queue.head != touch->event_queue.tail )
+		{
+			// use port_ref in case din were initialized
+			port = touch->event_queue.event[touch->event_queue.head].port+port_ref;
+			value = touch->event_queue.event[touch->event_queue.head].value; 
+			head = (touch->event_queue.head+1)%(touch->event_queue.size);
+			ATOMIC(
+				touch->event_queue.head = head
+			)
 
-#if defined(USE_DEVICE)
-	   if ( device->handleDigitalEvent(port, value, 0) == true ) {
-			continue;
-	   }
-#endif // defined(USE_DEVICE)                
-
-#if defined(USE_PAGE)
-#if defined(USE_AIN) 
-		// before each processEvent we need to: check if pot_ctrl is needed
-		if(page->_use_nav_pot) {
-			// if it is, check if it is inc or dec commands... 
-			if (port == page->_nav_ctrl_port.incrementer || 
-				port == page->_nav_ctrl_port.decrementer ||
-				port == page->_nav_ctrl_port.incrementer_secondary || 
-				port == page->_nav_ctrl_port.decrementer_secondary ||
-				port == page->_nav_ctrl_port.up || 
-				port == page->_nav_ctrl_port.down ||
-				port == page->_nav_ctrl_port.left || 
-				port == page->_nav_ctrl_port.right) {
-				// if it is. lock ain pot control to avoid mess with inc/dec changes
-				ain->lockControl(page->_nav_ctrl_port.pot);
-				// we also need to remove from our event queue any data from nav pot
-				discard_ain_data = true;
-			}
+	#if defined(USE_DEVICE)
+		if ( device->handleDigitalEvent(port, value, 0) == true ) {
+				continue;
 		}
-#endif // defined(USE_AIN)
-		page->processEvent(port, (uint16_t)value, uctrl::module::DIGITAL_EVENT);
-#endif // defined(USE_PAGE)
+	#endif // defined(USE_DEVICE)                
 
-		if ( touch->callback != nullptr ) {
-			touch->callback(port, value);
-		}
-	}
-#endif // defined(USE_CAP_TOUCH)
-
-#if defined(USE_AIN) 
-   // ain:
-   // read while empty
-   while ( _ain_event_queue.head != _ain_event_queue.tail )
-   {
-		port = _ain_event_queue.event[_ain_event_queue.head].port;
-		value = _ain_event_queue.event[_ain_event_queue.head].value;  
-		head = (_ain_event_queue.head+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.head+1);
-		ATOMIC(                      
-			_ain_event_queue.head = head
-		)
-
-#if defined(USE_PAGE_COMPONENT)
-		if (discard_ain_data) {
-			if (port == page->_nav_ctrl_port.pot) {
-				if (ain->isLocked(page->_nav_ctrl_port.pot) == false) {
-					discard_ain_data = false;
-				} else {
-					continue;
+		if (page != nullptr) {
+			if (ain != nullptr) {
+				// before each processEvent we need to: check if pot_ctrl is needed
+				if(page->_use_nav_pot) {
+					// if it is, check if it is inc or dec commands... 
+					if (port == page->_nav_ctrl_port.incrementer || 
+						port == page->_nav_ctrl_port.decrementer ||
+						port == page->_nav_ctrl_port.incrementer_secondary || 
+						port == page->_nav_ctrl_port.decrementer_secondary ||
+						port == page->_nav_ctrl_port.up || 
+						port == page->_nav_ctrl_port.down ||
+						port == page->_nav_ctrl_port.left || 
+						port == page->_nav_ctrl_port.right) {
+						// if it is. lock ain pot control to avoid mess with inc/dec changes
+						ain->lockControl(page->_nav_ctrl_port.pot);
+						// we also need to remove from our event queue any data from nav pot
+						discard_ain_data = true;
+					}
 				}
 			}
+			page->processEvent(port, (uint16_t)value, uctrl::module::DIGITAL_EVENT);
 		}
-#endif // defined(USE_PAGE_COMPONENT)
 
-#if defined(USE_DEVICE)
+			if ( touch->callback != nullptr ) {
+				touch->callback(port, value);
+			}
+		}
+	}
+
+	if (ain != nullptr) {
+		// ain:
+		// read while empty
+		while ( _ain_event_queue.head != _ain_event_queue.tail )
+		{
+			port = _ain_event_queue.event[_ain_event_queue.head].port;
+			value = _ain_event_queue.event[_ain_event_queue.head].value;  
+			head = (_ain_event_queue.head+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.head+1);
+			ATOMIC(                      
+				_ain_event_queue.head = head
+			)
+
+	#if defined(USE_PAGE_COMPONENT)
+			if (discard_ain_data) {
+				if (port == page->_nav_ctrl_port.pot) {
+					if (ain->isLocked(page->_nav_ctrl_port.pot) == false) {
+						discard_ain_data = false;
+					} else {
+						continue;
+					}
+				}
+			}
+	#endif // defined(USE_PAGE_COMPONENT)
+
+	#if defined(USE_DEVICE)
 			// device process are done inside interrupt to keep smooth for realtime controllers events
 			// EDIT MODE HANDLER
 			if ( device->getCtrlMode() == 2 ) {
@@ -545,49 +525,47 @@ void uCtrlClass::run()
 			if ( device->handleAnalogEvent(port, value, 0) == true ) {
 				continue;
 			}
-#endif // defined(USE_DEVICE)
+	#endif // defined(USE_DEVICE)
 
-#if defined(USE_PAGE)
-		page->processEvent(port, value, uctrl::module::ANALOG_EVENT);
-#endif // defined(USE_PAGE)
+			if (page != nullptr) {
+				page->processEvent(port, value, uctrl::module::ANALOG_EVENT);
+			}
 
-		if ( ain->callback != nullptr ) {
-			ain->callback(port, value);
+			if ( ain->callback != nullptr ) {
+				ain->callback(port, value);
+			}
 		}
-	}
-#endif // defined(USE_AIN)    
-     
-#if defined(USE_PAGE)                
+	} 
+              
 	if ( page != nullptr ) {
 #if defined(USE_PAGE_COMPONENT)
 		page->clearComponentMap();
 #endif // defined(USE_PAGE_COMPONENT)
 		page->processView();
 	}
-#endif // defined(USE_PAGE)   
 
-#if defined(USE_OLED)
+	if ( oled != nullptr ) {
 #if defined(USE_EXT_RAM)
 #if defined(USE_DEVICE)
-    processDisplay();
+    	processDisplay();
 #endif // defined(USE_DEVICE)
 #endif // defined(USE_EXT_RAM)
 #if defined(USE_OLED_U8G2)
-	oled->refreshDisplay();
+		oled->refreshDisplay();
 #endif // defined(USE_OLED_U8G2)
-#endif // defined(USE_OLED)
+	}
 
-#if defined(USE_DOUT)
-	uCtrl.dout->flushBuffer();
-#endif // defined(USE_DOUT)        	
+	if (dout != nullptr) {
+		uCtrl.dout->flushBuffer();
+	}
 }
 
 uint8_t uCtrlClass::getAnalogPorts()
 {
 
-#if defined(USE_AIN)
-	return ain->sizeOf();
-#endif // defined(USE_AIN)
+	if (ain != nullptr) {
+		return ain->sizeOf();
+	}
 
 	return 0;
 }
@@ -595,9 +573,9 @@ uint8_t uCtrlClass::getAnalogPorts()
 uint8_t uCtrlClass::getDigitalPorts()
 {
 
-#if defined(USE_DIN)
-	return din->sizeOf();
-#endif // defined(USE_DIN)
+	if (din != nullptr) {
+		return din->sizeOf();
+	}
 
 	return 0;
 }
@@ -605,11 +583,7 @@ uint8_t uCtrlClass::getDigitalPorts()
 uint8_t uCtrlClass::getOutputPorts()
 {
 
-#if defined(USE_MIDI)
 	return midi->sizeOf();
-#endif // defined(USE_MIDI)
-
-	return 0;
 	
 /*
 #if defined(UMODULAR_DMX)	
@@ -671,42 +645,42 @@ void uCtrlHandler()
 		}
 	}
 
-#if defined(USE_DIN)
-	// ~2ms call
-	if (++_timerCounterDin == 8) {
-		_timerCounterDin = 0;
-		uCtrl.din->read(1);
-		return;
+	if (uCtrl.din != nullptr) {
+		// ~2ms call
+		if (++_timerCounterDin == 8) {
+			_timerCounterDin = 0;
+			uCtrl.din->read(1);
+			return;
+		}
 	}
-#endif // defined(USE_DIN)
 
-#if defined(USE_CAP_TOUCH)	
-	// ~3ms call
-	if (++_timerCapTouch == 12) 
-	{
-		_timerCapTouch = 0;
-		uCtrl.touch->read();
-		return;
+	if (uCtrl.touch != nullptr) {
+		// ~3ms call
+		if (++_timerCapTouch == 12) 
+		{
+			_timerCapTouch = 0;
+			uCtrl.touch->read();
+			return;
+		}
 	}
-#endif // defined(USE_CAP_TOUCH)
 
-#if defined(USE_AIN)
-	// ~10ms call
-	if (++_timerCounterAin == 40) 
-	{
-		_timerCounterAin = 0;
-		uCtrl.processAin();
-		return;
+	if (uCtrl.ain != nullptr) {
+		// ~10ms call
+		if (++_timerCounterAin == 40) 
+		{
+			_timerCounterAin = 0;
+			uCtrl.processAin();
+			return;
+		}
 	}
-#endif // defined(USE_AIN)
 
-#if defined(USE_DOUT)
-	// ~30ms call
-	if (++_timerCounterDout == 120) {
-		_timerCounterDout = 0;
-		uCtrl.dout->flush(1);
-		return;
+	if (uCtrl.dout != nullptr) {
+		// ~30ms call
+		if (++_timerCounterDout == 120) {
+			_timerCounterDout = 0;
+			uCtrl.dout->flush(1);
+			return;
+		}
 	}
-#endif // defined(USE_DOUT)
 
 }

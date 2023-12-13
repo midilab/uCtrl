@@ -2,7 +2,7 @@
  *  @file       din.cpp
  *  Project     Arduino Library API interface for uMODULAR projects
  *  @brief      Digital input driver module (165 shiftregister)
- *  @version    1.0.0
+ *  @version    1.1.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
@@ -26,10 +26,6 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
-#include "../../../../modules.h"
-
-#ifdef USE_DIN
-
 #include "din.hpp"
 
 namespace uctrl { namespace module {
@@ -49,23 +45,36 @@ uint8_t Din::sizeOf()
 	return _remote_digital_port;
 }			
 
+void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin)
+{
+	// HARDWARE NOTES
+	// For those using a SPI device for other devices than 165:
+	// since the 165 are not spi compilant we need a 2.2k resistor on MISO line to not screw up other spi devices on same MISO pin
+	_spi_device = spi_device;
+	// Chip select pin setup
+	_latch_pin = latch_pin;
+}
+
 // call first all plug() for pin register, then plugSR if needed
 void Din::plug(uint8_t setup)
 {
-	if (_remote_digital_port < USE_DIN_MAX_PORTS) {
-		_button_pin[_remote_digital_port] = setup;
-		++_remote_digital_port;
-		_chain_size_pin = floor(_remote_digital_port/8)+1;
+	// alloc once and forever policy!
+	if (_din_pin_map == nullptr) {
+		_din_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
+	} else {
+		_din_pin_map = (uint8_t*) realloc( _din_pin_map, sizeof(uint8_t) * (_remote_digital_port+1) );
 	}
+
+	_din_pin_map[_remote_digital_port] = setup;
+	++_remote_digital_port;
+	_chain_size_pin = floor(_remote_digital_port/8)+1;
 }
 
-#if defined(USE_DIN_SPI_DRIVER) || defined(USE_DIN_BITBANG_DRIVER)
 void Din::plugSR(uint8_t setup)
 {
 	_chain_size_sr = setup;
 	_remote_digital_port += _chain_size_sr * 8;
 }
-#endif
 
 // call it only after all plug() and plugSR() requests
 void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
@@ -110,12 +119,15 @@ void Din::init()
 	pinModeFast(DIN_DATA_PIN, INPUT); 
 	pinModeFast(DIN_CLOCK_PIN, OUTPUT);	
 	digitalWriteFast(DIN_LATCH_PIN, HIGH);	
-#elif defined(USE_DIN_SPI_DRIVER)
-	pinMode(_latch_pin, OUTPUT);
-	digitalWrite(_latch_pin, HIGH);	
-	// initing SPI bus
-	_spi_device->begin();
 #endif
+	// should we init spi driver for shiftregister?
+	if (_spi_device != nullptr) {
+	//if (_chain_size_sr != 0) {
+		pinMode(_latch_pin, OUTPUT);
+		digitalWrite(_latch_pin, HIGH);	
+		// initing SPI bus
+		_spi_device->begin();
+	}
 
 	// init total chain size 
 	_chain_size = (_chain_size_pin + _chain_size_sr);
@@ -125,7 +137,7 @@ void Din::init()
 		uint8_t remote_pin_port = _remote_digital_port - (_chain_size_sr * 8);
 		// walk port reference structure and setup PINs as PULLUP/INPUT
 		for (uint8_t i=0; i < remote_pin_port; i++ ) {
-			pinMode(_button_pin[i], INPUT_PULLUP);
+			pinMode(_din_pin_map[i], INPUT_PULLUP);
 		}
 		_chain_pin_gap = 8 - (_remote_digital_port % 8);
 	}
@@ -149,18 +161,6 @@ void Din::init()
 	event_queue.tail = 0;
 	event_queue.size = DIN_EVENT_QUEUE_SIZE;
 }
-
-#if defined(USE_DIN_SPI_DRIVER)
-void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin)
-{
-	// HARDWARE NOTES
-	// For those using a SPI device for other devices than 165:
-	// since the 165 are not spi compilant we need a 2.2k resistor on MISO line to not screw up other spi devices on same MISO pin
-	_spi_device = spi_device;
-	// Chip select pin setup
-	_latch_pin = latch_pin;
-}
-#endif
 
 // make it bool...
 // if (read()) means something change...
@@ -189,7 +189,7 @@ void Din::read(uint8_t interrupted)
 				if (remote_port >= _remote_digital_port) {
 					break;
 				}
-				_digital_input_state[i] |= digitalRead(_button_pin[remote_port]) << j;
+				_digital_input_state[i] |= digitalRead(_din_pin_map[remote_port]) << j;
 			}				
 			if (state_change == false && _digital_input_last_state[i] != _digital_input_state[i]) {
 				state_change = true;
@@ -223,29 +223,32 @@ void Din::read(uint8_t interrupted)
 			state_change = true;
 		}
 	}
-#elif defined(USE_DIN_SPI_DRIVER)
-	if ( interrupted == 0 ) { 
-		noInterrupts();
-		//_spi_device->usingInterrupt(255);
-	} 
-	_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
-	// pulsing the chip select pin to start capturing data
-	digitalWrite(_latch_pin, LOW);
-	digitalWrite(_latch_pin, HIGH);
-	// Read byte per byte
-	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
-		// Before refresh data, set the last state data
-		_digital_input_last_state[i] = _digital_input_state[i];		
-		_digital_input_state[i] = (uint8_t) _spi_device->transfer(0x00); 
-		if (state_change == false && _digital_input_last_state[i] != _digital_input_state[i]) {
-			state_change = true;
+#else
+	if (_spi_device != nullptr) {
+	//if (_chain_size_sr != 0) {
+		if ( interrupted == 0 ) { 
+			noInterrupts();
+			//_spi_device->usingInterrupt(255);
+		} 
+		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
+		// pulsing the chip select pin to start capturing data
+		digitalWrite(_latch_pin, LOW);
+		digitalWrite(_latch_pin, HIGH);
+		// Read byte per byte
+		for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
+			// Before refresh data, set the last state data
+			_digital_input_last_state[i] = _digital_input_state[i];		
+			_digital_input_state[i] = (uint8_t) _spi_device->transfer(0x00); 
+			if (state_change == false && _digital_input_last_state[i] != _digital_input_state[i]) {
+				state_change = true;
+			}
 		}
+		_spi_device->endTransaction();
+		if ( interrupted == 0 ) { 
+			interrupts();
+			//_spi_device->notUsingInterrupt(255);
+		}  
 	}
-	_spi_device->endTransaction();
-	if ( interrupted == 0 ) { 
-		interrupts();
-		//_spi_device->notUsingInterrupt(255);
-	}  
 #endif
 
 	if (state_change) {
@@ -342,4 +345,3 @@ int8_t Din::getDataRaw(uint8_t port)
 } }
 
 uctrl::module::Din din_module;
-#endif

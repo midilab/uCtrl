@@ -26,10 +26,6 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
-#include "../../../../modules.h"
-
-#ifdef USE_OLED
-
 #include "oled.hpp"
 
 namespace uctrl { namespace module {
@@ -256,4 +252,3 @@ void Oled::inverseFont(bool inverse)
 } }
 
 uctrl::module::Oled oled_module;
-#endif

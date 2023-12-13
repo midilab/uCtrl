@@ -31,9 +31,9 @@
 
 #include <Arduino.h>
 
-#ifndef USE_PAGE_MAX_PAGES
-#define USE_PAGE_MAX_PAGES      6
-#endif
+// auto defines, change per dinamicly setup
+#define USE_PAGE_COMPONENT
+
 
 #ifdef USE_PAGE_COMPONENT	
 
@@ -222,7 +222,7 @@ typedef struct
         uint8_t f1_state = 0;
         uint8_t f2_state = 0;
         // each subpage needs a reference pointer to wich is the selected component of the first one to be selected
-        SUB_PAGE_DATA sub_page_data[USE_PAGE_MAX_SUB_PAGES];
+        SUB_PAGE_DATA * sub_page_data = nullptr;
 #endif
 } PAGE_DATA;
 
@@ -232,7 +232,7 @@ class Page
         Page();
         ~Page(); 
   
-        void init();
+        void init(uint8_t pages_size);
         void setPage(int8_t page);	
         void setSubPage(int8_t sub_page);
         //void isPageSet(uint8_t page_number);
@@ -289,7 +289,7 @@ class Page
         uint8_t _last_page;  
         bool _page_callback_create;
         bool _page_callback_destroy;
-        PAGE_DATA _page_data[USE_PAGE_MAX_PAGES];
+        PAGE_DATA * _page_data = nullptr;
 
 #ifdef USE_PAGE_COMPONENT
         HOOK_CTRL_DATA _shift_hooker[MAX_SHIFT_HOOKERS_SIZE];

@@ -1,7 +1,3 @@
-#include "../../../../modules.h"
-
-#ifdef USE_CAP_TOUCH
-
 //
 //  FastTouch.cpp
 //  
@@ -803,6 +799,3 @@ int fastTouchMax()
 {
     return 60;
 }
-
-
-#endif
