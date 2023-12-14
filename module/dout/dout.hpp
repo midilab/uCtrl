@@ -62,7 +62,7 @@ class Dout
         bool blink();
 
         uint8_t * _digital_output_state = nullptr;
-        volatile uint8_t * _digital_output_buffer = nullptr;
+        uint8_t * _digital_output_buffer = nullptr;
 
         // used for direct microcontroller digital output pins
 	//uint8_t _dout_pin_map[16] = {0};
@@ -78,7 +78,7 @@ class Dout
 	bool _blink = false;
 	uint32_t _blink_timer = 0;
 
-	volatile SPIClass * _spi_device = nullptr;
+	SPIClass * _spi_device = nullptr;
 	void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
         int8_t _latch_pin = -1;
 

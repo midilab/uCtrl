@@ -8,7 +8,14 @@
 
 #include "FastTouch.h"
 
-
+// ESP32 family dont have support on this library
+// mocking return to avoid compile problems on this platform
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+int fastTouchRead(int  pin)
+{
+    return 0;
+}
+#endif
 
 
 #if defined(CORE_TEENSY)
