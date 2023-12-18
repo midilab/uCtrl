@@ -40,7 +40,12 @@
 #define COMPONENT_LINE  8
 #define COMPONENT_GRID  2
 
+
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+#define POT_ADC_RESOLUTION 4096
+#else
 #define POT_ADC_RESOLUTION 1024
+#endif
 
 // for change control
 #define INCREMENT -1
