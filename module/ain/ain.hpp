@@ -43,6 +43,12 @@ namespace uctrl { namespace module {
 #define AIN_4051_MUX_SIZE	8
 #define AIN_4067_MUX_SIZE	16
 
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+#define ADC_RESOLUTION 4096
+#else
+#define ADC_RESOLUTION 1024
+#endif
+
 typedef enum {
 	MUX_DRIVER_4051,
 	MUX_DRIVER_4067
@@ -106,13 +112,13 @@ class Ain
 		uint8_t _remote_analog_port = 0; // uint8_t soft_port[16];
 		uint8_t _direct_pin_size = 0;
 
-		// For arduino ADC max resolution is 10bits(1024)
-		uint16_t _adc_max_resolution = 1024;
+		// For arduino ADC max resolution is 10bits(ADC_RESOLUTION)
+		uint16_t _adc_max_resolution = ADC_RESOLUTION;
 		//uint8_t _adc_unlock_divider = 8;
 		//uint8_t _adc_unlock_divider = 16;
 		//uint8_t _adc_unlock_divider = 32;
 		uint8_t _adc_unlock_divider = 64;
-		uint16_t _user_adc_max_resolution = 1024;
+		uint16_t _user_adc_max_resolution = ADC_RESOLUTION;
 			
 		// for filtering ADC data changes
 #ifdef ANALOG_AVG_READS
