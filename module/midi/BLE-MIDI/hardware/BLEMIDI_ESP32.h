@@ -28,7 +28,7 @@ public:
     {
     }
 
-    bool begin(const char *, BLEMIDI_Transport<class BLEMIDI_ESP32> *);
+    inline bool begin(const char *, BLEMIDI_Transport<class BLEMIDI_ESP32> *);
 
     void end()
     {
@@ -121,7 +121,7 @@ protected:
     }
 };
 
-bool BLEMIDI_ESP32::begin(const char *deviceName, BLEMIDI_Transport<class BLEMIDI_ESP32> *bleMidiTransport)
+inline bool BLEMIDI_ESP32::begin(const char *deviceName, BLEMIDI_Transport<class BLEMIDI_ESP32> *bleMidiTransport)
 {
     _bleMidiTransport = bleMidiTransport;
 

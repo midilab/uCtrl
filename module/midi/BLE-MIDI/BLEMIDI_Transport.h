@@ -1,7 +1,6 @@
 /*!
  *  @file		BLEMIDI_Transport.h
  */
-#if defined(CONFIG_BT_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
 
 #pragma once
 
@@ -418,5 +417,3 @@ struct MySettings : public MIDI_NAMESPACE::DefaultSettings
 };
 
 END_BLEMIDI_NAMESPACE
-
-#endif

@@ -15,6 +15,7 @@ hw_timer_t * _uctrlTimer = NULL;
 
 // FreeRTOS main clock task size in bytes
 #define CTRL_STACK_SIZE     2048
+//#define CTRL_STACK_SIZE     4096
 //#define CTRL_STACK_SIZE     configMINIMAL_STACK_SIZE
 #define CTRL_TASK_PRIORITY  tskIDLE_PRIORITY + 2
 TaskHandle_t _taskHandle;
