@@ -8,14 +8,14 @@
 //
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 	// mutex to protect the shared resource
-	static SemaphoreHandle_t _midi_mutex;
+	extern SemaphoreHandle_t _midi_mutex;
 	// mutex control for task
-	#define ATOMIC(X) xSemaphoreTake(_midi_mutex, portMAX_DELAY); X; xSemaphoreGive(_midi_mutex);
+	#define MIDI_ATOMIC(X) xSemaphoreTake(_midi_mutex, portMAX_DELAY); X; xSemaphoreGive(_midi_mutex);
 //
 // singlecore archs
 //
 #else
-	#define ATOMIC(X) noInterrupts(); X; interrupts();
+	#define MIDI_ATOMIC(X) noInterrupts(); X; interrupts();
 #endif
 
 // MIDI Support
@@ -56,15 +56,15 @@ class Midi
 
 		void init();	
 
-    	template <typename T, typename U, typename V>
-    	void plug(midi::MidiInterface<T, U, V> *midiInterface) {
+    	template <typename T>
+    	void plug(T * midiInterface) {
 			if (_port_size >= MAX_MIDI_DEVICE) {
 				return;
 			}
 
             midiArray[_port_size] = reinterpret_cast<void *>(midiInterface);
-            readFunctions[_port_size] = &readImpl<T, U, V>;
-            sendFunctions[_port_size] = &sendImpl<T, U, V>;
+            readFunctions[_port_size] = &readImpl<T>;
+            sendFunctions[_port_size] = &sendImpl<T>;
 
 			// init interface
 			midiInterface->begin();
@@ -80,7 +80,7 @@ class Midi
 			midiInterface->setHandleStart(handleStart);
 			midiInterface->setHandleStop(handleStop);
 
-			//
+			// is its usb_midi_class for teensy?
 			midiInterface->setHandlePitchBend(handlePitchBend);
 			midiInterface->turnThruOff();	
 
@@ -88,37 +88,34 @@ class Midi
 		}
 
 		using ReadFunction = void (*)(void *, uint8_t);
-		//using SendFunction = void (*)(void *, const std::string &);
+		//using SendFunction = void (*)(void *, const midi::MidiMessage &);
 		using SendFunction = void (*)(void *, const midi::MidiType &, const midi::DataByte &, const midi::DataByte &, const midi::Channel &, uint8_t);
 		void *midiArray[MAX_MIDI_DEVICE];
 		ReadFunction readFunctions[MAX_MIDI_DEVICE];
 		SendFunction sendFunctions[MAX_MIDI_DEVICE];
-		template <typename T, typename U, typename V>
+
+		template <typename T>
 		static void readImpl(void *item, uint8_t interrupted) {
-			midi::MidiInterface<T, U, V> *midi = reinterpret_cast<midi::MidiInterface<T, U, V> *>(item);
-			//if (interrupted == 0) {
-			//	ATOMIC(midi->read());
-			//} else {
+			T* midi = reinterpret_cast<T*>(item);
+			if (interrupted == 0) {
+				MIDI_ATOMIC(midi->read());
+			} else {
 				midi->read();
-			//}
+			}
 		}
-		template <typename T, typename U, typename V>
+
+		template <typename T>
 		static void sendImpl(void *item, const midi::MidiType &inType, const midi::DataByte &inData1,
 							const midi::DataByte &inData2, const midi::Channel &inChannel, uint8_t interrupted) {
-			midi::MidiInterface<T, U, V> *midi = reinterpret_cast<midi::MidiInterface<T, U, V> *>(item);
-			//if (interrupted == 0) {
-			//	ATOMIC(midi->send(inType, inData1, inData2, inChannel));
-			//} else {
+			T *midi = reinterpret_cast<T*>(item);
+			// usb_midi_class for teensy needs one parameter more, cable(virtual port of a usb midi port)
+			//midi->send(inType, inData1, inData2, inChannel, 0);
+			if (interrupted == 0) {
+				MIDI_ATOMIC(midi->send(inType, inData1, inData2, inChannel));
+			} else {
 				midi->send(inType, inData1, inData2, inChannel);
-			//}
+			}
 		}
-		/* template <typename T, typename U, typename V>
-		static void readImpl(void *item, uint8_t interrupted);
-
-		template <typename T, typename U, typename V>
-		static void sendImpl(void *item, const midi::MidiType &inType, const midi::DataByte &inData1,
-							 const midi::DataByte &inData2, const midi::Channel &inChannel, uint8_t interrupted);
-		 */
 
 		bool read(uint8_t port);
 		void readAllPorts(uint8_t interrupted = 0);
@@ -130,13 +127,8 @@ class Midi
 
         uint8_t _port_size = 0;
         uint8_t _port = 0;
-		bool _ble_connected = false;
 
         uctrl::protocol::midi::MIDI_MESSAGE _message;
-
-		// keep only the address of devices, type conversion is done in compile time 
-		// using templates of initMidiInterface<>(), writeMidiInterface<>(), readMidiInterface<>()
-		//void * _midi_port_if[MAX_MIDI_DEVICE] = {nullptr};
 
 		void sendMessage(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted = 0, uint8_t config = 0);
 

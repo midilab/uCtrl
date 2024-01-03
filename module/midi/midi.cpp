@@ -1,5 +1,9 @@
 #include "midi.hpp"
 
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+    SemaphoreHandle_t _midi_mutex;
+#endif
+
 namespace uctrl { namespace module {
 
 Midi::Midi()
@@ -16,131 +20,6 @@ Midi::~Midi()
 	
 }
 
-/* template <typename T, typename U, typename V>
-void Midi::readImpl(void *item, uint8_t interrupted) {
-	midi::MidiInterface<T, U, V> *midi = reinterpret_cast<midi::MidiInterface<T, U, V> *>(item);
-	midi->read();
-}
-
-template <typename T, typename U, typename V>
-void Midi::sendImpl(void *item, const midi::MidiType &inType, const midi::DataByte &inData1,
-					const midi::DataByte &inData2, const midi::Channel &inChannel, uint8_t interrupted) {
-	midi::MidiInterface<T, U, V> *midi = reinterpret_cast<midi::MidiInterface<T, U, V> *>(item);
-	if (interrupted == 0) {
-		ATOMIC(midi->send(inType, inData1, inData2, inChannel));
-	} else {
-		midi->send(inType, inData1, inData2, inChannel);
-	}
-} */
-/* 
-template<typename T>
-void Midi::initMidiInterface(T * device) {
-
-	device->begin();
-
-	// Setup MIDI Callbacks to handle incomming messages
-	device->setHandleNoteOn(handleNoteOn);
-	device->setHandleNoteOff(handleNoteOff);
-	device->setHandleControlChange(handleCC);
-
-	//device->setHandleAfterTouchPoly(handleAfterTouchPoly);
-	//device->setHandleAfterTouchChannel(handleAfterTouchChannel);
-	device->setHandleSystemExclusive(handleSystemExclusive);
-
-	device->setHandleClock(handleClock);
-	device->setHandleStart(handleStart);
-	device->setHandleStop(handleStop);
-}
- */
-
-// Method to store a MidiInterface object and keep track of it by index
-//template <typename T, typename U>
-//void Midi::plug(midi::MidiInterface<T, U>& midiInterface) {
-
-/* 
-void Midi::plug(midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> * device)
-{
-	_midi_port_if[_port_size] = (void *) device;
-
-	initMidiInterface<midi::MidiInterface<midi::SerialMIDI<HardwareSerial>>>((midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> *)_midi_port_if[_port_size]);
-	device->setHandlePitchBend(handlePitchBend);
-	device->turnThruOff();	
-
-	_port_size++;
-}
-
-#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
-void Midi::plug(usb_midi_class * device)
-{
-	if ( _usb_port == 255 ) {
-		_usb_port = _port_size;
-		_midi_port_if[_usb_port] = (void *) device;
-
-		initMidiInterface<usb_midi_class>((usb_midi_class *)_midi_port_if[_usb_port]);
-		device->setHandlePitchChange(handlePitchBend);
-
-		_port_size++;
-	}
-}
-#elif defined(__AVR_ATmega32U4__)
-void Midi::plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device)
-{
-	if ( _usb_port == 255 ) {
-		_usb_port = _port_size;
-		_midi_port_if[_usb_port] = (void *) device;
-
-		initMidiInterface<midi::MidiInterface<usbMidi::usbMidiTransport>>((midi::MidiInterface<usbMidi::usbMidiTransport> *)_midi_port_if[_usb_port]);
-		device->setHandlePitchBend(handlePitchBend);
-		device->turnThruOff();	
-
-		_port_size++;
-	}
-}
-#elif defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
-void Midi::plug(midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> * device)
-{
-	if ( _usb_port == 255 ) {
-		_usb_port = _port_size;
-		_midi_port_if[_port_size] = (void *) device;
-
-		initMidiInterface<midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>>>((midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> *)_midi_port_if[_port_size]);
-		device->setHandlePitchBend(handlePitchBend);
-		device->turnThruOff();	
-
-		_port_size++;
-	}
-}
-#endif
-
-void onConnected() {
-
-}
-
-void OnDisconnected() {
-
-}
-
-#if defined(USE_BT_MIDI_ESP32) && defined(CONFIG_BT_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
-void Midi::plug(midi::MidiInterface<bleMidi::BLEMIDI_Transport<bleMidi::BLEMIDI_ESP32>, bleMidi::MySettings> * device)
-{
-	if ( _ble_port == 255 ) {
-		_ble_port = _port_size;
-		_midi_port_if[_port_size] = (void *) device;
-
-		initMidiInterface<midi::MidiInterface<bleMidi::BLEMIDI_Transport<bleMidi::BLEMIDI_ESP32>, bleMidi::MySettings>>((midi::MidiInterface<bleMidi::BLEMIDI_Transport<bleMidi::BLEMIDI_ESP32>, bleMidi::MySettings> *)_midi_port_if[_port_size]);
-
-		device->setHandlePitchBend(handlePitchBend);
-		device->turnThruOff();	
-
-		// how to handle this for API access?
-		//BLEMIDI.setHandleConnected(OnConnected); // void OnConnected() {}
-		//BLEMIDI.setHandleDisconnected(OnDisconnected); // void OnDisconnected() {}
-		_port_size++;
-	}
-}
-#endif
-
- */
 uint8_t Midi::sizeOf()
 {
 	return _port_size;
@@ -171,7 +50,7 @@ bool Midi::read(uint8_t port)
 	
 	_port = port;
 	
-	uint8_t interrupted = 1;
+	uint8_t interrupted = 0;
 	// Use the stored function pointers to invoke member functions
 	readFunctions[_port](midiArray[_port], interrupted);
 }
@@ -297,8 +176,11 @@ void Midi::write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_
     
     --port;    
 
-	// writing ble crashes! why? only inside rtos task, when interrupted == 1
-	if (interrupted == 1) return;
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	// forces interrupted to 0 since we are running from freertos task
+	interrupted = 0;
+#endif
+
 	writeMidiInterface(port, msg, interrupted);
 }
 

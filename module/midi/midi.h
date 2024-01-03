@@ -1,6 +1,8 @@
 #ifndef __U_CTRL_MIDI_H__
 #define __U_CTRL_MIDI_H__
 
+//#include "MIDI/midi_Defs.h"
+
 namespace uctrl { namespace protocol { namespace midi {
 
 typedef enum {
@@ -43,6 +45,7 @@ typedef enum {
 typedef struct 
 {
 	MidiMessageType type;
+    //midi::MidiType type;
 	uint8_t channel;
 	int16_t data1; // 16bits for NRPN support
 	int16_t data2; // 16bits for NRPN support
