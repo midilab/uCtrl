@@ -49,10 +49,10 @@ bool Midi::read(uint8_t port)
 	--port;
 	
 	_port = port;
-	
-	uint8_t interrupted = 0;
+
 	// Use the stored function pointers to invoke member functions
-	readFunctions[_port](midiArray[_port], interrupted);
+	// should always be atomic interrupted=0
+	readFunctions[_port](midiArray[_port], 0);
 }
 
 void Midi::readAllPorts(uint8_t interrupted)
@@ -175,11 +175,6 @@ void Midi::write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_
 	}
     
     --port;    
-
-#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
-	// forces interrupted to 0 since we are running from freertos task
-	interrupted = 0;
-#endif
 
 	writeMidiInterface(port, msg, interrupted);
 }
