@@ -49,22 +49,22 @@ namespace uctrl { namespace module {
 
 class Midi
 {
-    public:
-    
-        Midi();
-        ~Midi();
+	public:
+
+		Midi();
+		~Midi();
 
 		void init();	
 
-    	template <typename T>
-    	void plug(T * midiInterface) {
+		template <typename T>
+		void plug(T * midiInterface) {
 			if (_port_size >= MAX_MIDI_DEVICE) {
 				return;
 			}
 
-            midiArray[_port_size] = reinterpret_cast<void *>(midiInterface);
-            readFunctions[_port_size] = &readImpl<T>;
-            sendFunctions[_port_size] = &sendImpl<T>;
+			midiArray[_port_size] = reinterpret_cast<void *>(midiInterface);
+			readFunctions[_port_size] = &readImpl<T>;
+			sendFunctions[_port_size] = &sendImpl<T>;
 
 			// init interface
 			midiInterface->begin();
@@ -116,7 +116,52 @@ class Midi
 				midi->send(inType, inData1, inData2, inChannel);
 			}
 		}
+/* 
+#if defined(TEENSYDUINO) && defined(USB_MIDI_SERIAL) && !defined(__AVR_ATmega32U4__)
+		// usb_midi_class dont follow the midi:MidiInterface interface
+		template <typename T>
+		void plug(T * midiInterface) {
+			if (_port_size >= MAX_MIDI_DEVICE) {
+				return;
+			}
 
+			midiArray[_port_size] = reinterpret_cast<void *>(midiInterface);
+			sendFunctions[_port_size] = &sendImplTeensyUsbMidi<T>;
+			readFunctions[_port_size] = &readImpl<T>;
+
+			// init interface
+			midiInterface->begin();
+
+			// Setup MIDI Callbacks to handle incomming messages
+			midiInterface->setHandleNoteOn(handleNoteOn);
+			midiInterface->setHandleNoteOff(handleNoteOff);
+			midiInterface->setHandleControlChange(handleCC);
+			//midiInterface->setHandleAfterTouchPoly(handleAfterTouchPoly);
+			//midiInterface->setHandleAfterTouchChannel(handleAfterTouchChannel);
+			midiInterface->setHandleSystemExclusive(handleSystemExclusive);
+			midiInterface->setHandleClock(handleClock);
+			midiInterface->setHandleStart(handleStart);
+			midiInterface->setHandleStop(handleStop);
+			//midiInterface->setHandlePitchBend(handlePitchBend);
+			//midiInterface->turnThruOff();
+
+			++_port_size;
+		}
+		
+ 		// teensy usb_midi_class demands a different send signature handling for cable selection
+		template <typename T>
+		static void sendImplTeensyUsbMidi(void *item, const midi::MidiType &inType, const midi::DataByte &inData1,
+							const midi::DataByte &inData2, const midi::Channel &inChannel, uint8_t interrupted) {
+			T *midi = reinterpret_cast<T*>(item);
+			// usb_midi_class for teensy needs one parameter more, cable(virtual port of a usb midi port)
+			if (interrupted == 0) {
+				MIDI_ATOMIC(midi->send(inType, inData1, inData2, inChannel, 0));
+			} else {
+				midi->send(inType, inData1, inData2, inChannel, 0);
+			}
+		} 
+#endif
+ */
 		bool read(uint8_t port);
 		void readAllPorts(uint8_t interrupted = 0);
 		void write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted = 0);
@@ -125,10 +170,10 @@ class Midi
 
 		void writeMidiInterface(uint8_t port, uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted = 0);
 
-        uint8_t _port_size = 0;
-        uint8_t _port = 0;
+		uint8_t _port_size = 0;
+		uint8_t _port = 0;
 
-        uctrl::protocol::midi::MIDI_MESSAGE _message;
+		uctrl::protocol::midi::MIDI_MESSAGE _message;
 
 		void sendMessage(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted = 0, uint8_t config = 0);
 
@@ -141,7 +186,7 @@ class Midi
 		void setMidiOutputCallback(void (*callback)(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupetd, uint8_t config)) {
 			_midiOutputCallback = callback;
 		}
-	
+
 		// because of MIDI library way of working we need static methods with static data.
 		static void handleNoteOn(byte channel, byte pitch, byte velocity);
 		static void handleNoteOff(byte channel, byte pitch, byte velocity);
