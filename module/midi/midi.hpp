@@ -87,13 +87,6 @@ class Midi
 			++_port_size;
 		}
 
-		using ReadFunction = void (*)(void *, uint8_t);
-		//using SendFunction = void (*)(void *, const midi::MidiMessage &);
-		using SendFunction = void (*)(void *, const midi::MidiType &, const midi::DataByte &, const midi::DataByte &, const midi::Channel &, uint8_t);
-		void *midiArray[MAX_MIDI_DEVICE];
-		ReadFunction readFunctions[MAX_MIDI_DEVICE];
-		SendFunction sendFunctions[MAX_MIDI_DEVICE];
-
 		template <typename T>
 		static void readImpl(void *item, uint8_t interrupted) {
 			T* midi = reinterpret_cast<T*>(item);
@@ -116,18 +109,24 @@ class Midi
 				midi->send(inType, inData1, inData2, inChannel);
 			}
 		}
-/* 
+
+		using ReadFunction = void (*)(void *, uint8_t);
+		using SendFunction = void (*)(void *, const midi::MidiType &, const midi::DataByte &, const midi::DataByte &, const midi::Channel &, uint8_t);
+		void *midiArray[MAX_MIDI_DEVICE];
+		ReadFunction readFunctions[MAX_MIDI_DEVICE];
+		SendFunction sendFunctions[MAX_MIDI_DEVICE];
+
 #if defined(TEENSYDUINO) && defined(USB_MIDI_SERIAL) && !defined(__AVR_ATmega32U4__)
 		// usb_midi_class dont follow the midi:MidiInterface interface
-		template <typename T>
-		void plug(T * midiInterface) {
+		// so it needs a special handling
+		void plug(usb_midi_class * midiInterface) {
 			if (_port_size >= MAX_MIDI_DEVICE) {
 				return;
 			}
 
 			midiArray[_port_size] = reinterpret_cast<void *>(midiInterface);
-			sendFunctions[_port_size] = &sendImplTeensyUsbMidi<T>;
-			readFunctions[_port_size] = &readImpl<T>;
+			sendFunctions[_port_size] = &sendImplTeensyUsbMidi<usb_midi_class>;
+			readFunctions[_port_size] = &readImpl<usb_midi_class>;
 
 			// init interface
 			midiInterface->begin();
@@ -161,7 +160,7 @@ class Midi
 			}
 		} 
 #endif
- */
+
 		bool read(uint8_t port);
 		void readAllPorts(uint8_t interrupted = 0);
 		void write(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted = 0);
