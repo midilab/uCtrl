@@ -79,8 +79,6 @@ class Midi
 			midiInterface->setHandleClock(handleClock);
 			midiInterface->setHandleStart(handleStart);
 			midiInterface->setHandleStop(handleStop);
-
-			// is its usb_midi_class for teensy?
 			midiInterface->setHandlePitchBend(handlePitchBend);
 			midiInterface->turnThruOff();	
 
@@ -101,8 +99,6 @@ class Midi
 		static void sendImpl(void *item, const midi::MidiType &inType, const midi::DataByte &inData1,
 							const midi::DataByte &inData2, const midi::Channel &inChannel, uint8_t interrupted) {
 			T *midi = reinterpret_cast<T*>(item);
-			// usb_midi_class for teensy needs one parameter more, cable(virtual port of a usb midi port)
-			//midi->send(inType, inData1, inData2, inChannel, 0);
 			if (interrupted == 0) {
 				MIDI_ATOMIC(midi->send(inType, inData1, inData2, inChannel));
 			} else {
