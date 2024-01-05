@@ -11,7 +11,7 @@ Choose uCtrl for developing robust, portable, and high-performance musical instr
 The following microcontrollers and boards are supported and were tested:
 
 **AVRs:** ATmega168, ATmega328, ATmega16u4, ATmega32u4 and ATmega2560.  
-**ARMs:** ESP32, SAMD21 and All Teensy ARM microcontrollers.  
+**ARMs:** ESP32, SAMD21 and All Teensy ARM microcontrollers(1.57.2).  
 
 **Boards:** All AVR Arduino boards, All Teensy AVRs and ARMs, ESP32 based boards and Seedstudio XIAO M0.
 

@@ -3,19 +3,37 @@
 
 #include <Arduino.h>
 
+//
+// multicore archs
+//
+#if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	// mutex to protect the shared resource
+	extern SemaphoreHandle_t _midi_mutex;
+	// mutex control for task
+	#define MIDI_ATOMIC(X) xSemaphoreTake(_midi_mutex, portMAX_DELAY); X; xSemaphoreGive(_midi_mutex);
+//
+// singlecore archs
+//
+#else
+	#define MIDI_ATOMIC(X) noInterrupts(); X; interrupts();
+#endif
+
 // MIDI Support
 #if defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
 #include <USB.h>
 #include "ESPNATIVEUSBMIDI/ESPNATIVEUSBMIDI.h"
 #endif
-/* 
-#if defined(CONFIG_BT_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
+
+// want to use Bluetooth midi stack? keep in mind that consumes almost all of your code memory
+#define USE_BT_MIDI_ESP32
+
+#if defined(USE_BT_MIDI_ESP32) && defined(CONFIG_BT_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
 #include "BLE-MIDI/BLEMIDI_Transport.h"
 //#include "BLE-MIDI/hardware/BLEMIDI_ESP32_NimBLE.h"
 #include "BLE-MIDI/hardware/BLEMIDI_ESP32.h"
 //#include "BLE-MIDI/hardware/BLEMIDI_nRF52.h"
 //#include "BLE-MIDI/hardware/BLEMIDI_ArduinoBLE.h"
-#endif */
+#endif
 
 #include "MIDI/MIDI.h"
 
@@ -24,33 +42,120 @@
 #endif
 
 #include "midi.h"
-	
+
 namespace uctrl { namespace module { 
 
 #define MAX_MIDI_DEVICE 6
 
 class Midi
 {
-    public:
-    
-        Midi();
-        ~Midi();
+	public:
+
+		Midi();
+		~Midi();
 
 		void init();	
-		void plug(midi::MidiInterface<midi::SerialMIDI<HardwareSerial>> * device);
-		// handler for USB transport
-#if defined(TEENSYDUINO) && !defined(__AVR_ATmega32U4__)
-		void plug(usb_midi_class * device);
-#elif defined(__AVR_ATmega32U4__)
-		void plug(midi::MidiInterface<usbMidi::usbMidiTransport> * device);
-#elif defined(CONFIG_TINYUSB_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
-		void plug(midi::MidiInterface<midi::SerialMIDI<ESPNATIVEUSBMIDI>> * device);
+
+		template <typename T>
+		void plug(T * midiInterface) {
+			if (_port_size >= MAX_MIDI_DEVICE) {
+				return;
+			}
+
+			midiArray[_port_size] = reinterpret_cast<void *>(midiInterface);
+			readFunctions[_port_size] = &readImpl<T>;
+			sendFunctions[_port_size] = &sendImpl<T>;
+
+			// init interface
+			midiInterface->begin();
+
+			// Setup MIDI Callbacks to handle incomming messages
+			midiInterface->setHandleNoteOn(handleNoteOn);
+			midiInterface->setHandleNoteOff(handleNoteOff);
+			midiInterface->setHandleControlChange(handleCC);
+			//midiInterface->setHandleAfterTouchPoly(handleAfterTouchPoly);
+			//midiInterface->setHandleAfterTouchChannel(handleAfterTouchChannel);
+			midiInterface->setHandleSystemExclusive(handleSystemExclusive);
+			midiInterface->setHandleClock(handleClock);
+			midiInterface->setHandleStart(handleStart);
+			midiInterface->setHandleStop(handleStop);
+			midiInterface->setHandlePitchBend(handlePitchBend);
+			midiInterface->turnThruOff();	
+
+			++_port_size;
+		}
+
+		template <typename T>
+		static void readImpl(void *item, uint8_t interrupted) {
+			T* midi = reinterpret_cast<T*>(item);
+			if (interrupted == 0) {
+				MIDI_ATOMIC(midi->read());
+			} else {
+				midi->read();
+			}
+		}
+
+		template <typename T>
+		static void sendImpl(void *item, const midi::MidiType &inType, const midi::DataByte &inData1,
+							const midi::DataByte &inData2, const midi::Channel &inChannel, uint8_t interrupted) {
+			T *midi = reinterpret_cast<T*>(item);
+			if (interrupted == 0) {
+				MIDI_ATOMIC(midi->send(inType, inData1, inData2, inChannel));
+			} else {
+				midi->send(inType, inData1, inData2, inChannel);
+			}
+		}
+
+		using ReadFunction = void (*)(void *, uint8_t);
+		using SendFunction = void (*)(void *, const midi::MidiType &, const midi::DataByte &, const midi::DataByte &, const midi::Channel &, uint8_t);
+		void *midiArray[MAX_MIDI_DEVICE];
+		ReadFunction readFunctions[MAX_MIDI_DEVICE];
+		SendFunction sendFunctions[MAX_MIDI_DEVICE];
+
+#if defined(TEENSYDUINO) && defined(USB_MIDI_SERIAL) && !defined(__AVR_ATmega32U4__)
+		// usb_midi_class dont follow the midi:MidiInterface interface
+		// so it needs a special handling
+		void plug(usb_midi_class * midiInterface) {
+			if (_port_size >= MAX_MIDI_DEVICE) {
+				return;
+			}
+
+			midiArray[_port_size] = reinterpret_cast<void *>(midiInterface);
+			sendFunctions[_port_size] = &sendImplTeensyUsbMidi<usb_midi_class>;
+			readFunctions[_port_size] = &readImpl<usb_midi_class>;
+
+			// init interface
+			midiInterface->begin();
+
+			// Setup MIDI Callbacks to handle incomming messages
+			midiInterface->setHandleNoteOn(handleNoteOn);
+			midiInterface->setHandleNoteOff(handleNoteOff);
+			midiInterface->setHandleControlChange(handleCC);
+			//midiInterface->setHandleAfterTouchPoly(handleAfterTouchPoly);
+			//midiInterface->setHandleAfterTouchChannel(handleAfterTouchChannel);
+			midiInterface->setHandleSystemExclusive(handleSystemExclusive);
+			midiInterface->setHandleClock(handleClock);
+			midiInterface->setHandleStart(handleStart);
+			midiInterface->setHandleStop(handleStop);
+			//midiInterface->setHandlePitchBend(handlePitchBend);
+			//midiInterface->turnThruOff();
+
+			++_port_size;
+		}
+		
+ 		// teensy usb_midi_class demands a different send signature handling for cable selection
+		template <typename T>
+		static void sendImplTeensyUsbMidi(void *item, const midi::MidiType &inType, const midi::DataByte &inData1,
+							const midi::DataByte &inData2, const midi::Channel &inChannel, uint8_t interrupted) {
+			T *midi = reinterpret_cast<T*>(item);
+			// usb_midi_class for teensy needs one parameter more, cable(virtual port of a usb midi port)
+			if (interrupted == 0) {
+				MIDI_ATOMIC(midi->send(inType, inData1, inData2, inChannel, 0));
+			} else {
+				midi->send(inType, inData1, inData2, inChannel, 0);
+			}
+		} 
 #endif
-/* 
-		// handler for bluetooth transport: esp32 only
-#if defined(CONFIG_BT_ENABLED) && (defined(ARDUINO_ARCH_ESP32) || defined(ESP32))
-		void plug(midi::MidiInterface<bleMidi::BLEMIDI_Transport<bleMidi::BLEMIDI_ESP32>, bleMidi::MySettings> * device);
-#endif */
 
 		bool read(uint8_t port);
 		void readAllPorts(uint8_t interrupted = 0);
@@ -58,24 +163,12 @@ class Midi
 		void writeAllPorts(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted = 0);
 		uint8_t sizeOf();	
 
-		template<typename T>
-		void initMidiInterface(T * device);
+		void writeMidiInterface(uint8_t port, uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted = 0);
 
-		template<typename T>
-		void writeMidiInterface(T * device, uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted);
+		uint8_t _port_size = 0;
+		uint8_t _port = 0;
 
-		template<typename T>
-		bool readMidiInterface(T * device);
-
-        uint8_t _port_size = 0;
-        uint8_t _port = 0;
-		uint8_t _usb_port = 255;
-
-        uctrl::protocol::midi::MIDI_MESSAGE _message;
-
-		// keep only the address of devices, type conversion is done in compile time 
-		// using templates of initMidiInterface<>(), writeMidiInterface<>(), readMidiInterface<>()
-		void * _midi_port_if[MAX_MIDI_DEVICE] = {nullptr};
+		uctrl::protocol::midi::MIDI_MESSAGE _message;
 
 		void sendMessage(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupted = 0, uint8_t config = 0);
 
@@ -88,7 +181,7 @@ class Midi
 		void setMidiOutputCallback(void (*callback)(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, uint8_t interrupetd, uint8_t config)) {
 			_midiOutputCallback = callback;
 		}
-	
+
 		// because of MIDI library way of working we need static methods with static data.
 		static void handleNoteOn(byte channel, byte pitch, byte velocity);
 		static void handleNoteOff(byte channel, byte pitch, byte velocity);
@@ -100,7 +193,6 @@ class Midi
 		static void handleClock();
 		static void handleStart();
 		static void handleStop();		
-
 };
 
 } }
