@@ -252,7 +252,7 @@ void Midi::handleSystemExclusive(byte* array, unsigned size)
 	
 }
 
-void Midi::handleClock()
+void Midi::handleClock(void)
 {
 	if ( midi_module._midiInputCallback != nullptr ) {
 		midi_module._message.type = uctrl::protocol::midi::Clock;
@@ -260,7 +260,7 @@ void Midi::handleClock()
 	}	
 }
 
-void Midi::handleStart()
+void Midi::handleStart(void)
 {
 	if ( midi_module._midiInputCallback != nullptr ) {
 		midi_module._message.type = uctrl::protocol::midi::Start;
@@ -268,7 +268,7 @@ void Midi::handleStart()
 	}	
 }
 
-void Midi::handleStop()
+void Midi::handleStop(void)
 {
 	if ( midi_module._midiInputCallback != nullptr ) {
 		midi_module._message.type = uctrl::protocol::midi::Stop;

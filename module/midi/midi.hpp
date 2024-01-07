@@ -113,7 +113,7 @@ class Midi
 		SendFunction sendFunctions[MAX_MIDI_DEVICE];
 
 #if defined(TEENSYDUINO) && defined(USB_MIDI_SERIAL) && !defined(__AVR_ATmega32U4__)
-		// usb_midi_class dont follow the midi:MidiInterface interface
+		// usb_midi_class doesn't follow the midi:MidiInterface interface standard
 		// so it needs a special handling
 		void plug(usb_midi_class * midiInterface) {
 			if (_port_size >= MAX_MIDI_DEVICE) {
@@ -190,9 +190,9 @@ class Midi
 		static void handlePitchBend(byte channel, int bend);
 		static void handleSystemExclusive(byte* array, unsigned size);
 		static void handleCC(byte channel, byte number, byte value);
-		static void handleClock();
-		static void handleStart();
-		static void handleStop();		
+		static void handleClock(void);
+		static void handleStart(void);
+		static void handleStop(void);		
 };
 
 } }
