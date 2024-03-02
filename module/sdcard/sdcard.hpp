@@ -3,9 +3,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
-#include "SdFat/SdFat.h"
-
-#include "../../../../modules.h"
+//#include "SdFat/SdFat.h"
 
 namespace uctrl { namespace module { 
 
@@ -18,7 +16,7 @@ class SdCard
         ~SdCard();  
         
         void plug();					
-        void init(SPIClass * spi_device = nullptr);	
+        void init(SPIClass * spi_device = nullptr, uint8_t chip_select = 0);	
         bool openFile(const char * path, uint8_t oflags, uint8_t interrupted = 0);
         bool readTextLine(char * line, char * str, size_t size, uint8_t field_num, char field_delim);
         bool closeFile(uint8_t interrupted = 0);
@@ -37,15 +35,15 @@ class SdCard
 #if defined(SDCARD_BITBANG_DRIVER)
         //SPI_DRIVER_SELECT == 2  // Must be set in SdFat/SdFatConfig.h
         //SoftSpiDriver<miso, mosi, clock>
-        volatile SoftSpiDriver<SDCARD_SOFT_SPI_MISO, SDCARD_SOFT_SPI_MOSI, SDCARD_SOFT_SPI_CLK> _soft_spi;	
+        //volatile SoftSpiDriver<SDCARD_SOFT_SPI_MISO, SDCARD_SOFT_SPI_MOSI, SDCARD_SOFT_SPI_CLK> _soft_spi;	
 #endif
         //SPI_DRIVER_SELECT == 3  // Must be set in SdFat/SdFatConfig.h for SPI device refrence usage
-        volatile SdFat _sd_fat;    
+        //volatile SdFat _sd_fat;    
 
 #if defined(TEENSYDUINO)
-        volatile FsFile _file; // for teensyduino
+        //volatile FsFile _file; // for teensyduino
 #else
-        volatile File _file; // for avr arduinos
+        //volatile File _file; // for avr arduinos
 #endif
         // FAT16/FAT32
         //SdFat32 sd;

@@ -46,15 +46,11 @@
 
 #include "module/touch/touch.hpp"
 
-#if defined(USE_EXT_RAM)
 #include "module/ram/ram.hpp"
-#endif // defined(USE_EXT_RAM)
 
 #include "module/storage/storage.hpp"
 
-#if defined(USE_SDCARD)
 #include "module/sdcard/sdcard.hpp"
-#endif // defined(USE_SDCARD)
 
 #include "module/page/page.hpp"
 
@@ -97,11 +93,11 @@ class uCtrlClass
 	//
 	// modules access
 	//
-#if defined(USE_EXT_RAM)
+//#if defined(USE_EXT_RAM)
 	// external ram module
-	bool initRam(SPIClass * device);
+	bool initRam(SPIClass * device, uint8_t chip_select = 2);
 	uctrl::module::Ram * ram = nullptr;		
-#endif // defined(USE_EXT_RAM)
+//#endif // defined(USE_EXT_RAM)
 
 	bool initStorage(SPIClass * spi_device = nullptr);
 	uctrl::module::Storage * storage = nullptr;	
@@ -143,11 +139,11 @@ class uCtrlClass
 	bool initCapTouch(int8_t pin1 = -1, int8_t pin2 = -1, int8_t pin3 = -1, int8_t pin4 = -1);
 	uctrl::module::CapTouch * touch = nullptr;
 	
-#if defined(USE_SDCARD)
+//#if defined(USE_SDCARD)
 	// sdcard module
-	bool initSdCard(SPIClass * spi_device = nullptr);	
+	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);	
 	uctrl::module::SdCard * sdcard;
-#endif // defined(USE_SDCARD)
+//#endif // defined(USE_SDCARD)
 	
 	// page module
 	bool initPage(uint8_t pages_size);

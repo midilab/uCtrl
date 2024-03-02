@@ -1,4 +1,3 @@
-#ifdef USE_SDCARD
 /*
  we need 2 ways of handling files
   + binary mode for fast retrieve of data on memory ram format(to use with stepsequencer for exemple)
@@ -49,13 +48,13 @@ void SdCard::plug()
   // ???
 }				
 
-void SdCard::init(SPIClass * spi_device)
+void SdCard::init(SPIClass * spi_device, uint8_t chip_select)
 {  
   _buffer_count = 0;
 
-#if defined(SDCARD_BITBANG_DRIVER)
+/* #if defined(SDCARD_BITBANG_DRIVER)
     // init sdcard
-    if (!_sd_fat.begin(SdSpiConfig(SDCARD_SOFT_CHIP_SELECT, DEDICATED_SPI, SD_SCK_MHZ(0), &_soft_spi))) {
+    if (!_sd_fat.begin(SdSpiConfig(chip_select, DEDICATED_SPI, SD_SCK_MHZ(0), &_soft_spi))) {
       //_sd_fat.initErrorHalt();
       _sd_fat.initErrorPrint();
     }
@@ -63,20 +62,20 @@ void SdCard::init(SPIClass * spi_device)
     // init sdcard
     sdSpi.setDevice(spi_device);
     // SHARED_SPI, DEDICATED_SPI
-    if (!_sd_fat.begin(SdSpiConfig(SDCARD_CHIP_SELECT, SHARED_SPI, SD_SCK_MHZ(4), &sdSpi))) {
-    //if (!_sd_fat.begin(SDCARD_CHIP_SELECT)) {
+    if (!_sd_fat.begin(SdSpiConfig(chip_select, SHARED_SPI, SD_SCK_MHZ(4), &sdSpi))) {
+    //if (!_sd_fat.begin(ram_module._chip_select)) {
       //_sd_fat.initErrorHalt();
       _sd_fat.initErrorPrint();
     }
 #endif  
-
+ */
   // get sdfat cache data address (512 bytes cache)
   //_cache = (uint8_t*)_sd_fat.vol()->cacheAddress()->data;
 }
 
-bool SdCard::openFile(const char * path, uint8_t oflags, uint8_t interrupted = 0)
+bool SdCard::openFile(const char * path, uint8_t oflags, uint8_t interrupted)
 {
-  if ( oflags == 1 ) {
+/*   if ( oflags == 1 ) {
     oflags = O_WRITE | O_CREAT;
     if ( interrupted == 0 ) ATOMIC_START
     _sd_fat.remove(path);
@@ -91,30 +90,30 @@ bool SdCard::openFile(const char * path, uint8_t oflags, uint8_t interrupted = 0
 
   if (_file) {
     return true;
-  }
+  } */
   return false;
 }
 
-bool SdCard::closeFile(uint8_t interrupted = 0)
+bool SdCard::closeFile(uint8_t interrupted)
 {
-  if (_file) {
+/*   if (_file) {
 
     if ( interrupted == 0 ) ATOMIC_START
     _file.close();
     if ( interrupted == 0 ) ATOMIC_END
 
     return true;
-  }
+  } */
   return false;
 }
 
-uint8_t * SdCard::getData(size_t buffer_size, uint8_t interrupted = 0)
+uint8_t * SdCard::getData(size_t buffer_size, uint8_t interrupted)
 {
   uint8_t ret = 0;
-  if ( interrupted == 0 ) ATOMIC_START
+/*   if ( interrupted == 0 ) ATOMIC_START
   ret = _file.read(_cache, buffer_size);
   if ( interrupted == 0 ) ATOMIC_END
-  
+   */
   if ( ret < buffer_size ) {
     return NULL;
   } else {
@@ -122,10 +121,10 @@ uint8_t * SdCard::getData(size_t buffer_size, uint8_t interrupted = 0)
   }
 }
 
-bool SdCard::setData(uint8_t * buffer, size_t buffer_size, uint8_t interrupted = 0)
+bool SdCard::setData(uint8_t * buffer, size_t buffer_size, uint8_t interrupted)
 {
   uint8_t ret = 0;
-
+/* 
   // buffer == NULL is the end of file setData
   if ( buffer == NULL ) {
     // zeroing our buffer count
@@ -153,14 +152,14 @@ bool SdCard::setData(uint8_t * buffer, size_t buffer_size, uint8_t interrupted =
   }
   
   // increment buffer counter
-  _buffer_count += buffer_size;
+  _buffer_count += buffer_size; */
 
   return true;
 }
 
 bool SdCard::readTextLine(char * line, char * str, size_t size, uint8_t field_num, char field_delim) 
 {
-  uint8_t index = 0;
+/*   uint8_t index = 0;
   
   if ( field_num > 0 ) {
     // find the after field_delim index to read from line[]
@@ -184,14 +183,14 @@ bool SdCard::readTextLine(char * line, char * str, size_t size, uint8_t field_nu
     }
     str[i] = line[index+i];
   }
-  
+   */
   return true;
 }
 
-bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num, uint8_t interrupted = 0)
+bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num, uint8_t interrupted)
 {
   uint8_t ret = 0;
-
+/* 
   if ( interrupted == 0 ) ATOMIC_START
   ret = _file.available();
   if ( interrupted == 0 ) ATOMIC_END
@@ -210,14 +209,14 @@ bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num, uint8_t i
     if ( ret <= 0 ) { // EOF=0 error=-1
       return false;
     }
-  }
+  } */
   
   return readTextLine(_cache, string, size, field_num, ',');
 }
 
-bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted = 0)
+bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted)
 {
-  char buf[BUFFER_SIZE];
+/*   char buf[BUFFER_SIZE];
   char * ptr;
   uint8_t ret = 0;
 
@@ -246,14 +245,14 @@ bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted 
   if ( readTextLine(_cache, buf, sizeof(buf), field_num, ',') ) {
     *number = (int16_t)strtol(buf, &ptr, 0); 
     return true;
-  }
+  } */
   
   return false;
 }
 
-bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted = 0)
+bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted)
 {
-  char buf[BUFFER_SIZE];
+/*   char buf[BUFFER_SIZE];
   char * ptr;
   uint8_t ret = 0;
   
@@ -280,52 +279,54 @@ bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted = 
   if ( readTextLine(_cache, buf, sizeof(buf), field_num, ',') ) {
     *number = (float)strtod(buf, &ptr);
     return true;
-  }
+  } */
   
   return false;  
 }
 
-bool SdCard::setConfig(char * string, uint8_t size, uint8_t field_num, uint8_t interrupted = 0)
+bool SdCard::setConfig(char * string, uint8_t size, uint8_t field_num, uint8_t interrupted)
 {
-  if ( interrupted == 0 ) ATOMIC_START 
+/*   if ( interrupted == 0 ) ATOMIC_START 
   // write data to sdcard
   //bool result = _file.println(string);
   _file.println(string);
 	if ( interrupted == 0 ) ATOMIC_END
-
+ */
   //return result;
   return true;
 }
 
-bool SdCard::remove(char * path, uint8_t interrupted = 0)
+bool SdCard::remove(char * path, uint8_t interrupted)
 {
-  if ( interrupted == 0 ) ATOMIC_START 
+/*   if ( interrupted == 0 ) ATOMIC_START 
   bool result = _sd_fat.remove(path);
   if ( interrupted == 0 ) ATOMIC_END
 
-  return result;
+  return result; */
+  return true;
 }
 
-bool SdCard::chdir(char * path, uint8_t interrupted = 0)
+bool SdCard::chdir(char * path, uint8_t interrupted)
 {
-  if ( interrupted == 0 ) ATOMIC_START 
+/*   if ( interrupted == 0 ) ATOMIC_START 
   bool result = _sd_fat.chdir(path);
 	if ( interrupted == 0 ) ATOMIC_END
 
-  return result;
+  return result; */
+  return true;
 }
 
-bool SdCard::exists(char * path, uint8_t interrupted = 0)
+bool SdCard::exists(char * path, uint8_t interrupted)
 {
-	if ( interrupted == 0 ) ATOMIC_START 
+/* 	if ( interrupted == 0 ) ATOMIC_START 
   bool result = _sd_fat.exists(path);
 	if ( interrupted == 0 ) ATOMIC_END
 
-  return result;
+  return result; */
+  return true;
 }	
 
 
 } }
 
 uctrl::module::SdCard sdcard_module;
-#endif

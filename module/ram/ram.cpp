@@ -1,5 +1,3 @@
-#ifdef USE_EXT_RAM
-
 #include "ram.hpp"
 	
 namespace uctrl { namespace module {
@@ -14,11 +12,12 @@ Ram::~Ram()
 
 }
 
-void Ram::init(SPIClass * device)
+void Ram::init(SPIClass * device, uint8_t chip_select)
 {
   ram_module._spi_device = device;   
-  pinMode(EXT_RAM_CHIP_SELECT, OUTPUT);
-  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);  
+  ram_module._chip_select = chip_select;
+  pinMode(ram_module._chip_select, OUTPUT);
+  digitalWrite(ram_module._chip_select, HIGH);  
   
   ram_module._buffer_address_id_pointer = 0;
   ram_module._buffer_address_pointer = 0;
@@ -63,7 +62,7 @@ static void Ram::read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_
   } 
 
   ram_module._spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE));
-  digitalWrite(EXT_RAM_CHIP_SELECT, LOW);
+  digitalWrite(ram_module._chip_select, LOW);
   
   // send address request
   ram_module._spi_device->transfer(READ);
@@ -81,7 +80,7 @@ static void Ram::read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_
 
   //ram_module._spi_device->transfer(buffer, size_to_read);
   
-  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);     
+  digitalWrite(ram_module._chip_select, HIGH);     
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
@@ -100,7 +99,7 @@ static void Ram::write(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer
   } 
 
   ram_module._spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE)); 
-  digitalWrite(EXT_RAM_CHIP_SELECT, LOW);  
+  digitalWrite(ram_module._chip_select, LOW);  
 
   // send address request
   ram_module._spi_device->transfer(WRITE);
@@ -120,7 +119,7 @@ static void Ram::write(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer
   //memcpy(tmp, buffer, size_to_write);
   //ram_module._spi_device->transfer(tmp, size_to_write);
   
-  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);  
+  digitalWrite(ram_module._chip_select, HIGH);  
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
@@ -139,7 +138,7 @@ static void Ram::fill(uint8_t fill, uint16_t buffer_address, uint8_t buffer_id, 
   } 
 
   ram_module._spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE)); 
-  digitalWrite(EXT_RAM_CHIP_SELECT, LOW);  
+  digitalWrite(ram_module._chip_select, LOW);  
 
   // send address request
   ram_module._spi_device->transfer(WRITE);
@@ -156,7 +155,7 @@ static void Ram::fill(uint8_t fill, uint16_t buffer_address, uint8_t buffer_id, 
     ram_module._spi_device->transfer(fill);
   }
   
-  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);  
+  digitalWrite(ram_module._chip_select, HIGH);  
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
@@ -170,12 +169,12 @@ void Ram::setMode(uint8_t mode)
   noInterrupts();
 
   ram_module._spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE));
-  digitalWrite(EXT_RAM_CHIP_SELECT, LOW);
+  digitalWrite(ram_module._chip_select, LOW);
   
   ram_module._spi_device->transfer(RDMR);
   ram_module._spi_device->transfer(mode);
   
-  digitalWrite(EXT_RAM_CHIP_SELECT, HIGH);     
+  digitalWrite(ram_module._chip_select, HIGH);     
   ram_module._spi_device->endTransaction();
   
   interrupts();
@@ -184,5 +183,3 @@ void Ram::setMode(uint8_t mode)
 } }
 
 uctrl::module::Ram ram_module;
-
-#endif

@@ -85,21 +85,21 @@ uCtrlClass::~uCtrlClass()
 
 }
 
-#if defined(USE_EXT_RAM)
-bool uCtrlClass::initRam(SPIClass * device)
+//#if defined(USE_EXT_RAM)
+bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
 {
 	if ( ram == nullptr ) {
 		ram = &ram_module;
 	}
 	
 	if ( ram != nullptr ) {
-		ram->init(device);
+		ram->init(device, chip_select);
 		return true;
 	} else {
 		return false;
 	}
 }
-#endif // defined(USE_EXT_RAM)
+//#endif // defined(USE_EXT_RAM)
 
 //#if defined(USE_STORAGE)
 bool uCtrlClass::initStorage(SPIClass * spi_device)
@@ -119,21 +119,21 @@ bool uCtrlClass::initStorage(SPIClass * spi_device)
 }
 //#endif // defined(USE_STORAGE)
 
-#if defined(USE_SDCARD)
-bool uCtrlClass::initSdCard(SPIClass * spi_device)
+//#if defined(USE_SDCARD)
+bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select)
 {
 	if ( sdcard == nullptr ) {
 		sdcard = &sdcard_module;
 	}
 	
 	if ( sdcard != nullptr ) {
-		sdcard->init(spi_device);
+		sdcard->init(spi_device, chip_select);
 		return true;
 	} else {
 		return false;
 	}	
 }
-#endif // defined(USE_SDCARD)
+//#endif // defined(USE_SDCARD)
 
 #if defined(USE_DEVICE)
 bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size, uint16_t device_label_buffer_size)
@@ -644,7 +644,7 @@ void uCtrlHandler()
 			return;
 		}
 	}
-
+	
 	if (uCtrl.din != nullptr) {
 		// ~2ms call
 		if (++_timerCounterDin == 8) {
