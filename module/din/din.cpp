@@ -288,10 +288,10 @@ void Din::processQueue()
 								// check against last state for a more stable read(thats polling!)
 								if (j % 2 == 0) {
 									// even: channel_a/decrement
-									value = value > !BIT_VALUE(_digital_input_last_state[i], j+1) ? 1 : 0;
+									value = value != !BIT_VALUE(_digital_input_last_state[i], j+1) ? 1 : 0;
 								} else {
 									// odd: channel_b/increment
-									value = value > !BIT_VALUE(_digital_input_last_state[i], j-1) ? 1 : 0;
+									value = value != !BIT_VALUE(_digital_input_last_state[i], j-1) ? 1 : 0;
 								}
 								// just 1 state... drop zeros
 								if (value == 0)
