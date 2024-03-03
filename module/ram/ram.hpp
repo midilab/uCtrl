@@ -23,8 +23,8 @@ namespace uctrl { namespace module {
 // this chip operates at 20MHZ max speed
 // SPI_CLOCK_DIV8	on a 16Mhz avr = 2 Mhz max
 // on teensy lc runs fine at 16mhz
-//#define SPI_SPEED       16000000
-#define SPI_SPEED       2000000
+#define SPI_SPEED       16000000
+//#define SPI_SPEED       2000000
 #define SPI_MODE        SPI_MODE0
 
 typedef struct

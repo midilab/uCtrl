@@ -57,7 +57,7 @@ static void Ram::read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_
 {
   uint32_t memory_address = ram_module._buffer_layout[buffer_id].buffer_address + ((uint32_t)buffer_address * (uint32_t)ram_module._buffer_layout[buffer_id].buffer_size) + (uint32_t)start_at;
   if ( interrupted == 0 ) { 
-    noInterrupts();
+    //noInterrupts();
     //ram_module._spi_device->usingInterrupt(255);
   } 
 
@@ -84,7 +84,7 @@ static void Ram::read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
-    interrupts();
+    //interrupts();
     //ram_module._spi_device->notUsingInterrupt(255);
   }  
 }
@@ -94,7 +94,7 @@ static void Ram::write(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer
   uint32_t memory_address = ram_module._buffer_layout[buffer_id].buffer_address + ((uint32_t)buffer_address * (uint32_t)ram_module._buffer_layout[buffer_id].buffer_size) + (uint32_t)start_at;
 
   if ( interrupted == 0 ) { 
-    noInterrupts();
+    //noInterrupts();
     //ram_module._spi_device->usingInterrupt(255);
   } 
 
@@ -123,7 +123,7 @@ static void Ram::write(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
-    interrupts();
+    //interrupts();
     //ram_module._spi_device->notUsingInterrupt(255);
   }  
 }
@@ -133,7 +133,7 @@ static void Ram::fill(uint8_t fill, uint16_t buffer_address, uint8_t buffer_id, 
   uint32_t memory_address = ram_module._buffer_layout[buffer_id].buffer_address + ((uint32_t)buffer_address * (uint32_t)ram_module._buffer_layout[buffer_id].buffer_size) + (uint32_t)start_at;
   
   if ( interrupted == 0 ) { 
-    noInterrupts();
+    //noInterrupts();
     //ram_module._spi_device->usingInterrupt(255);
   } 
 
@@ -159,14 +159,14 @@ static void Ram::fill(uint8_t fill, uint16_t buffer_address, uint8_t buffer_id, 
   ram_module._spi_device->endTransaction();
   
   if ( interrupted == 0 ) { 
-    interrupts();
+    //interrupts();
     //ram_module._spi_device->notUsingInterrupt(255);
   }  
 }
   
 void Ram::setMode(uint8_t mode)
 {
-  noInterrupts();
+  //noInterrupts();
 
   ram_module._spi_device->beginTransaction(SPISettings(SPI_SPEED, MSBFIRST, SPI_MODE));
   digitalWrite(ram_module._chip_select, LOW);
@@ -177,7 +177,7 @@ void Ram::setMode(uint8_t mode)
   digitalWrite(ram_module._chip_select, HIGH);     
   ram_module._spi_device->endTransaction();
   
-  interrupts();
+  //interrupts();
 } 
       
 } }

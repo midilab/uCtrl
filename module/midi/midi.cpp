@@ -53,7 +53,8 @@ bool Midi::read(uint8_t port, uint8_t interrupted)
 	// Use the stored function pointers to invoke member functions
 	// should always be atomic interrupted=0
 	//readFunctions[_port](midiArray[_port], interrupted);
-	midiArray[_port]->read(interrupted);
+	//midiArray[_port]->read(interrupted);
+	midiArray[_port]->read(0);
 }
 
 void Midi::readAllPorts(uint8_t interrupted)

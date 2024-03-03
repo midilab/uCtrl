@@ -375,6 +375,68 @@ void uCtrlClass::init()
 
 void uCtrlClass::run()
 {
+	// 250us call
+	if (uCtrl.on250usCallback) {
+		if (_doTrigger250us) {
+			_doTrigger250us = false;
+			uCtrl.on250usCallback();
+		}
+	}
+	
+	// ~1ms call
+	if (uCtrl.on1msCallback) {
+		if (_doTrigger1ms) {
+			_doTrigger1ms = false;
+			uCtrl.on1msCallback();
+			return;
+		}
+	}
+	
+	// ~2ms call
+	if (uCtrl.din != nullptr) {
+		if (_doTriggerDin) {
+			_doTriggerDin = false;
+			uCtrl.din->read();
+			return;
+		}
+	}
+	
+	// ~3ms call
+	if (uCtrl.touch != nullptr) {
+		if (_doTriggerTouch) {
+			_doTriggerTouch = false;
+			uCtrl.touch->read();
+			return;
+		}
+	}
+
+	// ~10ms call
+	if (uCtrl.ain != nullptr) {
+		if (_doTriggerAin) {
+			_doTriggerAin = false;
+			uCtrl.processAin();
+			return;
+		}
+	}
+
+	// ~30ms call
+	if (uCtrl.dout != nullptr) {
+		if (_doTriggerDout) {
+			_doTriggerDout = false;
+			uCtrl.dout->flush(0);
+			return;
+		}
+	}
+
+	// ?ms call
+	if (_doTriggerUi) {
+		// process ui stuffs
+		uCtrl.ui();
+	}
+}
+
+void uCtrlClass::ui()
+{
 	int16_t value;
 	uint8_t port, head;
 	uint8_t port_ref = 0;
@@ -400,9 +462,9 @@ void uCtrlClass::run()
 			port = din->event_queue.event[din->event_queue.head].port;
 			value = din->event_queue.event[din->event_queue.head].value; 
 			head = (din->event_queue.head+1)%(din->event_queue.size);
-			ATOMIC(
-				din->event_queue.head = head
-			)
+			//ATOMIC(
+				din->event_queue.head = head;
+			//)
 
 	#if defined(USE_DEVICE)
 		if ( device->handleDigitalEvent(port, value, 0) == true ) {
@@ -452,9 +514,9 @@ void uCtrlClass::run()
 			port = touch->event_queue.event[touch->event_queue.head].port+port_ref;
 			value = touch->event_queue.event[touch->event_queue.head].value; 
 			head = (touch->event_queue.head+1)%(touch->event_queue.size);
-			ATOMIC(
-				touch->event_queue.head = head
-			)
+			//ATOMIC(
+				touch->event_queue.head = head;
+			//)
 
 	#if defined(USE_DEVICE)
 		if ( device->handleDigitalEvent(port, value, 0) == true ) {
@@ -499,9 +561,9 @@ void uCtrlClass::run()
 			port = _ain_event_queue.event[_ain_event_queue.head].port;
 			value = _ain_event_queue.event[_ain_event_queue.head].value;  
 			head = (_ain_event_queue.head+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.head+1);
-			ATOMIC(                      
-				_ain_event_queue.head = head
-			)
+			//ATOMIC(                      
+				_ain_event_queue.head = head;
+			//)
 
 	#if defined(USE_PAGE_COMPONENT)
 			if (discard_ain_data) {
@@ -605,27 +667,18 @@ uctrl::uCtrlClass uCtrl;
 // 250 microseconds base interrupt for
 // realtime processment tasks(midi input, scan input/output modules...)
 //
-// priority on avr are handle by using nested
-// interrupts(ISR_NOBLOCK) along with uClock.
-// if you are not using timming critical interruption
-// you can delete the ISR_NOBLOCK
-//
-// priority on teensy is at 80, while uClock
-// keeps it at maximun priority 0(max prio).
-// if you are not using timming critical interruption
-// you can set the priority to 0(max prio)
-//
 uint8_t _timerCounter1ms = 0;
 uint8_t _timerCounterAin = 0;
 uint8_t _timerCapTouch = 0;
 uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
+uint16_t _timerCounterUi = 0;
 
 #if defined(ARDUINO_ARCH_AVR)
 	#if defined(__AVR_ATmega32U4__)	
-ISR(TIMER3_COMPA_vect, ISR_NOBLOCK) 
+ISR(TIMER3_COMPA_vect) 
 	#else
-ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) 
+ISR(TIMER2_COMPA_vect) 
 	#endif
 #else
 void uCtrlHandler() 
@@ -633,15 +686,14 @@ void uCtrlHandler()
 {
 	// 250us call
 	if (uCtrl.on250usCallback) {
-		uCtrl.on250usCallback();
+		uCtrl._doTrigger250us = true;
 	}
 	
 	if (uCtrl.on1msCallback) {
 		// ~1ms call
 		if(++_timerCounter1ms == 4) {
 			_timerCounter1ms = 0;
-			uCtrl.on1msCallback();
-			return;
+			uCtrl._doTrigger1ms = true;
 		}
 	}
 	
@@ -649,28 +701,23 @@ void uCtrlHandler()
 		// ~2ms call
 		if (++_timerCounterDin == 8) {
 			_timerCounterDin = 0;
-			uCtrl.din->read(1);
-			return;
+			uCtrl._doTriggerDin = true;
 		}
 	}
-
+	
 	if (uCtrl.touch != nullptr) {
 		// ~3ms call
-		if (++_timerCapTouch == 12) 
-		{
+		if (++_timerCapTouch == 12) {
 			_timerCapTouch = 0;
-			uCtrl.touch->read();
-			return;
+			uCtrl._doTriggerTouch = true;
 		}
 	}
 
 	if (uCtrl.ain != nullptr) {
 		// ~10ms call
-		if (++_timerCounterAin == 40) 
-		{
+		if (++_timerCounterAin == 40) {
 			_timerCounterAin = 0;
-			uCtrl.processAin();
-			return;
+			uCtrl._doTriggerAin = true;
 		}
 	}
 
@@ -678,9 +725,14 @@ void uCtrlHandler()
 		// ~30ms call
 		if (++_timerCounterDout == 120) {
 			_timerCounterDout = 0;
-			uCtrl.dout->flush(1);
-			return;
+			uCtrl._doTriggerDout = true;
 		}
 	}
 
+	// UI handling
+	// 500ms call
+	if (++_timerCounterUi == 2000) {
+		_timerCounterUi = 0;
+		uCtrl._doTriggerUi = true;
+	}
 }

@@ -164,6 +164,7 @@ class uCtrlClass
 	uint8_t getDigitalPorts();
 	
 	void run();
+	void ui();
 
 	void setOn250usCallback(void (*callback)()) {
 		on250usCallback = callback;
@@ -175,6 +176,15 @@ class uCtrlClass
 
 	void (*on250usCallback)();
 	void (*on1msCallback)();
+
+	// flaging for outsite ISR processing control
+	volatile bool _doTrigger250us = false;
+	volatile bool _doTrigger1ms = false;
+	volatile bool _doTriggerDin = false;
+	volatile bool _doTriggerTouch = false;
+	volatile bool _doTriggerAin = false;
+	volatile bool _doTriggerDout = false;
+	volatile bool _doTriggerUi = false;
 };
 
 }
