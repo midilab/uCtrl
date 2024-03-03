@@ -109,8 +109,9 @@ class Din
 		uint8_t * _din_pin_map = nullptr;
 
 		SPIClass * _spi_device = nullptr;
-		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
+		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
 		uint8_t _latch_pin;
+		bool _is_shared = false;
 };
 
 } }

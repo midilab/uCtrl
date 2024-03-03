@@ -86,14 +86,14 @@ uCtrlClass::~uCtrlClass()
 }
 
 //#if defined(USE_EXT_RAM)
-bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
+bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select, bool is_shared)
 {
 	if ( ram == nullptr ) {
 		ram = &ram_module;
 	}
 	
 	if ( ram != nullptr ) {
-		ram->init(device, chip_select);
+		ram->init(device, chip_select, is_shared);
 		return true;
 	} else {
 		return false;
@@ -102,14 +102,14 @@ bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
 //#endif // defined(USE_EXT_RAM)
 
 //#if defined(USE_STORAGE)
-bool uCtrlClass::initStorage(SPIClass * spi_device)
+bool uCtrlClass::initStorage(SPIClass * spi_device, bool is_shared)
 {
 	if ( storage == nullptr ) {
 		storage = &storage_module;
 	}
 	
 	if ( storage != nullptr ) {
-		storage->init(spi_device);
+		storage->init(spi_device, is_shared);
 		return true;
 	} else {
 		storage->init();
@@ -120,14 +120,14 @@ bool uCtrlClass::initStorage(SPIClass * spi_device)
 //#endif // defined(USE_STORAGE)
 
 //#if defined(USE_SDCARD)
-bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select)
+bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select, bool is_shared)
 {
 	if ( sdcard == nullptr ) {
 		sdcard = &sdcard_module;
 	}
 	
 	if ( sdcard != nullptr ) {
-		sdcard->init(spi_device, chip_select);
+		sdcard->init(spi_device, chip_select, is_shared);
 		return true;
 	} else {
 		return false;
@@ -223,7 +223,7 @@ void uCtrlClass::processMidi()
 	}
 }
 
-bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin)
+bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 {
 	if ( dout == nullptr ) {
 		dout = &dout_module;
@@ -231,7 +231,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin)
 	
 	if ( dout != nullptr ) {	
 		if (spi_device != nullptr) {
-			dout->setSpi(spi_device, latch_pin);
+			dout->setSpi(spi_device, latch_pin, is_shared);
 		}
 		return true;
 	} else {
@@ -239,7 +239,7 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin)
 	}
 }
 
-bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin)
+bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 {
 	if ( din == nullptr ) {
 		din = &din_module;
@@ -247,7 +247,7 @@ bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin)
 	
 	if ( din != nullptr ) {
 		if (spi_device != nullptr) {
-			din->setSpi(spi_device, latch_pin);
+			din->setSpi(spi_device, latch_pin, is_shared);
 		}
 		return true;
 	} else {

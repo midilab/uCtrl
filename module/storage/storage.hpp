@@ -46,7 +46,7 @@ class Storage
 
         Storage();
 
-		void init(SPIClass * spi_device = nullptr);
+		void init(SPIClass * spi_device = nullptr, bool is_shared = false);
 
 		// epprom
 		bool save(void *data, size_t n, int address = -1);
@@ -59,6 +59,7 @@ class Storage
 	private:
 
 		int _current_address = 0;
+		bool _is_shared = false;
 };
 			
 } }

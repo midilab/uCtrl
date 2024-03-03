@@ -16,7 +16,7 @@ class SdCard
         ~SdCard();  
         
         void plug();					
-        void init(SPIClass * spi_device = nullptr, uint8_t chip_select = 0);	
+        void init(SPIClass * spi_device = nullptr, uint8_t chip_select = 0, bool is_shared = false);	
         bool openFile(const char * path, uint8_t oflags, uint8_t interrupted = 0);
         bool readTextLine(char * line, char * str, size_t size, uint8_t field_num, char field_delim);
         bool closeFile(uint8_t interrupted = 0);
@@ -61,6 +61,7 @@ class SdCard
         volatile uint8_t _cache[BUFFER_SIZE];
 
         volatile uint16_t _buffer_count; 
+        bool _is_shared = false;
 };
 
 } }

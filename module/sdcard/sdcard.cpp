@@ -48,9 +48,10 @@ void SdCard::plug()
   // ???
 }				
 
-void SdCard::init(SPIClass * spi_device, uint8_t chip_select)
+void SdCard::init(SPIClass * spi_device, uint8_t chip_select, bool is_shared = false)
 {  
   _buffer_count = 0;
+  _is_shared = is_shared;
 
 /* #if defined(SDCARD_BITBANG_DRIVER)
     // init sdcard
@@ -77,16 +78,16 @@ bool SdCard::openFile(const char * path, uint8_t oflags, uint8_t interrupted)
 {
 /*   if ( oflags == 1 ) {
     oflags = O_WRITE | O_CREAT;
-    if ( interrupted == 0 ) ATOMIC_START
+    if ( interrupted == 0 && _is_shared ) ATOMIC_START
     _sd_fat.remove(path);
-    if ( interrupted == 0 ) ATOMIC_END
+    if ( interrupted == 0 && _is_shared ) ATOMIC_END
   } else if ( oflags == 0 ) {
     oflags = O_READ;
   }
 
-  if ( interrupted == 0 ) ATOMIC_START
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
   _file = _sd_fat.open(path, oflags);
-  if ( interrupted == 0 ) ATOMIC_END
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
   if (_file) {
     return true;
@@ -98,9 +99,9 @@ bool SdCard::closeFile(uint8_t interrupted)
 {
 /*   if (_file) {
 
-    if ( interrupted == 0 ) ATOMIC_START
+    if ( interrupted == 0 && _is_shared ) ATOMIC_START
     _file.close();
-    if ( interrupted == 0 ) ATOMIC_END
+    if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
     return true;
   } */
@@ -110,9 +111,9 @@ bool SdCard::closeFile(uint8_t interrupted)
 uint8_t * SdCard::getData(size_t buffer_size, uint8_t interrupted)
 {
   uint8_t ret = 0;
-/*   if ( interrupted == 0 ) ATOMIC_START
+/*   if ( interrupted == 0 && _is_shared ) ATOMIC_START
   ret = _file.read(_cache, buffer_size);
-  if ( interrupted == 0 ) ATOMIC_END
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
    */
   if ( ret < buffer_size ) {
     return NULL;
@@ -135,17 +136,17 @@ bool SdCard::setData(uint8_t * buffer, size_t buffer_size, uint8_t interrupted)
   // if we reach the 512 bytes boundary flush our data 
   if ( (_buffer_count + buffer_size) > 512 ) {
 
-    if ( interrupted == 0 ) ATOMIC_START
+    if ( interrupted == 0 && _is_shared ) ATOMIC_START
     _file.flush();
-    if ( interrupted == 0 ) ATOMIC_END
+    if ( interrupted == 0 && _is_shared ) ATOMIC_END
     
     _buffer_count = 0;
   }
     
   // write data to sdcard
-  if ( interrupted == 0 ) ATOMIC_START
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
   ret = _file.write(buffer, buffer_size);
-  if ( interrupted == 0 ) ATOMIC_END
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
   
   if ( ret < buffer_size ) {
     return NULL;
@@ -191,9 +192,9 @@ bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num, uint8_t i
 {
   uint8_t ret = 0;
 /* 
-  if ( interrupted == 0 ) ATOMIC_START
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
   ret = _file.available();
-  if ( interrupted == 0 ) ATOMIC_END
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
   if ( (!ret && field_num == 0) || size > BUFFER_SIZE) {
       return false;
@@ -202,9 +203,9 @@ bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num, uint8_t i
   // do only process next file line into _cache if field_num == 0
   if ( field_num == 0 ) {
 
-    if ( interrupted == 0 ) ATOMIC_START
+    if ( interrupted == 0 && _is_shared ) ATOMIC_START
     ret = _file.fgets(_cache, BUFFER_SIZE);
-    if ( interrupted == 0 ) ATOMIC_END
+    if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
     if ( ret <= 0 ) { // EOF=0 error=-1
       return false;
@@ -220,9 +221,9 @@ bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted)
   char * ptr;
   uint8_t ret = 0;
 
-  if ( interrupted == 0 ) ATOMIC_START
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
   ret = _file.available();
-  if ( interrupted == 0 ) ATOMIC_END
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
   if ( !ret && field_num == 0 ) {
       return false;
@@ -231,9 +232,9 @@ bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted)
   // do only process next file line into _cache if field_num == 0
   if ( field_num == 0 ) {   
 
-    if ( interrupted == 0 ) ATOMIC_START
+    if ( interrupted == 0 && _is_shared ) ATOMIC_START
     ret = _file.fgets(_cache, BUFFER_SIZE);
-    if ( interrupted == 0 ) ATOMIC_END
+    if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
     if ( ret <= 0 ) { // EOF=0 error=-1
       return false;
@@ -256,9 +257,9 @@ bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted)
   char * ptr;
   uint8_t ret = 0;
   
-  if ( interrupted == 0 ) ATOMIC_START
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
   ret = _file.available();
-  if ( interrupted == 0 ) ATOMIC_END
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
   if ( !ret && field_num == 0 ) {
       return false;
@@ -267,9 +268,9 @@ bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted)
   // do only process next file line into _cache if field_num == 0
   if ( field_num == 0 ) {
     
-    if ( interrupted == 0 ) ATOMIC_START
+    if ( interrupted == 0 && _is_shared ) ATOMIC_START
     ret = _file.fgets(_cache, BUFFER_SIZE);
-    if ( interrupted == 0 ) ATOMIC_END
+    if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
     if ( ret <= 0 ) { // EOF=0 error=-1
       return false;
@@ -286,11 +287,11 @@ bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted)
 
 bool SdCard::setConfig(char * string, uint8_t size, uint8_t field_num, uint8_t interrupted)
 {
-/*   if ( interrupted == 0 ) ATOMIC_START 
+/*   if ( interrupted == 0 && _is_shared ) ATOMIC_START 
   // write data to sdcard
   //bool result = _file.println(string);
   _file.println(string);
-	if ( interrupted == 0 ) ATOMIC_END
+	if ( interrupted == 0 && _is_shared ) ATOMIC_END
  */
   //return result;
   return true;
@@ -298,9 +299,9 @@ bool SdCard::setConfig(char * string, uint8_t size, uint8_t field_num, uint8_t i
 
 bool SdCard::remove(char * path, uint8_t interrupted)
 {
-/*   if ( interrupted == 0 ) ATOMIC_START 
+/*   if ( interrupted == 0 && _is_shared ) ATOMIC_START 
   bool result = _sd_fat.remove(path);
-  if ( interrupted == 0 ) ATOMIC_END
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
   return result; */
   return true;
@@ -308,9 +309,9 @@ bool SdCard::remove(char * path, uint8_t interrupted)
 
 bool SdCard::chdir(char * path, uint8_t interrupted)
 {
-/*   if ( interrupted == 0 ) ATOMIC_START 
+/*   if ( interrupted == 0 && _is_shared ) ATOMIC_START 
   bool result = _sd_fat.chdir(path);
-	if ( interrupted == 0 ) ATOMIC_END
+	if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
   return result; */
   return true;
@@ -318,9 +319,9 @@ bool SdCard::chdir(char * path, uint8_t interrupted)
 
 bool SdCard::exists(char * path, uint8_t interrupted)
 {
-/* 	if ( interrupted == 0 ) ATOMIC_START 
+/* 	if ( interrupted == 0 && _is_shared ) ATOMIC_START 
   bool result = _sd_fat.exists(path);
-	if ( interrupted == 0 ) ATOMIC_END
+	if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
   return result; */
   return true;

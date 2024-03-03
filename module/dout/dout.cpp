@@ -45,10 +45,11 @@ uint8_t Dout::sizeOf()
 	return _remote_digital_output_port;
 }	
 
-void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin)
+void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared = false)
 {
 	_spi_device = spi_device;
 	_latch_pin = latch_pin;
+	_is_shared = is_shared;
 }
 
 // call first all plug() for pin register, then plugSR if needed
@@ -127,7 +128,8 @@ void Dout::flushBuffer()
 	}
 //#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 	if (_spi_device != nullptr) {
-		noInterrupts();
+		if ( _is_shared )
+			noInterrupts();
 		//memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
 		i=_chain_size-1;
 		while(i >= 0) {
@@ -135,7 +137,8 @@ void Dout::flushBuffer()
 			i--;
 		}
 		_flush_dout = true;
-		interrupts();
+		if ( _is_shared )
+			interrupts();
 	}
 //#endif
 }
@@ -161,7 +164,7 @@ void Dout::flush(uint8_t interrupted)
 	digitalWrite(DOUT_LATCH_PIN, HIGH);
 #endif 
 	if (_spi_device != nullptr) {
-		if ( interrupted == 0 ) { 
+		if ( interrupted == 0 && _is_shared ) { 
 			noInterrupts();
 			//_spi_device->usingInterrupt(255);
 		} 
@@ -177,7 +180,7 @@ void Dout::flush(uint8_t interrupted)
 		// deactive device
 		digitalWrite(_latch_pin, HIGH);
 		_spi_device->endTransaction(); 
-		if ( interrupted == 0 ) { 
+		if ( interrupted == 0 && _is_shared ) { 
 			interrupts();
 			//_spi_device->notUsingInterrupt(255);
 		}

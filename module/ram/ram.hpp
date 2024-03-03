@@ -48,7 +48,7 @@ class Ram
         Ram();
         ~Ram(); 
 			
-		void init(SPIClass * device, uint8_t chip_select = 0);
+		void init(SPIClass * device, uint8_t chip_select = 0, bool is_shared = false);
 		static int8_t registerBuffer( uint16_t buffer_size, uint16_t buffer_length );	
 		void setMode(uint8_t mode);
 		static void read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_id, uint8_t interrupted = 0, uint8_t size_to_read = 0, uint8_t start_at = 0);
@@ -61,6 +61,7 @@ class Ram
 		uint8_t _chip_select = 0;
 		uint32_t _buffer_address_pointer = 0;
 		uint8_t _buffer_address_id_pointer = 0;
+		bool _is_shared = false;
 		volatile BUFFER_LAYOUT_RAM _buffer_layout[4];
 };
 

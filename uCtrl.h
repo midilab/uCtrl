@@ -95,11 +95,11 @@ class uCtrlClass
 	//
 //#if defined(USE_EXT_RAM)
 	// external ram module
-	bool initRam(SPIClass * device, uint8_t chip_select = 2);
+	bool initRam(SPIClass * device, uint8_t chip_select = 2, bool is_shared = false);
 	uctrl::module::Ram * ram = nullptr;		
 //#endif // defined(USE_EXT_RAM)
 
-	bool initStorage(SPIClass * spi_device = nullptr);
+	bool initStorage(SPIClass * spi_device = nullptr, bool is_shared = false);
 	uctrl::module::Storage * storage = nullptr;	
 
 	// oled module
@@ -122,11 +122,11 @@ class uCtrlClass
 	uctrl::module::Midi * midi = nullptr;
 	
 	// dout module
-	bool initDout(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
+	bool initDout(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
 	uctrl::module::Dout * dout = nullptr;
 	
 	// din module
-	bool initDin(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
+	bool initDin(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
 	uctrl::module::Din * din = nullptr;
 	
 	// ain module
@@ -141,7 +141,7 @@ class uCtrlClass
 	
 //#if defined(USE_SDCARD)
 	// sdcard module
-	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2);	
+	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2, bool is_shared = false);	
 	uctrl::module::SdCard * sdcard;
 //#endif // defined(USE_SDCARD)
 	

@@ -45,7 +45,7 @@ uint8_t Din::sizeOf()
 	return _remote_digital_port;
 }			
 
-void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin)
+void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared = false)
 {
 	// HARDWARE NOTES
 	// For those using a SPI device for other devices than 165:
@@ -53,6 +53,7 @@ void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin)
 	_spi_device = spi_device;
 	// Chip select pin setup
 	_latch_pin = latch_pin;
+	_is_shared = is_shared;
 }
 
 // call first all plug() for pin register, then plugSR if needed
@@ -226,7 +227,7 @@ void Din::read(uint8_t interrupted)
 #else
 	if (_spi_device != nullptr) {
 	//if (_chain_size_sr != 0) {
-		if ( interrupted == 0 ) { 
+		if ( interrupted == 0 && _is_shared ) { 
 			noInterrupts();
 			//_spi_device->usingInterrupt(255);
 		} 
@@ -244,7 +245,7 @@ void Din::read(uint8_t interrupted)
 			}
 		}
 		_spi_device->endTransaction();
-		if ( interrupted == 0 ) { 
+		if ( interrupted == 0 && _is_shared ) { 
 			interrupts();
 			//_spi_device->notUsingInterrupt(255);
 		}  

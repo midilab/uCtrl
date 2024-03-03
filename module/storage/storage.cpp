@@ -34,10 +34,11 @@ Storage::Storage()
 {
 }
 
-void Storage::init(SPIClass * spi_device)
+void Storage::init(SPIClass * spi_device, bool is_shared = false)
 {
 	if (spi_device != nullptr) {
 		// we need to activate sdcard support
+		_is_shared = is_shared;
 	}
 #if defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 	EEPROM.begin(INTERNAL_MEMORY_SIZE);
