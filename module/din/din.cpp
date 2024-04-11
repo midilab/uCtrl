@@ -45,7 +45,7 @@ uint8_t Din::sizeOf()
 	return _remote_digital_port;
 }			
 
-void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared = false)
+void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 {
 	// HARDWARE NOTES
 	// For those using a SPI device for other devices than 165:
@@ -285,7 +285,7 @@ void Din::processQueue()
 							if (BIT_VALUE(_digital_detent_pin[i], j) == 1) {
 								// A or B channels?
 								// we register then always in pairs(no matter what)
-								// check against last state for a more stable read(thats polling!)
+								// check against last state for a more stable read
 								if (j % 2 == 0) {
 									// even: channel_a/decrement
 									value = value != !BIT_VALUE(_digital_input_last_state[i], j+1) ? 1 : 0;

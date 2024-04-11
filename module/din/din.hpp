@@ -34,7 +34,7 @@
 
 namespace uctrl { namespace module { 
 
-#define DIN_EVENT_QUEUE_SIZE	12
+#define DIN_EVENT_QUEUE_SIZE	6
 
 typedef struct 
 {

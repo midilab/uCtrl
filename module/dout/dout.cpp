@@ -45,7 +45,7 @@ uint8_t Dout::sizeOf()
 	return _remote_digital_output_port;
 }	
 
-void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared = false)
+void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 {
 	_spi_device = spi_device;
 	_latch_pin = latch_pin;
