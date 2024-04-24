@@ -183,7 +183,6 @@ bool Device::handleAnalogEvent(uint8_t port, uint16_t value, uint8_t interrupted
 bool Device::handleDigitalEvent(uint8_t port, uint16_t value, uint8_t interrupted)
 {
     //--port;
-
     if ( _remote.din_port[port].event_address != 1023 ) { //!= -1 ) {  
         //_ctrl.port = port+1;
 #if defined(USE_DEVICE_LABELS)

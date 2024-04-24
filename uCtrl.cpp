@@ -336,11 +336,11 @@ void uCtrlClass::init()
 {
 	// init of hardware configuration
 	// if we have sdcard support, then retrive hardware config info from ucontrol.cfg on sdcard root filesystem
-#if defined(USE_SDCARD)
-	// load default config
-#else // defined(USE_SDCARD)
-	// load factory defaults
-#endif // defined(USE_SDCARD)
+	if ( sdcard != nullptr ) {
+		// load default config
+	} else {
+		// load factory defaults
+	}
 
 	if (ain != nullptr) {
 		ain->init();
