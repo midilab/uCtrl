@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
-//#include "SdFat/SdFat.h"
+#include "SdFat/SdFat.h"
 
 namespace uctrl { namespace module { 
 
@@ -38,7 +38,7 @@ class SdCard
         //volatile SoftSpiDriver<SDCARD_SOFT_SPI_MISO, SDCARD_SOFT_SPI_MOSI, SDCARD_SOFT_SPI_CLK> _soft_spi;	
 #endif
         //SPI_DRIVER_SELECT == 3  // Must be set in SdFat/SdFatConfig.h for SPI device refrence usage
-        //volatile SdFat _sd_fat;    
+        volatile SdFat _sd_fat;    
 
 #if defined(TEENSYDUINO)
         //volatile FsFile _file; // for teensyduino
@@ -47,7 +47,7 @@ class SdCard
 #endif
         // FAT16/FAT32
         //SdFat32 sd;
-        //File32 _file;
+        volatile File32 _file;
 
         // exFAT
         //SdExFat sd;

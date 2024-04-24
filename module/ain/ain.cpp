@@ -253,7 +253,7 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 	// otherwise its a mux read request
 	} else {
 //#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
+		//if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
 			uint8_t mux_host_port = remote_port - _direct_pin_size;
 			// find our indexes
 			host_analog_port = (uint8_t)(mux_host_port/_mux_size) + _direct_pin_size;
@@ -261,7 +261,7 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 			input_data = readPort(remote_port, host_analog_port);
 			// select next mux port while processing this one
 			selectMuxPort(mux_host_port+1);
-		}
+		//}
 //#endif
 	}
 	
@@ -275,7 +275,9 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 	}
 
 	// value remap?
-	max = _user_adc_max_resolution != _adc_max_resolution ? _user_adc_max_resolution-1 : _adc_max_resolution;
+	if (max == 0)
+		max = _user_adc_max_resolution != _adc_max_resolution ? _user_adc_max_resolution-1 : _adc_max_resolution;
+
 	if ( min == 0 && max == _adc_max_resolution ) {
 		value = input_data;
 		last_value = _analog_input_last_state[remote_port];

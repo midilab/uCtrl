@@ -54,9 +54,7 @@
 
 #include "module/page/page.hpp"
 
-#if defined(USE_DEVICE)
 #include "module/device/device.hpp"
-#endif // defined(USE_DEVICE)
 
 // tools
 #define BLINK_TIME 250	
@@ -109,11 +107,11 @@ class uCtrlClass
 	bool initOled(U8X8 * display);
 #endif // defined(USE_OLED_U8G2)
 
-#if defined(USE_EXT_RAM)
-#if defined(USE_DEVICE)
+//#if defined(USE_EXT_RAM)
+//#if defined(USE_DEVICE)
 	void processDisplay();
-#endif // defined(USE_DEVICE)
-#endif // defined(USE_EXT_RAM)
+//#endif // defined(USE_DEVICE)
+//#endif // defined(USE_EXT_RAM)
 	uctrl::module::Oled * oled = nullptr;
 
 	// midi module
@@ -150,11 +148,11 @@ class uCtrlClass
 	void processPage();
 	uctrl::module::Page * page = nullptr;
 	
-#if defined(USE_DEVICE)	
+//#if defined(USE_DEVICE)	
 	// device module
 	bool initDevice(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size = 0, uint16_t device_label_buffer_size = 0);
 	uctrl::module::Device * device = nullptr;
-#endif // defined(USE_DEVICE)
+//#endif // defined(USE_DEVICE)
         
 	//
 	// Registred Ports query

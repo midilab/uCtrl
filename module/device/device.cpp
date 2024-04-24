@@ -1,5 +1,3 @@
-#ifdef USE_DEVICE
-
 #include "../../uCtrl.h"
 #include "device.hpp"
 
@@ -163,7 +161,7 @@ bool Device::handleAnalogEvent(uint8_t port, uint16_t value, uint8_t interrupted
 {
 	//static uint16_t address;
 	
-    --port;
+    //--port;
     if ( _remote.adc_port[port].event_address != 1023 ) { //>= 0 ) {
         // Handler dispatcher
         _ctrl.port = port+1;
@@ -184,7 +182,7 @@ bool Device::handleAnalogEvent(uint8_t port, uint16_t value, uint8_t interrupted
 
 bool Device::handleDigitalEvent(uint8_t port, uint16_t value, uint8_t interrupted)
 {
-    --port;
+    //--port;
 
     if ( _remote.din_port[port].event_address != 1023 ) { //!= -1 ) {  
         //_ctrl.port = port+1;
@@ -231,7 +229,7 @@ bool Device::handleDigitalEvent(uint8_t port, uint16_t value, uint8_t interrupte
 void Device::setupCtrl(uint8_t port, uint16_t value)
 {
 	uint8_t size_of_ports;
-	--port;
+	//--port;
 
 	// 1023 default value we got no _remote.adc_port[port].device_id
 	if ( _remote.adc_port[port].event_address == 1023 ) {
@@ -833,7 +831,7 @@ void Device::remoteEventHandler(CONTROL_DATA * event, uint8_t device_id, uint16_
 		case uctrl::MIDI_BUTTON:
 			if ( interrupted == 1 ) {		
 				if ( uCtrl.midi != nullptr && _ctrl_mode != 1 ) {
-					uCtrl.midi->sendMessage(eventToMidiMsg(event, value, _device[device_id].chn), _device[device_id].port+1, 0, event->config);
+					uCtrl.midi->sendMessage(eventToMidiMsg(event, value, _device[device_id].chn), _device[device_id].port+1, interrupted, event->config);
 				}
 				return;
 			} else {
@@ -860,6 +858,9 @@ void Device::remoteEventHandler(CONTROL_DATA * event, uint8_t device_id, uint16_
 	// the comming piece of code should only be processed if interrupted == 0, or face the consequences... 
 
 #ifdef USE_DEVICE_LABELS
+	if ( uCtrl.oled == nullptr )
+		return;
+	
 	// TODO: dont use oled object here... go for callback solution!
     // if event name has a # on it means do not show feedback, do it silent
     if ( event->name[0] != '#' ) {
@@ -1356,4 +1357,3 @@ const uint8_t * Device::getDataLabel(uint8_t device_id, uint16_t address, uint16
 } }
 
 uctrl::module::Device device_module;
-#endif

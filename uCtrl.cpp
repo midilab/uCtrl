@@ -135,7 +135,7 @@ bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select, bool is_
 }
 //#endif // defined(USE_SDCARD)
 
-#if defined(USE_DEVICE)
+//#if defined(USE_DEVICE)
 bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size, uint16_t device_label_buffer_size)
 {
 	if ( device == nullptr ) {
@@ -149,7 +149,7 @@ bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, u
 		return false;
 	}
 }
-#endif // defined(USE_DEVICE)
+//#endif // defined(USE_DEVICE)
 
 bool uCtrlClass::initPage(uint8_t pages_size)
 {
@@ -184,8 +184,8 @@ bool uCtrlClass::initOled(U8X8 * display)
 	}
 }
 
-#if defined(USE_EXT_RAM)
-#if defined(USE_DEVICE)
+//#if defined(USE_EXT_RAM)
+//#if defined(USE_DEVICE)
 void uCtrlClass::processDisplay()
 {
 	if ( device->showDataFeedback() == true ) {
@@ -199,8 +199,8 @@ void uCtrlClass::processDisplay()
 		}			
 	}
 }
-#endif // defined(USE_DEVICE)
-#endif // defined(USE_EXT_RAM)
+//#endif // defined(USE_DEVICE)
+//#endif // defined(USE_EXT_RAM)
 
 bool uCtrlClass::initMidi()
 {
@@ -283,26 +283,26 @@ void uCtrlClass::processAin()
 	// 
 	for ( port=0; port < size_of_ports; port++ ) {
 
-#if defined(USE_DEVICE)
-		value = ain->getData(port, device->getCtrlAdcMin(port), device->getCtrlAdcMax(port));
-#else // defined(USE_DEVICE)
-		value = ain->getData(port);
-#endif // defined(USE_DEVICE)
+		if ( device != nullptr ) {
+			value = ain->getData(port, device->getCtrlAdcMin(port), device->getCtrlAdcMax(port));
+		} else {
+			value = ain->getData(port);
+		}
 	
 		if ( value > -1 ) {
 
-#if defined(USE_DEVICE)
-			// make midi signal smooth as posible
-			if ( device->handleAnalogEvent(port+1, value, 1) == true ) {
-				//continue;
-			}
-#else // defined(USE_DEVICE)
-			// ain callback is processed inside a timmer interrupt, so always be short inside it!
-			if ( ain->rtCallback != nullptr ) {
-				ain->rtCallback(port+1, value);
-				continue;
-			}   
-#endif // defined(USE_DEVICE)
+			if ( device != nullptr ) {
+				// make midi signal smooth as posible
+				if ( device->handleAnalogEvent(port, value, 1) == true ) {
+					//continue;
+				}
+			} else {
+				// ain callback is processed inside a timmer interrupt, so always be short inside it!
+				if ( ain->rtCallback != nullptr ) {
+					ain->rtCallback(port, value);
+					continue;
+				}
+			}  
 
 			// add event to non interrupted queue in case no device control setup
 			uint8_t tail = (_ain_event_queue.tail+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.tail+1);
@@ -383,7 +383,7 @@ void uCtrlClass::run()
 	// 250us call
 	if (on250usCallback) {
 		if (_doTrigger250us) {
-			_doTrigger250us = false;
+			ATOMIC(_doTrigger250us = false)
 			uCtrl.on250usCallback();
 		}
 	}
@@ -391,16 +391,16 @@ void uCtrlClass::run()
 	// ~1ms call
 	if (on1msCallback) {
 		if (_doTrigger1ms) {
-			_doTrigger1ms = false;
+			ATOMIC(_doTrigger1ms = false)
 			uCtrl.on1msCallback();
-			return;
+			//return;
 		}
 	}
 	
 	// ~2ms call
 	if (din != nullptr) {
 		if (_doTriggerDin) {
-			_doTriggerDin = false;
+			ATOMIC(_doTriggerDin = false)
 
 			// read while empty
 			while ( din->event_queue.head != din->event_queue.tail )
@@ -412,11 +412,11 @@ void uCtrlClass::run()
 					din->event_queue.head = head;
 				)
 
-#if defined(USE_DEVICE)
-				if ( device->handleDigitalEvent(port, value, 0) == true ) {
+				if ( device != nullptr ) {
+					if ( device->handleDigitalEvent(port, value, 0) == true ) {
 						continue;
+					}
 				}
-#endif // defined(USE_DEVICE)
 
 				if (page != nullptr) {
 					if (ain != nullptr) {
@@ -447,7 +447,7 @@ void uCtrlClass::run()
 				if ( din->callback != nullptr )
 					din->callback(port, value);
 			}
-			return;
+			//return;
 		}
 		// set port_ref in case other digital modules were initialized
 		port_ref = din->sizeOf();
@@ -456,7 +456,7 @@ void uCtrlClass::run()
 	// ~3ms call
 	if (touch != nullptr) {
 		if (_doTriggerTouch) {
-			_doTriggerTouch = false;
+			ATOMIC(_doTriggerTouch = false)
 
 			// read while empty
 			while ( touch->event_queue.head != touch->event_queue.tail )
@@ -469,10 +469,10 @@ void uCtrlClass::run()
 					touch->event_queue.head = head;
 				)
 
-#if defined(USE_DEVICE)
-				if ( device->handleDigitalEvent(port, value, 0) == true )
-					continue;
-#endif // defined(USE_DEVICE)
+				if ( device != nullptr ) {
+					if ( device->handleDigitalEvent(port, value, 0) == true )
+						continue;
+				}
 
 				if (page != nullptr) {
 					if (ain != nullptr) {
@@ -501,14 +501,14 @@ void uCtrlClass::run()
 				if ( touch->callback != nullptr )
 					touch->callback(port, value);
 			}
-			return;
+			//return;
 		}
 	}
 
 	// ~10ms call
 	if (uCtrl.ain != nullptr) {
 		if (_doTriggerAin) {
-			_doTriggerAin = false;
+			ATOMIC(_doTriggerAin = false)
 
 			// read while empty
 			while ( _ain_event_queue.head != _ain_event_queue.tail )
@@ -532,17 +532,17 @@ void uCtrlClass::run()
 				}
 		#endif // defined(USE_PAGE_COMPONENT)
 
-		#if defined(USE_DEVICE)
-				// device process are done inside interrupt to keep smooth for realtime controllers events
-				// EDIT MODE HANDLER
-				if ( device->getCtrlMode() == 2 ) {
-					device->setupCtrl(port, value);
-				}
+				if ( device != nullptr ) {
+					// device process are done inside interrupt to keep smooth for realtime controllers events
+					// EDIT MODE HANDLER
+					if ( device->getCtrlMode() == 2 ) {
+						device->setupCtrl(port, value);
+					}
 
-				if ( device->handleAnalogEvent(port, value, 0) == true ) {
-					continue;
+					if ( device->handleAnalogEvent(port, value, 0) == true ) {
+						continue;
+					}
 				}
-		#endif // defined(USE_DEVICE)
 
 				if (page != nullptr) {
 					page->processEvent(port, value, uctrl::module::ANALOG_EVENT);
@@ -552,21 +552,22 @@ void uCtrlClass::run()
 					ain->callback(port, value);
 				}
 			}
-			return;
+			//return;
 		}
 	}
 
 	// ~30ms call
 	if (uCtrl.dout != nullptr) {
 		if (_doTriggerDout) {
-			_doTriggerDout = false;
+			ATOMIC(_doTriggerDout = false)
 			uCtrl.dout->flush(0);
-			return;
+			//return;
 		}
 	}
 
 	// 500ms call
 	if (_doTriggerUi) {
+		ATOMIC(_doTriggerUi = false)
 		// process ui stuffs
 		uCtrl.ui();
 	}
@@ -614,11 +615,9 @@ void uCtrlClass::ui()
 	}
 
 	if ( oled != nullptr ) {
-#if defined(USE_EXT_RAM)
-#if defined(USE_DEVICE)
-    	processDisplay();
-#endif // defined(USE_DEVICE)
-#endif // defined(USE_EXT_RAM)
+		if ( device != nullptr && ram != nullptr ) {
+    		processDisplay();
+		}
 #if defined(USE_OLED_U8G2)
 		oled->refreshDisplay();
 #endif // defined(USE_OLED_U8G2)
@@ -741,7 +740,7 @@ void uCtrlHandler()
 
 	// UI handling
 	// 500ms call
-	if (++_timerCounterUi == 2000) {
+	if (++_timerCounterUi == 500) {
 		_timerCounterUi = 0;
 		uCtrl._doTriggerUi = true;
 	}

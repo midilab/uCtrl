@@ -8,6 +8,10 @@ namespace uctrl {
 #define DEVICE_LABEL_SIZE 16
 #define SYSEX_TEMPLATE_SIZE 16
 
+// find a place for user to setup it
+#define USE_DEVICE_LABELS
+#define USE_EXT_RAM
+
 // Sysex template system datatypes
 typedef enum {
 	SYSEX_TEMPLATE_STATIC,
