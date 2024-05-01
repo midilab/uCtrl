@@ -40,7 +40,7 @@ Din::~Din()
 	delete[] _digital_input_state;
 	delete[] _digital_input_last_state;
 	delete[] _digital_detent_pin;
-	delete[] _din_pin_map;
+	//delete[] _din_pin_map;
 }
 
 uint8_t Din::sizeOf()
@@ -62,20 +62,8 @@ void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 // call first all plug() for pin register, then plugSR if needed
 void Din::plug(uint8_t setup)
 {
-	// alloc once and forever policy!
-	if (_din_pin_map == nullptr) {
-		_din_pin_map = new uint8_t[1];
-	} else {
-		uint8_t * new_din_pin_map = new uint8_t[_remote_digital_port + 1];
-		for (size_t i = 0; i < _remote_digital_port; ++i) {
-			new_din_pin_map[i] = _din_pin_map[i];
-		}
-		delete[] _din_pin_map;
-		_din_pin_map = new_din_pin_map;
-	}
-
-	//if (_remote_digital_port >= USE_DIN_MAX_PORTS)
-	//	return;
+	if (_remote_digital_port >= USE_DIN_MAX_PORTS)
+		return;
 
 	_din_pin_map[_remote_digital_port] = setup;
 	++_remote_digital_port;

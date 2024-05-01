@@ -34,6 +34,10 @@
 
 namespace uctrl { namespace module { 
 
+#if !defined(USE_DIN_MAX_PORTS)
+#define USE_DIN_MAX_PORTS 12
+#endif
+
 #define DIN_EVENT_QUEUE_SIZE	6
 
 typedef struct 
@@ -105,7 +109,8 @@ class Din
     	volatile DIN_EVENT_QUEUE event_queue;	
 
 		// used for direct microcontroller digital input pins
-		uint8_t * _din_pin_map = nullptr;
+		//uint8_t * _din_pin_map = nullptr;
+		uint8_t _din_pin_map[USE_DIN_MAX_PORTS] = {0};
 
 		SPIClass * _spi_device = nullptr;
 		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);

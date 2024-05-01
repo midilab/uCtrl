@@ -39,7 +39,7 @@ Dout::~Dout()
 {
 	delete[] _digital_output_state;
     delete[] _digital_output_buffer;
-	delete[] _dout_pin_map;
+	//delete[] _dout_pin_map;
 }
 
 uint8_t Dout::sizeOf()
@@ -57,17 +57,8 @@ void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 // call first all plug() for pin register, then plugSR if needed
 void Dout::plug(uint8_t setup)
 {
-	// alloc once and forever policy!
-	if (_dout_pin_map == nullptr) {
-		_dout_pin_map = new uint8_t[1];
-	} else {
-		uint8_t * new_dout_pin_map = new uint8_t[_chain_size_pin + 1];
-		for (size_t i = 0; i < _chain_size_pin; ++i) {
-			new_dout_pin_map[i] = _dout_pin_map[i];
-		}
-		delete[] _dout_pin_map;
-		_dout_pin_map = new_dout_pin_map;
-	}
+	if (_chain_size_pin >= USE_DOUT_MAX_PORTS)
+		return;
 
 	_dout_pin_map[_chain_size_pin] = setup;
 	++_chain_size_pin;
@@ -114,6 +105,7 @@ void Dout::init()
 		// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
 		// Each bit represents the value state readed by digital inputs
 		if ( _chain_size > 0 ) {
+			// alloc once and forever policy!
 			_digital_output_state = new uint8_t[_chain_size];
 			_digital_output_buffer = new uint8_t[_chain_size];
 			for (uint8_t i=0; i < _chain_size; i++) {
