@@ -78,7 +78,8 @@ class CapTouch
 			callback = action_callback;
 		}
 		
-		int8_t _port[MAX_TOUCH_MUX] = {-1};
+		//int8_t _port[MAX_TOUCH_MUX] = {-1};
+		int8_t * _port = nullptr;
 		int8_t _control_pin_1 = -1;
 		int8_t _control_pin_2 = -1;
 		int8_t _control_pin_3 = -1;
@@ -101,7 +102,5 @@ class CapTouch
 };		
 			
 } }
-
-extern uctrl::module::CapTouch cap_touch_module;
 		
 #endif

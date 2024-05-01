@@ -91,11 +91,9 @@ class uCtrlClass
 	//
 	// modules access
 	//
-//#if defined(USE_EXT_RAM)
 	// external ram module
 	bool initRam(SPIClass * device, uint8_t chip_select = 2, bool is_shared = false);
 	uctrl::module::Ram * ram = nullptr;		
-//#endif // defined(USE_EXT_RAM)
 
 	bool initStorage(SPIClass * spi_device = nullptr, bool is_shared = false);
 	uctrl::module::Storage * storage = nullptr;	
@@ -116,7 +114,6 @@ class uCtrlClass
 
 	// midi module
 	bool initMidi();
-	void processMidi();
 	uctrl::module::Midi * midi = nullptr;
 	
 	// dout module
@@ -137,22 +134,18 @@ class uCtrlClass
 	bool initCapTouch(int8_t pin1 = -1, int8_t pin2 = -1, int8_t pin3 = -1, int8_t pin4 = -1);
 	uctrl::module::CapTouch * touch = nullptr;
 	
-//#if defined(USE_SDCARD)
 	// sdcard module
 	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2, bool is_shared = false);	
 	uctrl::module::SdCard * sdcard;
-//#endif // defined(USE_SDCARD)
 	
 	// page module
 	bool initPage(uint8_t pages_size);
 	void processPage();
 	uctrl::module::Page * page = nullptr;
 	
-//#if defined(USE_DEVICE)	
 	// device module
 	bool initDevice(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size = 0, uint16_t device_label_buffer_size = 0);
 	uctrl::module::Device * device = nullptr;
-//#endif // defined(USE_DEVICE)
         
 	//
 	// Registred Ports query
@@ -161,8 +154,8 @@ class uCtrlClass
 	uint8_t getAnalogPorts();
 	uint8_t getDigitalPorts();
 	
+	// runtime handler
 	void run();
-	void ui();
 
 	void setOn250usCallback(void (*callback)()) {
 		on250usCallback = callback;
@@ -174,15 +167,6 @@ class uCtrlClass
 
 	void (*on250usCallback)();
 	void (*on1msCallback)();
-
-	// flaging for outsite ISR processing control
-	volatile bool _doTrigger250us = false;
-	volatile bool _doTrigger1ms = false;
-	volatile bool _doTriggerDin = false;
-	volatile bool _doTriggerTouch = false;
-	volatile bool _doTriggerAin = false;
-	volatile bool _doTriggerDout = false;
-	volatile bool _doTriggerUi = false;
 };
 
 }

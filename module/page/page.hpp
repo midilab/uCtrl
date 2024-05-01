@@ -307,6 +307,4 @@ class Page
 
 } }
 
-extern uctrl::module::Page page_module;
-
 #endif

@@ -138,7 +138,5 @@ class Ain
 };		
 			
 } }
-
-extern uctrl::module::Ain ain_module;
 		
 #endif

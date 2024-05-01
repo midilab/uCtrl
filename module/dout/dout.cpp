@@ -37,7 +37,9 @@ Dout::Dout()
 
 Dout::~Dout()
 {
-	
+	delete[] _digital_output_state;
+    delete[] _digital_output_buffer;
+	delete[] _dout_pin_map;
 }
 
 uint8_t Dout::sizeOf()
@@ -57,9 +59,14 @@ void Dout::plug(uint8_t setup)
 {
 	// alloc once and forever policy!
 	if (_dout_pin_map == nullptr) {
-		_dout_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
+		_dout_pin_map = new uint8_t[1];
 	} else {
-		_dout_pin_map = (uint8_t*) realloc( _dout_pin_map, sizeof(uint8_t) * (_chain_size_pin+1) );
+		uint8_t * new_dout_pin_map = new uint8_t[_chain_size_pin + 1];
+		for (size_t i = 0; i < _chain_size_pin; ++i) {
+			new_dout_pin_map[i] = _dout_pin_map[i];
+		}
+		delete[] _dout_pin_map;
+		_dout_pin_map = new_dout_pin_map;
 	}
 
 	_dout_pin_map[_chain_size_pin] = setup;
@@ -107,8 +114,8 @@ void Dout::init()
 		// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
 		// Each bit represents the value state readed by digital inputs
 		if ( _chain_size > 0 ) {
-			_digital_output_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
-			_digital_output_buffer = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+			_digital_output_state = new uint8_t[_chain_size];
+			_digital_output_buffer = new uint8_t[_chain_size];
 			for (uint8_t i=0; i < _chain_size; i++) {
 				_digital_output_state[i] = 0;
 				_digital_output_buffer[i] = 0;
@@ -309,5 +316,3 @@ void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
         }
 }
 */
-
-uctrl::module::Dout dout_module;

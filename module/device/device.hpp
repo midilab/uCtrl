@@ -12,7 +12,6 @@ class Device
         Device();
         ~Device(); 
 
-    //void init(uctrl::uCtrlClass * uCtrl, uint8_t device_number, uint16_t event_buffer_size, uint8_t device_buffer_size, uint16_t device_label_buffer_size = 0);
     void init(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size = 0, uint16_t device_label_buffer_size = 0);
 
 	bool isPressed(uint8_t port);
@@ -177,6 +176,6 @@ class Device
 
 } }
 
-extern uctrl::module::Device device_module;
+//extern uctrl::module::Device device_module;
 
 #endif

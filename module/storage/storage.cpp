@@ -34,7 +34,7 @@ Storage::Storage()
 {
 }
 
-void Storage::init(SPIClass * spi_device, bool is_shared = false)
+void Storage::init(SPIClass * spi_device, bool is_shared)
 {
 	if (spi_device != nullptr) {
 		// we need to activate sdcard support
@@ -101,4 +101,4 @@ bool Storage::load(void *data, size_t n, const char * path)
 
 } }
 
-uctrl::module::Storage storage_module;
+//uctrl::module::Storage storage_module;

@@ -83,6 +83,4 @@ class Oled
 
 } } 
 
-extern uctrl::module::Oled oled_module;
-
 #endif

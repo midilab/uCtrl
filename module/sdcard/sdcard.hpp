@@ -38,16 +38,17 @@ class SdCard
         //volatile SoftSpiDriver<SDCARD_SOFT_SPI_MISO, SDCARD_SOFT_SPI_MOSI, SDCARD_SOFT_SPI_CLK> _soft_spi;	
 #endif
         //SPI_DRIVER_SELECT == 3  // Must be set in SdFat/SdFatConfig.h for SPI device refrence usage
-        volatile SdFat _sd_fat;    
+        SdFat _sd_fat;    
 
 #if defined(TEENSYDUINO)
-        //volatile FsFile _file; // for teensyduino
+        FsFile _file; // for teensyduino
 #else
-        //volatile File _file; // for avr arduinos
+        File _file; // for avr arduinos
 #endif
+
         // FAT16/FAT32
         //SdFat32 sd;
-        volatile File32 _file;
+        //volatile File32 _file;
 
         // exFAT
         //SdExFat sd;
@@ -58,14 +59,14 @@ class SdCard
         //FsFile file;    
 
         // for getData place his binary object data on it
-        volatile uint8_t _cache[BUFFER_SIZE];
+        uint8_t _cache[BUFFER_SIZE];
 
-        volatile uint16_t _buffer_count; 
+        uint16_t _buffer_count; 
         bool _is_shared = false;
 };
 
 } }
 
-extern uctrl::module::SdCard sdcard_module;
+//extern uctrl::module::SdCard sdcard_module;
 
 #endif

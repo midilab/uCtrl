@@ -64,6 +64,6 @@ class Storage
 			
 } }
 
-extern uctrl::module::Storage storage_module;
+//extern uctrl::module::Storage storage_module;
 		
 #endif

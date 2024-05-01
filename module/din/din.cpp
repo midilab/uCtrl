@@ -37,7 +37,10 @@ Din::Din()
 
 Din::~Din()
 {
-	
+	delete[] _digital_input_state;
+	delete[] _digital_input_last_state;
+	delete[] _digital_detent_pin;
+	delete[] _din_pin_map;
 }
 
 uint8_t Din::sizeOf()
@@ -61,10 +64,18 @@ void Din::plug(uint8_t setup)
 {
 	// alloc once and forever policy!
 	if (_din_pin_map == nullptr) {
-		_din_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
+		_din_pin_map = new uint8_t[1];
 	} else {
-		_din_pin_map = (uint8_t*) realloc( _din_pin_map, sizeof(uint8_t) * (_remote_digital_port+1) );
+		uint8_t * new_din_pin_map = new uint8_t[_remote_digital_port + 1];
+		for (size_t i = 0; i < _remote_digital_port; ++i) {
+			new_din_pin_map[i] = _din_pin_map[i];
+		}
+		delete[] _din_pin_map;
+		_din_pin_map = new_din_pin_map;
 	}
+
+	//if (_remote_digital_port >= USE_DIN_MAX_PORTS)
+	//	return;
 
 	_din_pin_map[_remote_digital_port] = setup;
 	++_remote_digital_port;
@@ -86,7 +97,8 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 		use_encoder = true;
 		uint8_t chain_size = (_chain_size_pin + _chain_size_sr);
 		// we need to init din drivers here to malloc heap data structures
-		_digital_detent_pin = (uint8_t*) malloc( sizeof(uint8_t) * chain_size );
+		//_digital_detent_pin = (uint8_t*) malloc( sizeof(uint8_t) * chain_size );
+		_digital_detent_pin = new uint8_t[chain_size];
 		for (uint8_t i=0; i < chain_size; i++) {
 			_digital_detent_pin[i] = 0;
 		}
@@ -147,8 +159,8 @@ void Din::init()
 	// Each bit represents the value state readed by digital inputs	
 	// alloc rules: alloc once and forever! no memory free call at runtime
 	if ( _remote_digital_port > 0 ) {
-		_digital_input_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
-		_digital_input_last_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+		_digital_input_state = new uint8_t[_chain_size];
+		_digital_input_last_state = new uint8_t[_chain_size];
 
 		for (uint8_t i=0; i < _chain_size; i++) {
 			_digital_input_state[i] = 0;
@@ -344,5 +356,3 @@ int8_t Din::getDataRaw(uint8_t port)
 }
 
 } }
-
-uctrl::module::Din din_module;

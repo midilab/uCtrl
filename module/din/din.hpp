@@ -105,7 +105,6 @@ class Din
     	volatile DIN_EVENT_QUEUE event_queue;	
 
 		// used for direct microcontroller digital input pins
-		//uint8_t _din_pin_map[16] = {0};
 		uint8_t * _din_pin_map = nullptr;
 
 		SPIClass * _spi_device = nullptr;
@@ -115,7 +114,5 @@ class Din
 };
 
 } }
-
-extern uctrl::module::Din din_module;
 
 #endif

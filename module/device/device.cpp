@@ -283,7 +283,7 @@ void Device::clearMap(uint8_t device_id)
 #endif
 }
 
-void Device::eventMap(uint8_t device_id, CONTROL_DATA * event, uint8_t * eventName = NULL, int16_t label_offset = 0)
+void Device::eventMap(uint8_t device_id, CONTROL_DATA * event, uint8_t * eventName, int16_t label_offset)
 {
 	uint16_t memory_address;
 	
@@ -418,7 +418,7 @@ void Device::getDeviceMapEventData(uint8_t device_id, uint16_t event_address, CO
 uint8_t * Device::getDeviceName(uint8_t device_id)
 {
 	if ( device_id > _device_number ) {
-		return;
+		return nullptr;
 	}	
 	if ( device_id == 0 ) {
 		device_id = _selected_device;
@@ -541,7 +541,7 @@ void Device::editCtrlsetDevice(int8_t inc, uint8_t port)
         if ( event.data_label != 65535 ) {
             memcpy (_ctrl.data_label, getDataLabel(_remote.adc_port[port].device_id, event.data_label, _edit_ctrl_last_value), 16);
         } else {
-			sprintf (_ctrl.data_label, "%-8d", event.label_offset + _edit_ctrl_last_value);
+			sprintf ((char*)_ctrl.data_label, "%-8d", event.label_offset + _edit_ctrl_last_value);
             //sprintf (_ctrl.data_label, "%d", event.label_offset + _edit_ctrl_last_value);
         }
         /*
@@ -602,7 +602,7 @@ void Device::editCtrlsetCtrl(int8_t inc, uint8_t port)
         if ( event.data_label != 65535 ) {
             memcpy (_ctrl.data_label, getDataLabel(_remote.adc_port[port].device_id, event.data_label, _edit_ctrl_last_value), 16);
         } else {
-			sprintf (_ctrl.data_label, "%-8d", event.label_offset + _edit_ctrl_last_value);
+			sprintf ((char*)_ctrl.data_label, "%-8d", event.label_offset + _edit_ctrl_last_value);
             //sprintf (_ctrl.data_label, "%d", event.label_offset + _edit_ctrl_last_value);
         }      
         /*
@@ -870,7 +870,7 @@ void Device::remoteEventHandler(CONTROL_DATA * event, uint8_t device_id, uint16_
 			if ( event->data_label != 65535 ) {
 				memcpy (_ctrl.data_label, getDataLabel(device_id, event->data_label, value), 16);
 			} else {
-				sprintf (_ctrl.data_label, "%-8d", event->label_offset + value);
+				sprintf ((char*)_ctrl.data_label, "%-8d", event->label_offset + value);
 				//sprintf (_ctrl.data_label, "%d", event->label_offset + value);
 			}
 			if ( _data_feedback_show == false ) {
@@ -1355,4 +1355,4 @@ const uint8_t * Device::getDataLabel(uint8_t device_id, uint16_t address, uint16
 
 } }
 
-uctrl::module::Device device_module;
+//uctrl::module::Device device_module;

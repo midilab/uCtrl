@@ -48,7 +48,7 @@ void SdCard::plug()
   // ???
 }				
 
-void SdCard::init(SPIClass * spi_device, uint8_t chip_select, bool is_shared = false)
+void SdCard::init(SPIClass * spi_device, uint8_t chip_select, bool is_shared)
 {  
   _buffer_count = 0;
   _is_shared = is_shared;
@@ -112,7 +112,7 @@ uint8_t * SdCard::getData(size_t buffer_size, uint8_t interrupted)
 {
   uint8_t ret = 0;
   if ( interrupted == 0 && _is_shared ) ATOMIC_START
-  ret = _file.read(_cache, buffer_size);
+  ret = _file.read((char*)_cache, buffer_size);
   if ( interrupted == 0 && _is_shared ) ATOMIC_END
   if ( ret < buffer_size ) {
     return NULL;
@@ -203,7 +203,7 @@ bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num, uint8_t i
   if ( field_num == 0 ) {
 
     if ( interrupted == 0 && _is_shared ) ATOMIC_START
-    ret = _file.fgets(_cache, BUFFER_SIZE);
+    ret = _file.fgets((char*)_cache, BUFFER_SIZE);
     if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
     if ( ret <= 0 ) { // EOF=0 error=-1
@@ -211,7 +211,7 @@ bool SdCard::getConfig(char * string, uint8_t size, uint8_t field_num, uint8_t i
     }
   }
   
-  return readTextLine(_cache, string, size, field_num, ',');
+  return readTextLine((char*)_cache, string, size, field_num, ',');
 }
 
 bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted)
@@ -232,7 +232,7 @@ bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted)
   if ( field_num == 0 ) {   
 
     if ( interrupted == 0 && _is_shared ) ATOMIC_START
-    ret = _file.fgets(_cache, BUFFER_SIZE);
+    ret = _file.fgets((char*)_cache, BUFFER_SIZE);
     if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
     if ( ret <= 0 ) { // EOF=0 error=-1
@@ -242,7 +242,7 @@ bool SdCard::getConfig(int16_t * number, uint8_t field_num, uint8_t interrupted)
   
   //is the base for the number represented in the string. A "base" of zero indicates that the base should be determined from the leading digits of "s". The default is decimal, a leading '0' indicates octal, and a leading '0x' or '0X' indicates hexadecimal. 
   
-  if ( readTextLine(_cache, buf, sizeof(buf), field_num, ',') ) {
+  if ( readTextLine((char*)_cache, buf, sizeof(buf), field_num, ',') ) {
     *number = (int16_t)strtol(buf, &ptr, 0); 
     return true;
   }
@@ -268,7 +268,7 @@ bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted)
   if ( field_num == 0 ) {
     
     if ( interrupted == 0 && _is_shared ) ATOMIC_START
-    ret = _file.fgets(_cache, BUFFER_SIZE);
+    ret = _file.fgets((char*)_cache, BUFFER_SIZE);
     if ( interrupted == 0 && _is_shared ) ATOMIC_END
 
     if ( ret <= 0 ) { // EOF=0 error=-1
@@ -276,7 +276,7 @@ bool SdCard::getConfig(float * number, uint8_t field_num, uint8_t interrupted)
     }
   }
   
-  if ( readTextLine(_cache, buf, sizeof(buf), field_num, ',') ) {
+  if ( readTextLine((char*)_cache, buf, sizeof(buf), field_num, ',') ) {
     *number = (float)strtod(buf, &ptr);
     return true;
   }
@@ -329,4 +329,4 @@ bool SdCard::exists(char * path, uint8_t interrupted)
 
 } }
 
-uctrl::module::SdCard sdcard_module;
+//uctrl::module::SdCard sdcard_module;
