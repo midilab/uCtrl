@@ -824,7 +824,6 @@ void Device::remoteEventHandler(CONTROL_DATA * event, uint8_t device_id, uint16_
 
 	switch (event->type) {
 
-#ifdef USE_MIDI
 		case uctrl::MIDI_ANALOG:
 		case uctrl::MIDI_TRIGGER:
 		case uctrl::MIDI_BUTTON:
@@ -836,7 +835,6 @@ void Device::remoteEventHandler(CONTROL_DATA * event, uint8_t device_id, uint16_
 			} else {
 				break;
 			}
-#endif 
 
 		// this is non realtime action, so always return if its interrupted
 		case uctrl::APP_CTRL:
@@ -972,13 +970,13 @@ void Device::sendEvent(uint16_t eventAddress, uint8_t device_id, uint16_t value)
 */
 void Device::lockControl(uint8_t remote_port)
 {
-#ifdef USE_AIN    
-	if ( remote_port == 0 ) {	
-		uCtrl.ain->lockAllControls();
-	} else {		
-		uCtrl.ain->lockControl(remote_port-1);
+	if ( uCtrl.ain != nullptr) {
+		if ( remote_port == 0 ) {	
+			uCtrl.ain->lockAllControls();
+		} else {		
+			uCtrl.ain->lockControl(remote_port-1);
+		}
 	}
-#endif    
 }
 /*
 // Special shift button with n taps support
@@ -1077,10 +1075,8 @@ bool Device::isPressed(uint8_t port)
 #endif		
 */
 
-#ifdef USE_DIN
-    return uCtrl.din->getDataRaw(port);
-#endif
-		
+	if ( uCtrl.din != nullptr )
+    	return uCtrl.din->getDataRaw(port);		
 }
 
 void Device::ctrlMap(uint8_t device_id, uint16_t control_id, uint16_t range_min, uint16_t range_max, int16_t label_offset, uint8_t * name)
