@@ -127,8 +127,8 @@ void Dout::flushBuffer()
 	}
 //#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 	if (_spi_device != nullptr) {
-		if ( _is_shared )
-			noInterrupts();
+		//if ( _is_shared )
+		noInterrupts();
 		//memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
 		i=_chain_size-1;
 		while(i >= 0) {
@@ -136,10 +136,12 @@ void Dout::flushBuffer()
 			i--;
 		}
 		_flush_dout = true;
-		if ( _is_shared )
-			interrupts();
+		//if ( _is_shared )
+		interrupts();
 	}
 //#endif
+
+	flush(0);
 }
 
 void Dout::flush(uint8_t interrupted)

@@ -646,13 +646,13 @@ void uCtrlHandler()
 		}
 	}
 
-	if (uCtrl.dout != nullptr) {
+	/* if (uCtrl.dout != nullptr) {
 		// ~30ms call
 		if (++_timerCounterDout == 120) {
 			_timerCounterDout = 0;
 			uCtrl.dout->flush(1);
 			return;
 		}
-	}
+	} */
 
 }
