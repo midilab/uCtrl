@@ -35,7 +35,7 @@
 namespace uctrl { namespace module { 
 
 #if !defined(USE_DIN_MAX_PORTS)
-#define USE_DIN_MAX_PORTS 24
+#define USE_DIN_MAX_PORTS 12
 #endif
 
 #define DIN_EVENT_QUEUE_SIZE	6

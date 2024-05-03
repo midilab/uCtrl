@@ -147,6 +147,8 @@ void Din::init()
 	// Each bit represents the value state readed by digital inputs	
 	// alloc rules: alloc once and forever! no memory free call at runtime
 	if ( _remote_digital_port > 0 ) {
+		//_digital_input_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+		//_digital_input_last_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
 		_digital_input_state = new uint8_t[_chain_size];
 		_digital_input_last_state = new uint8_t[_chain_size];
 
@@ -227,9 +229,9 @@ void Din::read(uint8_t interrupted)
 #else
 	if (_spi_device != nullptr) {
 	//if (_chain_size_sr != 0) {
-		if ( interrupted == 0 && _is_shared ) { 
+		// always inside ISR, if is shared make sure no one will try to handle while we do it
+		if ( _is_shared ) { 
 			noInterrupts();
-			//_spi_device->usingInterrupt(255);
 		} 
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
 		// pulsing the chip select pin to start capturing data
@@ -245,9 +247,8 @@ void Din::read(uint8_t interrupted)
 			}
 		}
 		_spi_device->endTransaction();
-		if ( interrupted == 0 && _is_shared ) { 
+		if ( _is_shared ) { 
 			interrupts();
-			//_spi_device->notUsingInterrupt(255);
 		}  
 	}
 #endif

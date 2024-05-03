@@ -321,17 +321,6 @@ void uCtrlClass::init()
 		// load factory defaults
 	}
 
-	if (ain != nullptr) {
-		ain->init();
-		_ain_event_queue.head = 0;
-		_ain_event_queue.tail = 0;
-		_ain_event_queue.size = 8;
-	}
-
-	if (touch != nullptr) {
-		touch->init();
-	}
-
 	if (din != nullptr) {
 		din->init();
 	}
@@ -339,7 +328,18 @@ void uCtrlClass::init()
 	if (dout != nullptr) {
 		dout->init();
 	}
-			
+
+	if (touch != nullptr) {
+		touch->init();
+	}
+	
+	if (ain != nullptr) {
+		ain->init();
+		_ain_event_queue.head = 0;
+		_ain_event_queue.tail = 0;
+		_ain_event_queue.size = 8;
+	}
+
 	if (page != nullptr) {
 		// default page and subpge
 		if (page->getPageSize() > 0) {
@@ -646,13 +646,13 @@ void uCtrlHandler()
 		}
 	}
 
-	/* if (uCtrl.dout != nullptr) {
+	if (uCtrl.dout != nullptr) {
 		// ~30ms call
 		if (++_timerCounterDout == 120) {
 			_timerCounterDout = 0;
 			uCtrl.dout->flush(1);
 			return;
 		}
-	} */
+	}
 
 }
