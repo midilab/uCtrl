@@ -57,8 +57,15 @@ void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 // call first all plug() for pin register, then plugSR if needed
 void Dout::plug(uint8_t setup)
 {
-	if (_chain_size_pin >= USE_DOUT_MAX_PORTS)
-		return;
+	//if (_chain_size_pin >= USE_DOUT_MAX_PORTS)
+	//	return;
+
+	// alloc once and forever policy!
+	if (_dout_pin_map == nullptr) {
+		_dout_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
+	} else {
+		_dout_pin_map = (uint8_t*) realloc( _dout_pin_map, sizeof(uint8_t) * (_chain_size_pin+1) );
+	}
 
 	_dout_pin_map[_chain_size_pin] = setup;
 	++_chain_size_pin;

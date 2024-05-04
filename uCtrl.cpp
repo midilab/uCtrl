@@ -377,10 +377,10 @@ void uCtrlClass::run()
 		// read while empty
 		while ( din->event_queue.head != din->event_queue.tail )
 		{
-			port = din->event_queue.event[din->event_queue.head].port;
-			value = din->event_queue.event[din->event_queue.head].value; 
-			head = (din->event_queue.head+1)%(din->event_queue.size);
 			ATOMIC(
+				port = din->event_queue.event[din->event_queue.head].port;
+				value = din->event_queue.event[din->event_queue.head].value; 
+				head = (din->event_queue.head+1)%(din->event_queue.size);
 				din->event_queue.head = head;
 			)
 

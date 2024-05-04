@@ -34,9 +34,9 @@
 
 namespace uctrl { namespace module { 
 
-#if !defined(USE_DOUT_MAX_PORTS)
+/* #if !defined(USE_DOUT_MAX_PORTS)
 #define USE_DOUT_MAX_PORTS 12
-#endif
+#endif */
 
 #define SPI_SPEED_DOUT         4000000
 //#define SPI_SPEED_DOUT         2000000
@@ -69,8 +69,8 @@ class Dout
         uint8_t * _digital_output_buffer = nullptr;
 
         // used for direct microcontroller digital output pins
-	uint8_t _dout_pin_map[USE_DOUT_MAX_PORTS] = {0};
-        //uint8_t * _dout_pin_map = nullptr;
+	//uint8_t _dout_pin_map[USE_DOUT_MAX_PORTS] = {0};
+        uint8_t * _dout_pin_map = nullptr;
 
         uint8_t _remote_digital_output_port = 0; 
 

@@ -62,8 +62,15 @@ void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 // call first all plug() for pin register, then plugSR if needed
 void Din::plug(uint8_t setup)
 {
-	if (_remote_digital_port >= USE_DIN_MAX_PORTS)
-		return;
+	//if (_remote_digital_port >= USE_DIN_MAX_PORTS)
+	//	return;
+
+	// alloc once and forever policy!
+	if (_din_pin_map == nullptr) {
+		_din_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
+	} else {
+		_din_pin_map = (uint8_t*) realloc( _din_pin_map, sizeof(uint8_t) * (_remote_digital_port+1) );
+	}
 
 	_din_pin_map[_remote_digital_port] = setup;
 	++_remote_digital_port;
