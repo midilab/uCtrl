@@ -38,7 +38,7 @@ CapTouch::~CapTouch()
 {
 	delete[] _digital_input_state;
 	delete[] _digital_input_last_state;
-	delete[] _port;
+	free(_port);
 }
 
 uint8_t CapTouch::sizeOf()
@@ -75,14 +75,9 @@ void CapTouch::plug(uint8_t analog_port)
 {
 	// alloc once and forever policy!
 	if (_port == nullptr) {
-		_port = new int8_t[1];
+		_port = (int8_t*) malloc( sizeof(int8_t) );
 	} else {
-		int8_t * new_port = new int8_t[_host_analog_port + 1];
-		for (size_t i = 0; i < _host_analog_port; ++i) {
-			new_port[i] = _port[i];
-		}
-		delete[] _port;
-		_port = new_port;
+		_port = (int8_t*) realloc( _port, sizeof(int8_t) * (_host_analog_port+1) );
 	}
 
 	if ( _control_pin_1 != -1 ) {

@@ -40,7 +40,7 @@ Din::~Din()
 	delete[] _digital_input_state;
 	delete[] _digital_input_last_state;
 	delete[] _digital_detent_pin;
-	//delete[] _din_pin_map;
+	free(_din_pin_map);
 }
 
 uint8_t Din::sizeOf()

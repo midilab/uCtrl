@@ -48,7 +48,7 @@ typedef struct
 
 typedef struct
 {
-	DIN_EVENT_QUEUE_DATA event[DIN_EVENT_QUEUE_SIZE];
+	volatile DIN_EVENT_QUEUE_DATA event[DIN_EVENT_QUEUE_SIZE];
 	volatile uint8_t head;
 	volatile uint8_t tail;
 	uint8_t size; //of the buffer

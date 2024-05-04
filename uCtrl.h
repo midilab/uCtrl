@@ -69,7 +69,7 @@ typedef struct
 
 typedef struct
 {
-	EVENT_QUEUE_DATA event[8];
+	volatile EVENT_QUEUE_DATA event[8];
 	volatile uint8_t head;
 	volatile uint8_t tail;
 	uint8_t size; //of the buffer

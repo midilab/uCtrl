@@ -57,7 +57,7 @@ class Ram
 		uint32_t getFreeRam();
 			
     protected:
-		volatile SPIClass * _spi_device = nullptr;
+		SPIClass * _spi_device = nullptr;
 		uint8_t _chip_select = 0;
 		uint32_t _buffer_address_pointer = 0;
 		uint8_t _buffer_address_id_pointer = 0;

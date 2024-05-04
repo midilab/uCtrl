@@ -44,6 +44,7 @@ Ain::~Ain()
 #ifdef AUTOLOCK	
 	delete[] _analog_input_check_state;	
 #endif		 
+	free(_port);
 }
 
 uint8_t Ain::sizeOf()
@@ -93,8 +94,15 @@ void Ain::setMuxPins(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 // call first all plug() for pin register, then plugMux()
 void Ain::plug(uint8_t setup)
 {
-	if (_host_analog_port >= USE_AIN_MAX_PORTS) 
-		return;
+	//if (_host_analog_port >= USE_AIN_MAX_PORTS) 
+	//	return;
+
+	// alloc once and forever policy!
+	if (_port == nullptr) {
+		_port = (int8_t*) malloc( sizeof(int8_t) );
+	} else {
+		_port = (int8_t*) realloc( _port, sizeof(int8_t) * (_host_analog_port+1) );
+	}
 
 	_port[_host_analog_port] = setup;
 	pinMode(setup, INPUT);
@@ -107,8 +115,15 @@ void Ain::plug(uint8_t setup)
 
 void Ain::plugMux(uint8_t setup)
 {
-	if (_host_analog_port >= USE_AIN_MAX_PORTS) 
-		return;
+	//if (_host_analog_port >= USE_AIN_MAX_PORTS) 
+	//	return;
+
+	// alloc once and forever policy!
+	if (_port == nullptr) {
+		_port = (int8_t*) malloc( sizeof(int8_t) );
+	} else {
+		_port = (int8_t*) realloc( _port, sizeof(int8_t) * (_host_analog_port+1) );
+	}
 
 	_port[_host_analog_port] = setup;
 	pinMode(setup, INPUT);

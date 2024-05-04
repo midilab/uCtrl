@@ -432,10 +432,10 @@ void uCtrlClass::run()
 		while ( touch->event_queue.head != touch->event_queue.tail )
 		{
 			// use port_ref in case din were initialized
-			port = touch->event_queue.event[touch->event_queue.head].port+port_ref;
-			value = touch->event_queue.event[touch->event_queue.head].value; 
-			head = (touch->event_queue.head+1)%(touch->event_queue.size);
 			ATOMIC(
+				port = touch->event_queue.event[touch->event_queue.head].port+port_ref;
+				value = touch->event_queue.event[touch->event_queue.head].value; 
+				head = (touch->event_queue.head+1)%(touch->event_queue.size);
 				touch->event_queue.head = head;
 			)
 
@@ -479,10 +479,10 @@ void uCtrlClass::run()
 		// read while empty
 		while ( _ain_event_queue.head != _ain_event_queue.tail )
 		{
-			port = _ain_event_queue.event[_ain_event_queue.head].port;
-			value = _ain_event_queue.event[_ain_event_queue.head].value;  
-			head = (_ain_event_queue.head+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.head+1);
-			ATOMIC(                      
+			ATOMIC( 
+				port = _ain_event_queue.event[_ain_event_queue.head].port;
+				value = _ain_event_queue.event[_ain_event_queue.head].value;  
+				head = (_ain_event_queue.head+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.head+1);					
 				_ain_event_queue.head = head;
 			)
 

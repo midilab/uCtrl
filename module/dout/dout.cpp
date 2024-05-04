@@ -39,7 +39,7 @@ Dout::~Dout()
 {
 	delete[] _digital_output_state;
     delete[] _digital_output_buffer;
-	//delete[] _dout_pin_map;
+	free(_dout_pin_map);
 }
 
 uint8_t Dout::sizeOf()
