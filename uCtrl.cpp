@@ -58,6 +58,12 @@
 #if defined(ARDUINO_ARCH_STM32)
     #include "platforms/stm32.h"
 #endif
+//
+// RP2040 (Raspberry Pico) family
+//
+#if defined(ARDUINO_ARCH_RP2040)
+    #include "platforms/rp2040.h"
+#endif
 
 namespace uctrl {
 
