@@ -81,6 +81,7 @@ void enableTimer()
 
 uCtrlClass::uCtrlClass()
 {
+	loopCallback = nullptr;
 	on250usCallback = nullptr;
 	on1msCallback = nullptr;
 }
@@ -532,6 +533,11 @@ void uCtrlClass::run()
 		page->clearComponentMap();
 #endif // defined(USE_PAGE_COMPONENT)
 		page->processView();
+	}
+
+	// no page module? loop callback set up?
+	if ( loopCallback != nullptr ) {
+		loopCallback();
 	}
 
 	if ( oled != nullptr ) {

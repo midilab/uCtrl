@@ -157,6 +157,10 @@ class uCtrlClass
 	// runtime handler
 	void run();
 
+	void setLoopCallback(void (*callback)()) {
+		loopCallback = callback;
+	}
+
 	void setOn250usCallback(void (*callback)()) {
 		on250usCallback = callback;
 	}
@@ -165,6 +169,7 @@ class uCtrlClass
 		on1msCallback = callback;
 	}
 
+	void (*loopCallback)();
 	void (*on250usCallback)();
 	void (*on1msCallback)();
 };
