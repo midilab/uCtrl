@@ -102,15 +102,10 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 	// find our indexes
 	state_group = floor(channel_a_id/8);
 
-	if (channel_a_id % 2 == 1) {
-		// no channel A id odd here...
-		return;
-	}
-
 	if (channel_b_id - channel_a_id == 1) {
-		// a pair register call
+		// register detent pin channel a 
 		_digital_detent_pin[state_group] |= 1 << (channel_a_id % 8);
-		_digital_detent_pin[state_group] |= 1 << (channel_b_id % 8);
+		//_digital_detent_pin[state_group] |= 1 << (channel_b_id % 8);
 	} else {
 		// a range of pairs register call(or invalid call)
 
@@ -286,25 +281,26 @@ void Din::processQueue()
 					}
 
 					// identify if we have a detend encoder pin case here
-					// use a #define case here for detent driver usage
 					if (_digital_detent_pin != nullptr) {
 						if (_digital_detent_pin[i] != 0) {
-							//  detent pin?
+							// process channel A
 							if (BIT_VALUE(_digital_detent_pin[i], j) == 1) {
-								// A or B channels?
-								// we register then always in pairs(no matter what)
-								// check against last state for a more stable read
-								if (j % 2 == 0) {
-									// even: channel_a/decrement
-									value = value != !BIT_VALUE(_digital_input_last_state[i], j+1) ? 1 : 0;
-								} else {
-									// odd: channel_b/increment
-									value = value != !BIT_VALUE(_digital_input_last_state[i], j-1) ? 1 : 0;
-								}
-								// just 1 state... drop zeros
+								// we only keep track of a channel A turned on
 								if (value == 0)
 									continue;
+								// channel A process check, compares against channel B
+								if (value != !BIT_VALUE(_digital_input_state[i], j+1)) {
+									// clockwise rotating
+									// we queue incrementer instead of decrementer, wich is next port
+									++port;
+								} else {
+									// counter clockwise rotating
+									// we do nothing, value is set, port is set, let it queue
+								}
 							}
+							// we dont process channel B
+							if (j != 0 && BIT_VALUE(_digital_detent_pin[i], j-1) == 1)
+								continue;
 						}
 					}
 
