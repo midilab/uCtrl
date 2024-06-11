@@ -40,7 +40,7 @@ void Midi::sendMessage(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t port, 
 }
 
 // do only read if the port are not in realtime mode
-bool Midi::read(uint8_t port)
+bool Midi::read(uint8_t port, uint8_t interrupted)
 {
 	if ( port > _port_size || port == 0 ) {
 		return false;
@@ -52,7 +52,9 @@ bool Midi::read(uint8_t port)
 
 	// Use the stored function pointers to invoke member functions
 	// should always be atomic interrupted=0
-	readFunctions[_port](midiArray[_port], 0);
+	//readFunctions[_port](midiArray[_port], interrupted);
+	//midiArray[_port]->read(interrupted);
+	midiArray[_port]->read(0);
 }
 
 void Midi::readAllPorts(uint8_t interrupted)
@@ -74,56 +76,67 @@ void Midi::writeAllPorts(uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t inte
 
 void Midi::writeMidiInterface(uint8_t port, uctrl::protocol::midi::MIDI_MESSAGE * msg, uint8_t interrupted) {
     // packages with interrupted 1 are marked to be handled with interruptions disable to avoid MIDI override data with MIDI messages sent via some timer interruption
-
+	
     // MIDI Handle
     switch (msg->type) {
 
 		//Realtime
 		case uctrl::protocol::midi::Clock:
-			sendFunctions[port](midiArray[port], midi::Clock, 0, 0, 0, interrupted);
+			//sendFunctions[port](midiArray[port], midi::Clock, 0, 0, 0, interrupted);
+			midiArray[port]->send(midi::Clock, 0, 0, 0, interrupted);
 			break;   
 
 		case uctrl::protocol::midi::Start:
-			sendFunctions[port](midiArray[port], midi::Start, 0, 0, 0, interrupted);
+			//sendFunctions[port](midiArray[port], midi::Start, 0, 0, 0, interrupted);
+			midiArray[port]->send(midi::Start, 0, 0, 0, interrupted);
 			break;  
 
 		case uctrl::protocol::midi::Stop:
 			//device->sendRealTime(midi::Stop);
-			sendFunctions[port](midiArray[port], midi::Stop, 0, 0, 0, interrupted);
+			//sendFunctions[port](midiArray[port], midi::Stop, 0, 0, 0, interrupted);
+			midiArray[port]->send(midi::Stop, 0, 0, 0, interrupted);
 			break;   
 
 		// Non-realtime 
 		case uctrl::protocol::midi::NoteOn:
 			//device->sendNoteOn(msg->data1, msg->data2, msg->channel+1);
-			sendFunctions[port](midiArray[port], midi::NoteOn, msg->data1, msg->data2, msg->channel+1, interrupted);
+			//sendFunctions[port](midiArray[port], midi::NoteOn, msg->data1, msg->data2, msg->channel+1, interrupted);
+			midiArray[port]->send(midi::NoteOn, msg->data1, msg->data2, msg->channel+1, interrupted);
 			break;
 
 		case uctrl::protocol::midi::NoteOff:
 			//device->sendNoteOff(msg->data1, 0, msg->channel+1);
-			sendFunctions[port](midiArray[port], midi::NoteOff, msg->data1, 0, msg->channel+1, interrupted);
+			//sendFunctions[port](midiArray[port], midi::NoteOff, msg->data1, 0, msg->channel+1, interrupted);
+			midiArray[port]->send(midi::NoteOff, msg->data1, 0, msg->channel+1, interrupted);
 			break;
 
 		case uctrl::protocol::midi::ControlChange:   
 			//device->sendControlChange(msg->data1, msg->data2, msg->channel+1);
-			sendFunctions[port](midiArray[port], midi::ControlChange, msg->data1, msg->data2, msg->channel+1, interrupted);
+			//sendFunctions[port](midiArray[port], midi::ControlChange, msg->data1, msg->data2, msg->channel+1, interrupted);
+			midiArray[port]->send(midi::ControlChange, msg->data1, msg->data2, msg->channel+1, interrupted);
 			break;
 
 		case uctrl::protocol::midi::ProgramChange:
 			//device->sendProgramChange(msg->data1, msg->channel+1);
-			sendFunctions[port](midiArray[port], midi::ProgramChange, msg->data1, msg->data2, msg->channel+1, interrupted);
+			//sendFunctions[port](midiArray[port], midi::ProgramChange, msg->data1, msg->data2, msg->channel+1, interrupted);
+			midiArray[port]->send(midi::ProgramChange, msg->data1, msg->data2, msg->channel+1, interrupted);
 			break;
 						
 		case uctrl::protocol::midi::Nrpn:  
 			// param select
 			//device->sendControlChange(99, 0x7f & (msg->data1 >> 7), msg->channel+1);
 			//device->sendControlChange(98, 0x7f & msg->data1, msg->channel+1);
-			sendFunctions[port](midiArray[port], midi::ControlChange, 99, 0x7f & (msg->data1 >> 7), msg->channel+1, interrupted);
-			sendFunctions[port](midiArray[port], midi::ControlChange, 98, 0x7f & msg->data1, msg->channel+1, interrupted);
+			//sendFunctions[port](midiArray[port], midi::ControlChange, 99, 0x7f & (msg->data1 >> 7), msg->channel+1, interrupted);
+			//sendFunctions[port](midiArray[port], midi::ControlChange, 98, 0x7f & msg->data1, msg->channel+1, interrupted);
+			midiArray[port]->send(midi::ControlChange, 99, 0x7f & (msg->data1 >> 7), msg->channel+1, interrupted);
+			midiArray[port]->send(midi::ControlChange, 98, 0x7f & msg->data1, msg->channel+1, interrupted);
 			// send value
 			//device->sendControlChange(6, 0x7f & (msg->data2 >> 7), msg->channel+1);
 			//device->sendControlChange(38, 0x7f & msg->data2, msg->channel+1);
-			sendFunctions[port](midiArray[port], midi::ControlChange, 6, 0x7f & (msg->data2 >> 7), msg->channel+1, interrupted);
-			sendFunctions[port](midiArray[port], midi::ControlChange, 38, 0x7f & msg->data2, msg->channel+1, interrupted);
+			//sendFunctions[port](midiArray[port], midi::ControlChange, 6, 0x7f & (msg->data2 >> 7), msg->channel+1, interrupted);
+			//sendFunctions[port](midiArray[port], midi::ControlChange, 38, 0x7f & msg->data2, msg->channel+1, interrupted);
+			midiArray[port]->send(midi::ControlChange, 6, 0x7f & (msg->data2 >> 7), msg->channel+1, interrupted);
+			midiArray[port]->send(midi::ControlChange, 38, 0x7f & msg->data2, msg->channel+1, interrupted);
 			break;
 		/* 
 		case uctrl::protocol::midi::PitchBend:

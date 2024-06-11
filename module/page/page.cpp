@@ -42,7 +42,11 @@ Page::Page()
 
 Page::~Page()
 {
-
+	// delete subpages first
+	for (uint8_t i=0; i < _pages_size; i++) {
+		delete[] _page_data[i].sub_page_data;
+	}
+	delete[] _page_data;
 }
 
 void Page::init(uint8_t pages_size)
@@ -54,7 +58,7 @@ void Page::init(uint8_t pages_size)
 
 	// alloc once and forever policy!
 	if (_page_data == nullptr) {
-		_page_data = (PAGE_DATA*) malloc( sizeof(PAGE_DATA) * pages_size );
+		_page_data = new PAGE_DATA[pages_size];
 		// init page memory
 		for (uint8_t i=0; i < pages_size; i++) {
 			_page_data[i].create = nullptr;
@@ -556,7 +560,7 @@ void Page::set(const char * page_name, void (*page_create_callback)(), void (*pa
 
 #ifdef USE_PAGE_COMPONENT
 	// init selected component memory, alloc once and forever policy!
-	_page_data[_page].sub_page_data = (SUB_PAGE_DATA*) malloc( sizeof(SUB_PAGE_DATA) * sub_page_size );
+	_page_data[_page].sub_page_data = new SUB_PAGE_DATA[sub_page_size];
 	for (uint8_t i=0; i < sub_page_size; i++) {
 		_page_data[_page].sub_page_data[i].selected_component = nullptr;
 		_page_data[_page].sub_page_data[i].selector_line = 0;
@@ -679,4 +683,4 @@ uint8_t Page::getPage()
 
 } }
 
-uctrl::module::Page page_module;
+//uctrl::module::Page page_module;

@@ -34,7 +34,11 @@
 
 namespace uctrl { namespace module { 
 
-#define DIN_EVENT_QUEUE_SIZE	4
+//#if !defined(USE_DIN_MAX_PORTS)
+//#define USE_DIN_MAX_PORTS 18
+//#endif
+
+#define DIN_EVENT_QUEUE_SIZE	32
 
 typedef struct 
 {
@@ -44,7 +48,7 @@ typedef struct
 
 typedef struct
 {
-	DIN_EVENT_QUEUE_DATA event[DIN_EVENT_QUEUE_SIZE];
+	volatile DIN_EVENT_QUEUE_DATA event[DIN_EVENT_QUEUE_SIZE];
 	volatile uint8_t head;
 	volatile uint8_t tail;
 	uint8_t size; //of the buffer
@@ -105,16 +109,15 @@ class Din
     	volatile DIN_EVENT_QUEUE event_queue;	
 
 		// used for direct microcontroller digital input pins
-		//uint8_t _din_pin_map[16] = {0};
 		uint8_t * _din_pin_map = nullptr;
+		//uint8_t _din_pin_map[USE_DIN_MAX_PORTS] = {0};
 
 		SPIClass * _spi_device = nullptr;
-		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
+		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
 		uint8_t _latch_pin;
+		bool _is_shared = false;
 };
 
 } }
-
-extern uctrl::module::Din din_module;
 
 #endif

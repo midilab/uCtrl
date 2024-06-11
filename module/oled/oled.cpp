@@ -251,4 +251,3 @@ void Oled::inverseFont(bool inverse)
 
 } }
 
-uctrl::module::Oled oled_module;

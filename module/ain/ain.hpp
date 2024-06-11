@@ -36,9 +36,9 @@ namespace uctrl { namespace module {
 #define AUTOLOCK
 #define ANALOG_AVG_READS
 
-#if !defined(USE_AIN_MAX_PORTS)
-#define USE_AIN_MAX_PORTS 8
-#endif
+//#if !defined(USE_AIN_MAX_PORTS)
+//#define USE_AIN_MAX_PORTS 8
+//#endif
 
 #define AIN_4051_MUX_SIZE	8
 #define AIN_4067_MUX_SIZE	16
@@ -106,7 +106,8 @@ class Ain
 		int8_t _use_mux_driver = -1; // 0=4051, 1=4067
 		uint8_t _mux_size = 0;
 
-		int8_t _port[USE_AIN_MAX_PORTS] = {-1};
+		//int8_t _port[USE_AIN_MAX_PORTS] = {-1};
+		int8_t * _port = nullptr;
 
 		uint8_t _host_analog_port = 0; // uint8_t hard_port[16];
 		uint8_t _remote_analog_port = 0; // uint8_t soft_port[16];
@@ -138,7 +139,5 @@ class Ain
 };		
 			
 } }
-
-extern uctrl::module::Ain ain_module;
 		
 #endif

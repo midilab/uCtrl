@@ -35,9 +35,16 @@ Ain::Ain()
 	rtCallback = nullptr;
 }
 
+// we never reach here because its a lifetime object
 Ain::~Ain()
 {
-	
+	delete[] _analog_input_last_state;
+	delete[] _analog_input_state;
+	delete[] _analog_input_lock_control;
+#ifdef AUTOLOCK	
+	delete[] _analog_input_check_state;	
+#endif		 
+	free(_port);
 }
 
 uint8_t Ain::sizeOf()
@@ -87,8 +94,15 @@ void Ain::setMuxPins(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 // call first all plug() for pin register, then plugMux()
 void Ain::plug(uint8_t setup)
 {
-	if (_host_analog_port >= USE_AIN_MAX_PORTS) 
-		return;
+	//if (_host_analog_port >= USE_AIN_MAX_PORTS) 
+	//	return;
+
+	// alloc once and forever policy!
+	if (_port == nullptr) {
+		_port = (int8_t*) malloc( sizeof(int8_t) );
+	} else {
+		_port = (int8_t*) realloc( _port, sizeof(int8_t) * (_host_analog_port+1) );
+	}
 
 	_port[_host_analog_port] = setup;
 	pinMode(setup, INPUT);
@@ -101,8 +115,15 @@ void Ain::plug(uint8_t setup)
 
 void Ain::plugMux(uint8_t setup)
 {
-	if (_host_analog_port >= USE_AIN_MAX_PORTS) 
-		return;
+	//if (_host_analog_port >= USE_AIN_MAX_PORTS) 
+	//	return;
+
+	// alloc once and forever policy!
+	if (_port == nullptr) {
+		_port = (int8_t*) malloc( sizeof(int8_t) );
+	} else {
+		_port = (int8_t*) realloc( _port, sizeof(int8_t) * (_host_analog_port+1) );
+	}
 
 	_port[_host_analog_port] = setup;
 	pinMode(setup, INPUT);
@@ -119,18 +140,23 @@ void Ain::init()
 	// Allocate memory
 	// alloc rules: alloc once and forever! no memory free call at runtime
 	if ( _remote_analog_port > 0 ) {
-		_analog_input_last_state = (uint16_t*) malloc( sizeof(uint16_t) * _remote_analog_port );
+		//_analog_input_last_state = (uint16_t*) malloc( sizeof(uint16_t) * _remote_analog_port );
+		_analog_input_last_state = new uint16_t[_remote_analog_port];
 #ifdef ANALOG_AVG_READS
-		_analog_input_state = (AVG_READS*) malloc( sizeof(AVG_READS) * _remote_analog_port );	
+		//_analog_input_state = (AVG_READS*) malloc( sizeof(AVG_READS) * _remote_analog_port ); 
+		_analog_input_state = new AVG_READS[_remote_analog_port];
 #else
-		_analog_input_state = (uint16_t*) malloc( sizeof(uint16_t*) * _remote_analog_port );	
+		//_analog_input_state = (uint16_t*) malloc( sizeof(uint16_t*) * _remote_analog_port ); 
+		_analog_input_state = new uint16_t[_remote_analog_port];	
 #endif
-		_analog_input_lock_control = (int8_t*) malloc( sizeof(int8_t) * _remote_analog_port );	
+		//_analog_input_lock_control = (int8_t*) malloc( sizeof(int8_t) * _remote_analog_port );  
+		_analog_input_lock_control = new int8_t[_remote_analog_port];
 #ifdef AUTOLOCK
-		_analog_input_check_state = (uint16_t*) malloc( sizeof(uint16_t) * _remote_analog_port );
-#endif		
+		//_analog_input_check_state = (uint16_t*) malloc( sizeof(uint16_t) * _remote_analog_port );
+		_analog_input_check_state = new uint16_t[_remote_analog_port];
+#endif   
 	}
-	
+
 	// initing memory and first mux scan 	
 	for (uint8_t remote_port=0; remote_port < _remote_analog_port; remote_port++) {
 
@@ -253,7 +279,7 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 	// otherwise its a mux read request
 	} else {
 //#if defined(USE_AIN_4051_DRIVER) || defined(USE_AIN_4067_DRIVER)
-		if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
+		//if (_use_mux_driver == MUX_DRIVER_4051 || _use_mux_driver == MUX_DRIVER_4067) {
 			uint8_t mux_host_port = remote_port - _direct_pin_size;
 			// find our indexes
 			host_analog_port = (uint8_t)(mux_host_port/_mux_size) + _direct_pin_size;
@@ -261,7 +287,7 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 			input_data = readPort(remote_port, host_analog_port);
 			// select next mux port while processing this one
 			selectMuxPort(mux_host_port+1);
-		}
+		//}
 //#endif
 	}
 	
@@ -275,7 +301,9 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 	}
 
 	// value remap?
-	max = _user_adc_max_resolution != _adc_max_resolution ? _user_adc_max_resolution-1 : _adc_max_resolution;
+	if (max == 0)
+		max = _user_adc_max_resolution != _adc_max_resolution ? _user_adc_max_resolution-1 : _adc_max_resolution;
+
 	if ( min == 0 && max == _adc_max_resolution ) {
 		value = input_data;
 		last_value = _analog_input_last_state[remote_port];
@@ -320,5 +348,3 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 }
 
 } }
-
-uctrl::module::Ain ain_module;

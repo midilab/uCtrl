@@ -1294,7 +1294,7 @@ template<class Transport, class Settings, class Platform>
 void MidiInterface<Transport, Settings, Platform>::launchCallback()
 {
     if (mMessageCallback != 0) mMessageCallback(mMessage);
-
+    
     // The order is mixed to allow frequent messages to trigger their callback faster.
     switch (mMessage.type)
     {

@@ -1,5 +1,3 @@
-#ifdef USE_DEVICE
-
 #include "../../uCtrl.h"
 #include "device.hpp"
 
@@ -163,7 +161,7 @@ bool Device::handleAnalogEvent(uint8_t port, uint16_t value, uint8_t interrupted
 {
 	//static uint16_t address;
 	
-    --port;
+    //--port;
     if ( _remote.adc_port[port].event_address != 1023 ) { //>= 0 ) {
         // Handler dispatcher
         _ctrl.port = port+1;
@@ -184,8 +182,7 @@ bool Device::handleAnalogEvent(uint8_t port, uint16_t value, uint8_t interrupted
 
 bool Device::handleDigitalEvent(uint8_t port, uint16_t value, uint8_t interrupted)
 {
-    --port;
-
+    //--port;
     if ( _remote.din_port[port].event_address != 1023 ) { //!= -1 ) {  
         //_ctrl.port = port+1;
 #if defined(USE_DEVICE_LABELS)
@@ -231,7 +228,7 @@ bool Device::handleDigitalEvent(uint8_t port, uint16_t value, uint8_t interrupte
 void Device::setupCtrl(uint8_t port, uint16_t value)
 {
 	uint8_t size_of_ports;
-	--port;
+	//--port;
 
 	// 1023 default value we got no _remote.adc_port[port].device_id
 	if ( _remote.adc_port[port].event_address == 1023 ) {
@@ -286,7 +283,7 @@ void Device::clearMap(uint8_t device_id)
 #endif
 }
 
-void Device::eventMap(uint8_t device_id, CONTROL_DATA * event, uint8_t * eventName = NULL, int16_t label_offset = 0)
+void Device::eventMap(uint8_t device_id, CONTROL_DATA * event, uint8_t * eventName, int16_t label_offset)
 {
 	uint16_t memory_address;
 	
@@ -421,7 +418,7 @@ void Device::getDeviceMapEventData(uint8_t device_id, uint16_t event_address, CO
 uint8_t * Device::getDeviceName(uint8_t device_id)
 {
 	if ( device_id > _device_number ) {
-		return;
+		return nullptr;
 	}	
 	if ( device_id == 0 ) {
 		device_id = _selected_device;
@@ -544,7 +541,7 @@ void Device::editCtrlsetDevice(int8_t inc, uint8_t port)
         if ( event.data_label != 65535 ) {
             memcpy (_ctrl.data_label, getDataLabel(_remote.adc_port[port].device_id, event.data_label, _edit_ctrl_last_value), 16);
         } else {
-			sprintf (_ctrl.data_label, "%-8d", event.label_offset + _edit_ctrl_last_value);
+			sprintf ((char*)_ctrl.data_label, "%-8d", event.label_offset + _edit_ctrl_last_value);
             //sprintf (_ctrl.data_label, "%d", event.label_offset + _edit_ctrl_last_value);
         }
         /*
@@ -605,7 +602,7 @@ void Device::editCtrlsetCtrl(int8_t inc, uint8_t port)
         if ( event.data_label != 65535 ) {
             memcpy (_ctrl.data_label, getDataLabel(_remote.adc_port[port].device_id, event.data_label, _edit_ctrl_last_value), 16);
         } else {
-			sprintf (_ctrl.data_label, "%-8d", event.label_offset + _edit_ctrl_last_value);
+			sprintf ((char*)_ctrl.data_label, "%-8d", event.label_offset + _edit_ctrl_last_value);
             //sprintf (_ctrl.data_label, "%d", event.label_offset + _edit_ctrl_last_value);
         }      
         /*
@@ -827,19 +824,17 @@ void Device::remoteEventHandler(CONTROL_DATA * event, uint8_t device_id, uint16_
 
 	switch (event->type) {
 
-#ifdef USE_MIDI
 		case uctrl::MIDI_ANALOG:
 		case uctrl::MIDI_TRIGGER:
 		case uctrl::MIDI_BUTTON:
 			if ( interrupted == 1 ) {		
 				if ( uCtrl.midi != nullptr && _ctrl_mode != 1 ) {
-					uCtrl.midi->sendMessage(eventToMidiMsg(event, value, _device[device_id].chn), _device[device_id].port+1, 0, event->config);
+					uCtrl.midi->sendMessage(eventToMidiMsg(event, value, _device[device_id].chn), _device[device_id].port+1, interrupted, event->config);
 				}
 				return;
 			} else {
 				break;
 			}
-#endif 
 
 		// this is non realtime action, so always return if its interrupted
 		case uctrl::APP_CTRL:
@@ -860,6 +855,9 @@ void Device::remoteEventHandler(CONTROL_DATA * event, uint8_t device_id, uint16_
 	// the comming piece of code should only be processed if interrupted == 0, or face the consequences... 
 
 #ifdef USE_DEVICE_LABELS
+	if ( uCtrl.oled == nullptr )
+		return;
+	
 	// TODO: dont use oled object here... go for callback solution!
     // if event name has a # on it means do not show feedback, do it silent
     if ( event->name[0] != '#' ) {
@@ -870,7 +868,7 @@ void Device::remoteEventHandler(CONTROL_DATA * event, uint8_t device_id, uint16_
 			if ( event->data_label != 65535 ) {
 				memcpy (_ctrl.data_label, getDataLabel(device_id, event->data_label, value), 16);
 			} else {
-				sprintf (_ctrl.data_label, "%-8d", event->label_offset + value);
+				sprintf ((char*)_ctrl.data_label, "%-8d", event->label_offset + value);
 				//sprintf (_ctrl.data_label, "%d", event->label_offset + value);
 			}
 			if ( _data_feedback_show == false ) {
@@ -972,13 +970,13 @@ void Device::sendEvent(uint16_t eventAddress, uint8_t device_id, uint16_t value)
 */
 void Device::lockControl(uint8_t remote_port)
 {
-#ifdef USE_AIN    
-	if ( remote_port == 0 ) {	
-		uCtrl.ain->lockAllControls();
-	} else {		
-		uCtrl.ain->lockControl(remote_port-1);
+	if ( uCtrl.ain != nullptr) {
+		if ( remote_port == 0 ) {	
+			uCtrl.ain->lockAllControls();
+		} else {		
+			uCtrl.ain->lockControl(remote_port-1);
+		}
 	}
-#endif    
 }
 /*
 // Special shift button with n taps support
@@ -1077,10 +1075,8 @@ bool Device::isPressed(uint8_t port)
 #endif		
 */
 
-#ifdef USE_DIN
-    return uCtrl.din->getDataRaw(port);
-#endif
-		
+	if ( uCtrl.din != nullptr )
+    	return uCtrl.din->getDataRaw(port);		
 }
 
 void Device::ctrlMap(uint8_t device_id, uint16_t control_id, uint16_t range_min, uint16_t range_max, int16_t label_offset, uint8_t * name)
@@ -1355,5 +1351,4 @@ const uint8_t * Device::getDataLabel(uint8_t device_id, uint16_t address, uint16
 
 } }
 
-uctrl::module::Device device_module;
-#endif
+//uctrl::module::Device device_module;

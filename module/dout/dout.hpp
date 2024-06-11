@@ -33,7 +33,11 @@
 #include <SPI.h>
 
 namespace uctrl { namespace module { 
-		
+
+/* #if !defined(USE_DOUT_MAX_PORTS)
+#define USE_DOUT_MAX_PORTS 12
+#endif */
+
 #define SPI_SPEED_DOUT         4000000
 //#define SPI_SPEED_DOUT         2000000
 #define SPI_MODE_DOUT          SPI_MODE0	
@@ -65,7 +69,7 @@ class Dout
         uint8_t * _digital_output_buffer = nullptr;
 
         // used for direct microcontroller digital output pins
-	//uint8_t _dout_pin_map[16] = {0};
+	//uint8_t _dout_pin_map[USE_DOUT_MAX_PORTS] = {0};
         uint8_t * _dout_pin_map = nullptr;
 
         uint8_t _remote_digital_output_port = 0; 
@@ -79,13 +83,12 @@ class Dout
 	uint32_t _blink_timer = 0;
 
 	SPIClass * _spi_device = nullptr;
-	void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
+	void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
         int8_t _latch_pin = -1;
+        bool _is_shared = false;
 
 };
 
 } }
-
-extern uctrl::module::Dout dout_module;
 
 #endif

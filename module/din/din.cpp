@@ -37,7 +37,10 @@ Din::Din()
 
 Din::~Din()
 {
-	
+	delete[] _digital_input_state;
+	delete[] _digital_input_last_state;
+	delete[] _digital_detent_pin;
+	free(_din_pin_map);
 }
 
 uint8_t Din::sizeOf()
@@ -45,7 +48,7 @@ uint8_t Din::sizeOf()
 	return _remote_digital_port;
 }			
 
-void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin)
+void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 {
 	// HARDWARE NOTES
 	// For those using a SPI device for other devices than 165:
@@ -53,11 +56,15 @@ void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin)
 	_spi_device = spi_device;
 	// Chip select pin setup
 	_latch_pin = latch_pin;
+	_is_shared = is_shared;
 }
 
 // call first all plug() for pin register, then plugSR if needed
 void Din::plug(uint8_t setup)
 {
+	//if (_remote_digital_port >= USE_DIN_MAX_PORTS)
+	//	return;
+
 	// alloc once and forever policy!
 	if (_din_pin_map == nullptr) {
 		_din_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
@@ -85,7 +92,8 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 		use_encoder = true;
 		uint8_t chain_size = (_chain_size_pin + _chain_size_sr);
 		// we need to init din drivers here to malloc heap data structures
-		_digital_detent_pin = (uint8_t*) malloc( sizeof(uint8_t) * chain_size );
+		//_digital_detent_pin = (uint8_t*) malloc( sizeof(uint8_t) * chain_size );
+		_digital_detent_pin = new uint8_t[chain_size];
 		for (uint8_t i=0; i < chain_size; i++) {
 			_digital_detent_pin[i] = 0;
 		}
@@ -94,15 +102,10 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 	// find our indexes
 	state_group = floor(channel_a_id/8);
 
-	if (channel_a_id % 2 == 1) {
-		// no channel A id odd here...
-		return;
-	}
-
 	if (channel_b_id - channel_a_id == 1) {
-		// a pair register call
+		// register detent pin channel a 
 		_digital_detent_pin[state_group] |= 1 << (channel_a_id % 8);
-		_digital_detent_pin[state_group] |= 1 << (channel_b_id % 8);
+		//_digital_detent_pin[state_group] |= 1 << (channel_b_id % 8);
 	} else {
 		// a range of pairs register call(or invalid call)
 
@@ -146,8 +149,10 @@ void Din::init()
 	// Each bit represents the value state readed by digital inputs	
 	// alloc rules: alloc once and forever! no memory free call at runtime
 	if ( _remote_digital_port > 0 ) {
-		_digital_input_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
-		_digital_input_last_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+		//_digital_input_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+		//_digital_input_last_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+		_digital_input_state = new uint8_t[_chain_size];
+		_digital_input_last_state = new uint8_t[_chain_size];
 
 		for (uint8_t i=0; i < _chain_size; i++) {
 			_digital_input_state[i] = 0;
@@ -226,9 +231,9 @@ void Din::read(uint8_t interrupted)
 #else
 	if (_spi_device != nullptr) {
 	//if (_chain_size_sr != 0) {
-		if ( interrupted == 0 ) { 
+		// always inside ISR, if is shared make sure no one will try to handle while we do it
+		if ( _is_shared ) { 
 			noInterrupts();
-			//_spi_device->usingInterrupt(255);
 		} 
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
 		// pulsing the chip select pin to start capturing data
@@ -244,9 +249,8 @@ void Din::read(uint8_t interrupted)
 			}
 		}
 		_spi_device->endTransaction();
-		if ( interrupted == 0 ) { 
+		if ( _is_shared ) { 
 			interrupts();
-			//_spi_device->notUsingInterrupt(255);
 		}  
 	}
 #endif
@@ -277,25 +281,26 @@ void Din::processQueue()
 					}
 
 					// identify if we have a detend encoder pin case here
-					// use a #define case here for detent driver usage
 					if (_digital_detent_pin != nullptr) {
 						if (_digital_detent_pin[i] != 0) {
-							//  detent pin?
+							// process channel A
 							if (BIT_VALUE(_digital_detent_pin[i], j) == 1) {
-								// A or B channels?
-								// we register then always in pairs(no matter what)
-								// check against last state for a more stable read(thats polling!)
-								if (j % 2 == 0) {
-									// even: channel_a/decrement
-									value = value > !BIT_VALUE(_digital_input_last_state[i], j+1) ? 1 : 0;
-								} else {
-									// odd: channel_b/increment
-									value = value > !BIT_VALUE(_digital_input_last_state[i], j-1) ? 1 : 0;
-								}
-								// just 1 state... drop zeros
+								// we only keep track of a channel A turned on
 								if (value == 0)
 									continue;
+								// channel A process check, compares against channel B
+								if (value != !BIT_VALUE(_digital_input_state[i], j+1)) {
+									// clockwise rotating
+									// we queue incrementer instead of decrementer, wich is next port
+									++port;
+								} else {
+									// counter clockwise rotating
+									// we do nothing, value is set, port is set, let it queue
+								}
 							}
+							// we dont process channel B
+							if (j != 0 && BIT_VALUE(_digital_detent_pin[i], j-1) == 1)
+								continue;
 						}
 					}
 
@@ -343,5 +348,3 @@ int8_t Din::getDataRaw(uint8_t port)
 }
 
 } }
-
-uctrl::module::Din din_module;

@@ -36,7 +36,9 @@ CapTouch::CapTouch()
 
 CapTouch::~CapTouch()
 {
-	
+	delete[] _digital_input_state;
+	delete[] _digital_input_last_state;
+	free(_port);
 }
 
 uint8_t CapTouch::sizeOf()
@@ -71,6 +73,13 @@ void CapTouch::setControlPins(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4
 
 void CapTouch::plug(uint8_t analog_port)
 {
+	// alloc once and forever policy!
+	if (_port == nullptr) {
+		_port = (int8_t*) malloc( sizeof(int8_t) );
+	} else {
+		_port = (int8_t*) realloc( _port, sizeof(int8_t) * (_host_analog_port+1) );
+	}
+
 	if ( _control_pin_1 != -1 ) {
 		_port[_host_analog_port] = analog_port;
 
@@ -88,8 +97,8 @@ void CapTouch::init()
 		
 		uint8_t array_size = ceil(_remote_touch_port/16);
 		// alloc rules: alloc once and forever! no memory free call at runtime
-		_digital_input_state = (uint16_t*) malloc( sizeof(uint16_t) * array_size );
-		_digital_input_last_state = (uint16_t*) malloc( sizeof(uint16_t) * array_size );
+		_digital_input_state = new uint16_t[array_size];
+		_digital_input_last_state = new uint16_t[array_size];
 
 		for (uint8_t i=0; i < array_size; i++) {
 			_digital_input_state[i] = 0;
@@ -172,5 +181,3 @@ void CapTouch::read()
 }
 
 } }
-
-uctrl::module::CapTouch cap_touch_module;

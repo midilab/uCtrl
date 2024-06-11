@@ -37,7 +37,9 @@ Dout::Dout()
 
 Dout::~Dout()
 {
-	
+	delete[] _digital_output_state;
+    delete[] _digital_output_buffer;
+	free(_dout_pin_map);
 }
 
 uint8_t Dout::sizeOf()
@@ -45,15 +47,19 @@ uint8_t Dout::sizeOf()
 	return _remote_digital_output_port;
 }	
 
-void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin)
+void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 {
 	_spi_device = spi_device;
 	_latch_pin = latch_pin;
+	_is_shared = is_shared;
 }
 
 // call first all plug() for pin register, then plugSR if needed
 void Dout::plug(uint8_t setup)
 {
+	//if (_chain_size_pin >= USE_DOUT_MAX_PORTS)
+	//	return;
+
 	// alloc once and forever policy!
 	if (_dout_pin_map == nullptr) {
 		_dout_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
@@ -106,8 +112,11 @@ void Dout::init()
 		// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
 		// Each bit represents the value state readed by digital inputs
 		if ( _chain_size > 0 ) {
-			_digital_output_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
-			_digital_output_buffer = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+			// alloc once and forever policy!
+			//_digital_output_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+			//_digital_output_buffer = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
+			_digital_output_state = new uint8_t[_chain_size];
+			_digital_output_buffer = new uint8_t[_chain_size];
 			for (uint8_t i=0; i < _chain_size; i++) {
 				_digital_output_state[i] = 0;
 				_digital_output_buffer[i] = 0;
@@ -121,23 +130,28 @@ void Dout::init()
 // for interrupted the flush will be called on write()
 void Dout::flushBuffer()
 {
-	int8_t i;
+	//int8_t i;
 	if (_change_flag == false) {
 		return;
 	}
 //#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 	if (_spi_device != nullptr) {
 		noInterrupts();
-		//memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
-		i=_chain_size-1;
-		while(i >= 0) {
-			_digital_output_buffer[i] = _digital_output_state[i];
-			i--;
-		}
+		// TODO: instead of copying state over buffer, its a better approach to merge everything from state into buffer
+		memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
+		//i=_chain_size-1;
+		//while(i >= 0) {
+		//	_digital_output_buffer[i] = _digital_output_state[i];
+		//	i--;
+		//}
 		_flush_dout = true;
 		interrupts();
 	}
 //#endif
+
+	// should we flush using realtime resource shared?
+	// better not!
+	//flush(0);
 }
 
 void Dout::flush(uint8_t interrupted)
@@ -161,14 +175,15 @@ void Dout::flush(uint8_t interrupted)
 	digitalWrite(DOUT_LATCH_PIN, HIGH);
 #endif 
 	if (_spi_device != nullptr) {
-		if ( interrupted == 0 ) { 
+		// we are always running inside IRS, if is shared make sure no one will try to handle while we do it
+		if ( _is_shared ) { 
 			noInterrupts();
-			//_spi_device->usingInterrupt(255);
 		} 
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
 		// active device
 		digitalWrite(_latch_pin, LOW);
 		// Transfer byte a byte, in inverse order
+		//_spi_device->transfer(_digital_output_buffer, _chain_size); // this way we dont transfer inversed
 		i=_chain_size-1;
 		while(i >= 0) {
 			_spi_device->transfer(_digital_output_buffer[i]);
@@ -177,9 +192,8 @@ void Dout::flush(uint8_t interrupted)
 		// deactive device
 		digitalWrite(_latch_pin, HIGH);
 		_spi_device->endTransaction(); 
-		if ( interrupted == 0 ) { 
+		if ( _is_shared ) { 
 			interrupts();
-			//_spi_device->notUsingInterrupt(255);
 		}
 	}
 	// wait for the next change request
@@ -226,7 +240,8 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 				_change_flag = true;
 			} else {
 				_flush_dout = true;
-				flush(interrupted);
+				// let the main uCtrl ISR take care of flushing to avoid spi usage conflict
+				//flush(interrupted);
 			}
 		}
 	}
@@ -269,7 +284,8 @@ void Dout::writeAll(uint8_t value, uint8_t interrupted)
 			_change_flag = true;
 		} else {
 			_flush_dout = true;
-			flush(interrupted);
+			// let the main uCtrl ISR take care of flushing to avoid spi usage conflict
+			//flush(interrupted);
 		}
 	}
 //#endif	
@@ -306,5 +322,3 @@ void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
         }
 }
 */
-
-uctrl::module::Dout dout_module;

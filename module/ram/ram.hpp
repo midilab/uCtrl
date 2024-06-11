@@ -22,7 +22,9 @@ namespace uctrl { namespace module {
 
 // this chip operates at 20MHZ max speed
 // SPI_CLOCK_DIV8	on a 16Mhz avr = 2 Mhz max
-#define SPI_SPEED       2000000
+// on teensy lc runs fine at 16mhz
+#define SPI_SPEED       16000000
+//#define SPI_SPEED       2000000
 #define SPI_MODE        SPI_MODE0
 
 typedef struct
@@ -46,7 +48,7 @@ class Ram
         Ram();
         ~Ram(); 
 			
-		void init(SPIClass * device);
+		void init(SPIClass * device, uint8_t chip_select = 0, bool is_shared = false);
 		static int8_t registerBuffer( uint16_t buffer_size, uint16_t buffer_length );	
 		void setMode(uint8_t mode);
 		static void read(uint8_t * buffer, uint16_t buffer_address, uint8_t buffer_id, uint8_t interrupted = 0, uint8_t size_to_read = 0, uint8_t start_at = 0);
@@ -55,9 +57,11 @@ class Ram
 		uint32_t getFreeRam();
 			
     protected:
-		volatile SPIClass * _spi_device = nullptr;
+		SPIClass * _spi_device = nullptr;
+		uint8_t _chip_select = 0;
 		uint32_t _buffer_address_pointer = 0;
 		uint8_t _buffer_address_id_pointer = 0;
+		bool _is_shared = false;
 		volatile BUFFER_LAYOUT_RAM _buffer_layout[4];
 };
 
