@@ -53,16 +53,13 @@ void initTimer(uint32_t init_clock)
     // create the ctrlTask
     xTaskCreate(ctrlTask, "ctrlTask", CTRL_STACK_SIZE, NULL, CTRL_TASK_PRIORITY, &_taskHandle);
 
-    _uctrlTimer = timerBegin(TIMER_ID, 60, true);
+    _uctrlTimer = timerBegin(init_clock);
 
     // attach to generic uclock ISR
-    timerAttachInterrupt(_uctrlTimer, &handlerISR, false);
+    timerAttachInterrupt(_uctrlTimer, &handlerISR);
 
     // init clock tick time
-    timerAlarmWrite(_uctrlTimer, init_clock, true); 
-
-    // activate it!
-    timerAlarmEnable(_uctrlTimer);
+    timerAlarm(_uctrlTimer, init_clock, true, 0); 
 }
 
 } // end namespace uctrl

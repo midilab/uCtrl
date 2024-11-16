@@ -106,7 +106,7 @@ protected:
 
     void onWrite(BLECharacteristic *characteristic)
     {
-        std::string rxValue = characteristic->getValue();
+        String rxValue = characteristic->getValue();
         if (rxValue.length() > 0)
         {
             _bluetoothEsp32->receive((uint8_t *)(rxValue.c_str()), rxValue.length());
