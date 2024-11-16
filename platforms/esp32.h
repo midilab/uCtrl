@@ -53,7 +53,7 @@ void initTimer(uint32_t init_clock)
     // create the ctrlTask
     xTaskCreate(ctrlTask, "ctrlTask", CTRL_STACK_SIZE, NULL, CTRL_TASK_PRIORITY, &_taskHandle);
 
-    _uctrlTimer = timerBegin(1333333);
+    _uctrlTimer = timerBegin(init_clock);
 
     // attach to generic uclock ISR
     timerAttachInterrupt(_uctrlTimer, &handlerISR);
