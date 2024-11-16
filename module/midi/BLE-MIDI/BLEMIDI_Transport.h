@@ -307,11 +307,11 @@ public:
 
                 switch (midiType)
                 {
-                case NoteOff:
-                case NoteOn:
-                case AfterTouchPoly:
-                case ControlChange:
-                case PitchBend:
+                case midi::NoteOff:
+                case midi::NoteOn:
+                case midi::AfterTouchPoly:
+                case midi::ControlChange:
+                case midi::PitchBend:
 #ifdef RUNNING_ENABLE
                     mBleClass.add(lastStatus);
 #endif
@@ -354,11 +354,11 @@ public:
                 auto midiType = lastStatus & 0xF0;
                 switch (midiType)
                 {
-                case NoteOff:
-                case NoteOn:
-                case AfterTouchPoly:
-                case ControlChange:
-                case PitchBend:
+                case midi::NoteOff:
+                case midi::NoteOn:
+                case midi::AfterTouchPoly:
+                case midi::ControlChange:
+                case midi::PitchBend:
                     //3 bytes full Midi -> 2 bytes runningStatus
                     for (auto i = lPtr; i <= rPtr; i = i + 2)
                     {
@@ -367,8 +367,8 @@ public:
                         mBleClass.add(buffer[i + 1]);
                     }
                     break;
-                case ProgramChange:
-                case AfterTouchChannel:
+                case midi::ProgramChange:
+                case midi::AfterTouchChannel:
                     //2 bytes full Midi -> 1 byte runningStatus
                     for (auto i = lPtr; i <= rPtr; i = i + 1)
                     {
