@@ -7,11 +7,7 @@ void uCtrlHandler();
 
 namespace uctrl {
 
-#define TIMER_ID	1
 hw_timer_t * _uctrlTimer = NULL;
-// mutex control for ISR
-//portMUX_TYPE _uctrlTimerMux = portMUX_INITIALIZER_UNLOCKED;
-//#define ATOMIC(X) portENTER_CRITICAL_ISR(&_uctrlTimerMux); X; portEXIT_CRITICAL_ISR(&_uctrlTimerMux);
 
 // FreeRTOS main clock task size in bytes
 //#define CTRL_STACK_SIZE     2048

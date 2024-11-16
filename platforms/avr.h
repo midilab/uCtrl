@@ -8,6 +8,18 @@ namespace uctrl {
 // TODO: we should do this using macro guards for avrs different clocks freqeuncy setup at compile time
 #define AVR_CLOCK_FREQ	16000000
 
+// forward declaration of uClockHandler
+void uCtrlHandler();
+
+#if defined(__AVR_ATmega32U4__)	
+ISR(TIMER3_COMPA_vect) 
+#else
+ISR(TIMER2_COMPA_vect) 
+#endif
+{
+	uCtrlHandler();
+}
+
 void initTimer(uint32_t us_interval)
 {
     // we always keep 250us default task time

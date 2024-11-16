@@ -605,15 +605,7 @@ uint8_t _timerCapTouch = 0;
 uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
 
-#if defined(ARDUINO_ARCH_AVR)
-	#if defined(__AVR_ATmega32U4__)	
-ISR(TIMER3_COMPA_vect) 
-	#else
-ISR(TIMER2_COMPA_vect) 
-	#endif
-#else
 void uCtrlHandler() 
-#endif
 {
 	// 250us call
 	if (uCtrl.on250usCallback) {
