@@ -14,6 +14,7 @@
 ** SOFTWARE.
 */
 
+#if defined(__AVR_ATmega32U4__)
 #include "MIDIUSB.h"
 
 #define MIDI_AC_INTERFACE 	pluggedInterface	// MIDI AC Interface
@@ -193,3 +194,5 @@ MIDI_::MIDI_(void) : PluggableUSBModule(2, 2, epType)
 	epType[1] = EP_TYPE_BULK_IN_MIDI;		// MIDI_ENDPOINT_IN
 	PluggableUSB().plug(this);
 }
+
+#endif
