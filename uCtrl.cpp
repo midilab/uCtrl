@@ -92,6 +92,7 @@ uCtrlClass::~uCtrlClass()
 
 }
 
+#if defined(USE_RAM_MODULE)
 bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select, bool is_shared)
 {
 	if ( ram == nullptr )
@@ -105,7 +106,9 @@ bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select, bool is_shared)
 
 	return false;
 }
+#endif
 
+#if defined(USE_STORAGE_MODULE)
 bool uCtrlClass::initStorage(SPIClass * spi_device, bool is_shared)
 {
 	if ( storage == nullptr ) 
@@ -121,7 +124,9 @@ bool uCtrlClass::initStorage(SPIClass * spi_device, bool is_shared)
 
 	return false;
 }
+#endif
 
+#if defined(USE_SDCARD_MODULE)
 bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select, bool is_shared)
 {
 	if ( sdcard == nullptr ) 
@@ -134,7 +139,9 @@ bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select, bool is_
 
 	return false;	
 }
+#endif
 
+#if defined(USE_DEVICE_MODULE)
 bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size, uint16_t device_label_buffer_size)
 {
 	if ( device == nullptr )
@@ -147,7 +154,9 @@ bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, u
 
 	return false;
 }
+#endif
 
+#if defined(USE_PAGE_MODULE)
 bool uCtrlClass::initPage(uint8_t pages_size)
 {
 	if ( page == nullptr )
@@ -160,7 +169,9 @@ bool uCtrlClass::initPage(uint8_t pages_size)
 
 	return false;
 }
+#endif
 
+#if defined(USE_OLED_MODULE)
 #if defined(USE_OLED_U8G2)
 bool uCtrlClass::initOled(U8G2 * display)
 #else // defined(USE_OLED_U8G2)
@@ -196,7 +207,9 @@ void uCtrlClass::processDisplay()
 }
 //#endif // defined(USE_DEVICE)
 //#endif // defined(USE_EXT_RAM)
+#endif
 
+#if defined(USE_MIDI_MODULE)
 bool uCtrlClass::initMidi()
 {
 	if ( midi == nullptr ) {
@@ -210,7 +223,9 @@ bool uCtrlClass::initMidi()
 		
 	return false;
 }
+#endif
 
+#if defined(USE_DOUT_MODULE)
 bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 {
 	if ( dout == nullptr ) 
@@ -225,7 +240,9 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin, bool is_shar
 
 	return false;
 }
+#endif
 
+#if defined(USE_DIN_MODULE)
 bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 {
 	if ( din == nullptr ) 
@@ -240,7 +257,9 @@ bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin, bool is_share
 
 	return false;
 }
+#endif
 
+#if defined(USE_AIN_MODULE)
 bool uCtrlClass::initAin(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 {
 	if ( ain == nullptr )
@@ -268,14 +287,19 @@ void uCtrlClass::processAin()
 	// 
 	for ( port=0; port < size_of_ports; port++ ) {
 
+#if defined(USE_DEVICE_MODULE)
 		if ( device != nullptr ) {
 			value = ain->getData(port, device->getCtrlAdcMin(port), device->getCtrlAdcMax(port));
 		} else {
 			value = ain->getData(port);
 		}
+#else
+		value = ain->getData(port);
+#endif
 	
 		if ( value > -1 ) {
 
+#if defined(USE_DEVICE_MODULE)
 			if ( device != nullptr ) {
 				// make midi signal smooth as posible
 				if ( device->handleAnalogEvent(port, value, 1) == true ) {
@@ -288,6 +312,13 @@ void uCtrlClass::processAin()
 					continue;
 				}
 			}  
+#else
+			// ain callback is processed inside a timmer interrupt, so always be short inside it!
+			if ( ain->rtCallback != nullptr ) {
+				ain->rtCallback(port, value);
+				continue;
+			}
+#endif
 
 			// add event to non interrupted queue in case no device control setup
 			uint8_t tail = (_ain_event_queue.tail+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.tail+1);
@@ -302,7 +333,9 @@ void uCtrlClass::processAin()
 		
 	}
 }
+#endif
 
+#if defined(USE_TOUCH_MODULE)
 bool uCtrlClass::initCapTouch(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 {
 	if ( touch == nullptr ) {
@@ -317,9 +350,12 @@ bool uCtrlClass::initCapTouch(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4
 		return false;
 	}
 }
+#endif
 
 void uCtrlClass::init()
 {
+
+#if defined(USE_SDCARD_MODULE)
 	// init of hardware configuration
 	// if we have sdcard support, then retrive hardware config info from ucontrol.cfg on sdcard root filesystem
 	if ( sdcard != nullptr ) {
@@ -327,26 +363,36 @@ void uCtrlClass::init()
 	} else {
 		// load factory defaults
 	}
+#endif
 
+#if defined(USE_DIN_MODULE)
 	if (din != nullptr) {
 		din->init();
 	}
+#endif
 	
+#if defined(USE_DOUT_MODULE)
 	if (dout != nullptr) {
 		dout->init();
 	}
+#endif
 
+#if defined(USE_TOUCH_MODULE)
 	if (touch != nullptr) {
 		touch->init();
 	}
-	
+#endif
+
+#if defined(USE_AIN_MODULE)
 	if (ain != nullptr) {
 		ain->init();
 		_ain_event_queue.head = 0;
 		_ain_event_queue.tail = 0;
 		_ain_event_queue.size = 8;
 	}
+#endif
 
+#if defined(USE_PAGE_MODULE)
 	if (page != nullptr) {
 		// default page and subpge
 		if (page->getPageSize() > 0) {
@@ -354,7 +400,8 @@ void uCtrlClass::init()
 			page->setSubPage(0);
 		}
 	}
-	
+#endif
+
 	// ...
 	enableTimer();
 }
@@ -368,16 +415,23 @@ void uCtrlClass::run()
 
 	// timmer dependent UI visual effects
 	uint32_t time = millis();
+
+#if defined(USE_DOUT_MODULE)
 	if (dout != nullptr) {
 		uCtrl.dout->setTimer(time);
 	}
+#endif
+
+#if defined(USE_OLED_MODULE)
 	if ( oled != nullptr ) {
 		uCtrl.oled->setTimer(time);
 #if defined(USE_OLED_U8G2)
 		uCtrl.oled->clearDisplay();
 #endif // defined(USE_OLED_U8G2)
 	}
-              
+#endif
+
+#if defined(USE_DIN_MODULE)
 	// ~2ms call
 	if (din != nullptr) {
 
@@ -391,11 +445,13 @@ void uCtrlClass::run()
 				din->event_queue.head = head;
 			)
 
+#if defined(USE_DEVICE_MODULE)
 			if ( device != nullptr ) {
 				if ( device->handleDigitalEvent(port, value, 0) == true ) {
 					continue;
 				}
 			}
+#endif
 
 			if (page != nullptr) {
 				if (ain != nullptr) {
@@ -418,7 +474,7 @@ void uCtrlClass::run()
 							discard_ain_data = true;
 						}
 					}
-#endif // defined(USE_PAGE_COMPONENT)
+#endif // if defined(USE_PAGE_COMPONENT)
 				}
 				page->processEvent(port, value, uctrl::module::DIGITAL_EVENT);
 			}
@@ -431,7 +487,9 @@ void uCtrlClass::run()
 		// set port_ref in case other digital modules were initialized
 		port_ref = din->sizeOf();
 	}
-	
+#endif
+
+#if defined(USE_TOUCH_MODULE)
 	// ~3ms call
 	if (touch != nullptr) {
 
@@ -446,13 +504,17 @@ void uCtrlClass::run()
 				touch->event_queue.head = head;
 			)
 
+#if defined(USE_DEVICE_MODULE)
 			if ( device != nullptr ) {
 				if ( device->handleDigitalEvent(port, value, 0) == true )
 					continue;
 			}
+#endif
 
 			if (page != nullptr) {
 				if (ain != nullptr) {
+
+#if defined(USE_PAGE_COMPONENT)
 					// before each processEvent we need to: check if pot_ctrl is needed
 					if(page->_use_nav_pot) {
 						// if it is, check if it is inc or dec commands... 
@@ -471,6 +533,7 @@ void uCtrlClass::run()
 							discard_ain_data = true;
 						}
 					}
+#endif // if defined(USE_PAGE_COMPONENT)
 				}
 				page->processEvent(port, (uint16_t)value, uctrl::module::DIGITAL_EVENT);
 			}
@@ -480,7 +543,9 @@ void uCtrlClass::run()
 		}
 		//return;
 	}
+#endif
 
+#if defined(USE_AIN_MODULE)
 	// ~10ms call
 	if (uCtrl.ain != nullptr) {
 		// read while empty
@@ -505,6 +570,7 @@ void uCtrlClass::run()
 			}
 	#endif // defined(USE_PAGE_COMPONENT)
 
+#if defined(USE_DEVICE_MODULE)
 			if ( device != nullptr ) {
 				// device process are done inside interrupt to keep smooth for realtime controllers events
 				// EDIT MODE HANDLER
@@ -516,6 +582,7 @@ void uCtrlClass::run()
 					continue;
 				}
 			}
+#endif
 
 			if (page != nullptr) {
 				page->processEvent(port, value, uctrl::module::ANALOG_EVENT);
@@ -527,19 +594,23 @@ void uCtrlClass::run()
 		}
 		//return;
 	}
-			
+#endif
+
+#if defined(USE_PAGE_MODULE)
 	if ( page != nullptr ) {
 #if defined(USE_PAGE_COMPONENT)
 		page->clearComponentMap();
 #endif // defined(USE_PAGE_COMPONENT)
 		page->processView();
 	}
+#endif
 
 	// no page module? loop callback set up?
 	if ( loopCallback != nullptr ) {
 		loopCallback();
 	}
 
+#if defined(USE_OLED_MODULE)
 	if ( oled != nullptr ) {
 		if ( device != nullptr && ram != nullptr ) {
     		processDisplay();
@@ -548,37 +619,40 @@ void uCtrlClass::run()
 		oled->refreshDisplay();
 #endif // defined(USE_OLED_U8G2)
 	}
+#endif
 
+#if defined(USE_DOUT_MODULE)
 	if (dout != nullptr) {
 		uCtrl.dout->flushBuffer();
 	}
+#endif
 }
 
 uint8_t uCtrlClass::getAnalogPorts()
 {
-
+#if defined(USE_AIN_MODULE)
 	if (ain != nullptr) {
 		return ain->sizeOf();
 	}
-
+#endif
 	return 0;
 }
 
 uint8_t uCtrlClass::getDigitalPorts()
 {
-
+#if defined(USE_DIN_MODULE)
 	if (din != nullptr) {
 		return din->sizeOf();
 	}
-
+#endif
 	return 0;
 }
 
 uint8_t uCtrlClass::getOutputPorts()
 {
-
+#if defined(USE_MIDI_MODULE)
 	return midi->sizeOf();
-	
+#endif	
 /*
 #if defined(UMODULAR_DMX)	
 
@@ -621,6 +695,7 @@ void uCtrlHandler()
 		}
 	}
 
+#if defined(USE_DIN_MODULE)
 	if (uCtrl.din != nullptr) {
 		// ~2ms call
 		if (++_timerCounterDin == 8) {
@@ -629,7 +704,9 @@ void uCtrlHandler()
 			return;
 		}
 	}
+#endif
 
+#if defined(USE_TOUCH_MODULE)
 	if (uCtrl.touch != nullptr) {
 		// ~3ms call
 		if (++_timerCapTouch == 12) 
@@ -639,7 +716,9 @@ void uCtrlHandler()
 			return;
 		}
 	}
+#endif
 
+#if defined(USE_AIN_MODULE)
 	if (uCtrl.ain != nullptr) {
 		// ~10ms call
 		if (++_timerCounterAin == 40) 
@@ -649,7 +728,9 @@ void uCtrlHandler()
 			return;
 		}
 	}
+#endif
 
+#if defined(USE_DOUT_MODULE)
 	if (uCtrl.dout != nullptr) {
 		// ~30ms call
 		if (++_timerCounterDout == 120) {
@@ -658,5 +739,5 @@ void uCtrlHandler()
 			return;
 		}
 	}
-
+#endif
 }

@@ -25,6 +25,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE. 
  */
+#include "../../uCtrl.h"
+
+#if defined(USE_AIN_MODULE)
+
 #include "ain.hpp"
 
 namespace uctrl { namespace module {
@@ -348,3 +352,5 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 }
 
 } }
+
+#endif // #if defined(USE_AIN_MODULE)

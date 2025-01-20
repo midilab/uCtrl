@@ -26,6 +26,10 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
+#include "../../uCtrl.h"
+
+#if defined(USE_STORAGE_MODULE)
+
 #include "storage.hpp"
 
 namespace uctrl { namespace module {
@@ -102,3 +106,5 @@ bool Storage::load(void *data, size_t n, const char * path)
 } }
 
 //uctrl::module::Storage storage_module;
+
+#endif

@@ -7,6 +7,11 @@
  
 
 */ 
+
+#include "../../uCtrl.h"
+
+#if defined(USE_SDCARD_MODULE)
+
 #include "sdcard.hpp"
 
 #if !defined(SDCARD_BITBANG_DRIVER)
@@ -330,3 +335,5 @@ bool SdCard::exists(char * path, uint8_t interrupted)
 } }
 
 //uctrl::module::SdCard sdcard_module;
+
+#endif

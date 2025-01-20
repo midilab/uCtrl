@@ -36,6 +36,9 @@
 
 */
 
+#include "../../../uCtrl.h"
+
+#if defined(USE_OLED_MODULE)
 
 #include "U8x8lib.h"
 #ifdef U8X8_HAVE_HW_SPI
@@ -1871,3 +1874,5 @@ void u8x8_SetPin_SED1520(u8x8_t *u8x8, uint8_t d0, uint8_t d1, uint8_t d2, uint8
   u8x8_SetPin(u8x8, U8X8_PIN_RESET, reset);
 }
 #endif // U8X8_USE_PINS
+
+#endif

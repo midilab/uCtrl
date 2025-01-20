@@ -32,7 +32,7 @@
 #include <Arduino.h>
 
 // auto defines, change per dinamicly setup
-#define USE_PAGE_COMPONENT
+//#define USE_PAGE_COMPONENT
 
 
 #ifdef USE_PAGE_COMPONENT	

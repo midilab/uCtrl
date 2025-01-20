@@ -26,6 +26,10 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
+#include "../../uCtrl.h"
+
+#if defined(USE_DIN_MODULE)
+
 #include "din.hpp"
 
 namespace uctrl { namespace module {
@@ -348,3 +352,5 @@ int8_t Din::getDataRaw(uint8_t port)
 }
 
 } }
+
+#endif // #if defined(USE_DIN_MODULE)

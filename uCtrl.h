@@ -32,29 +32,64 @@
 #include <Arduino.h> 
 #include <SPI.h>
 
+// comment any non used module to save space
+#define USE_OLED_MODULE
+#define USE_MIDI_MODULE
+#define USE_DOUT_MODULE
+#define USE_DIN_MODULE
+#define USE_AIN_MODULE
+#define USE_TOUCH_MODULE
+#define USE_RAM_MODULE
+#define USE_STORAGE_MODULE
+#define USE_SDCARD_MODULE
+#define USE_PAGE_MODULE
+#define USE_DEVICE_MODULE
+
 // modules classes includes
+#if defined(USE_OLED_MODULE)
 #include "module/oled/oled.hpp"
+#endif
 
+#if defined(USE_MIDI_MODULE)
 #include "module/midi/midi.hpp"
+#endif
 
+#if defined(USE_DOUT_MODULE)
 // dout 595 or single output for arduino only
 #include "module/dout/dout.hpp"
+#endif
 
+#if defined(USE_DIN_MODULE)
 #include "module/din/din.hpp"
+#endif
 
+#if defined(USE_AIN_MODULE)
 #include "module/ain/ain.hpp"
+#endif
 
+#if defined(USE_TOUCH_MODULE)
 #include "module/touch/touch.hpp"
+#endif
 
+#if defined(USE_RAM_MODULE)
 #include "module/ram/ram.hpp"
+#endif
 
+#if defined(USE_STORAGE_MODULE)
 #include "module/storage/storage.hpp"
+#endif
 
+#if defined(USE_SDCARD_MODULE)
 #include "module/sdcard/sdcard.hpp"
+#endif
 
+#if defined(USE_PAGE_MODULE)
 #include "module/page/page.hpp"
+#endif
 
+#if defined(USE_DEVICE_MODULE)
 #include "module/device/device.hpp"
+#endif
 
 // tools
 #define BLINK_TIME 250	
@@ -91,13 +126,19 @@ class uCtrlClass
 	//
 	// modules access
 	//
+#if defined(USE_RAM_MODULE)
 	// external ram module
 	bool initRam(SPIClass * device, uint8_t chip_select = 2, bool is_shared = false);
 	uctrl::module::Ram * ram = nullptr;		
+#endif
 
+#if defined(USE_STORAGE_MODULE)
+	// generic storage module for epprom and sdcard
 	bool initStorage(SPIClass * spi_device = nullptr, bool is_shared = false);
 	uctrl::module::Storage * storage = nullptr;	
+#endif
 
+#if defined(USE_OLED_MODULE)
 	// oled module
 #if defined(USE_OLED_U8G2)
 	bool initOled(U8G2 * display);
@@ -111,42 +152,59 @@ class uCtrlClass
 //#endif // defined(USE_DEVICE)
 //#endif // defined(USE_EXT_RAM)
 	uctrl::module::Oled * oled = nullptr;
+#endif
 
+#if defined(USE_MIDI_MODULE)
 	// midi module
 	bool initMidi();
 	uctrl::module::Midi * midi = nullptr;
-	
+#endif
+
+#if defined(USE_DOUT_MODULE)
 	// dout module
 	bool initDout(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
 	uctrl::module::Dout * dout = nullptr;
-	
+#endif
+
+#if defined(USE_DIN_MODULE)
 	// din module
 	bool initDin(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
 	uctrl::module::Din * din = nullptr;
-	
+#endif
+
+#if defined(USE_AIN_MODULE)
 	// ain module
 	bool initAin(int8_t pin1 = -1, int8_t pin2 = -1, int8_t pin3 = -1, int8_t pin4 = -1);
 	void processAin();
 	uctrl::module::Ain * ain = nullptr;
     volatile EVENT_QUEUE _ain_event_queue;
-	
+#endif
+
+#if defined(USE_TOUCH_MODULE)
 	// capacitive touch module
 	bool initCapTouch(int8_t pin1 = -1, int8_t pin2 = -1, int8_t pin3 = -1, int8_t pin4 = -1);
 	uctrl::module::CapTouch * touch = nullptr;
-	
+#endif
+
+#if defined(USE_SDCARD_MODULE)
 	// sdcard module
 	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2, bool is_shared = false);	
 	uctrl::module::SdCard * sdcard;
-	
+#endif
+
+#if defined(USE_PAGE_MODULE)
 	// page module
 	bool initPage(uint8_t pages_size);
 	void processPage();
 	uctrl::module::Page * page = nullptr;
-	
+#endif
+
+#if defined(USE_DEVICE_MODULE)
 	// device module
 	bool initDevice(uint8_t device_number, uint16_t event_buffer_size, uint8_t sysex_buffer_size = 0, uint16_t device_label_buffer_size = 0);
 	uctrl::module::Device * device = nullptr;
-        
+#endif
+
 	//
 	// Registred Ports query
 	//

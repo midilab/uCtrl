@@ -23,7 +23,7 @@ SOFTWARE.
 #pragma once
 
 #include "../MIDI/MIDI.h"
-#include <MIDIUSB.h>
+#include "../MIDIUSB/MIDIUSB.h"
 
 #include "USB-MIDI_defs.h"
 #include "USB-MIDI_Namespace.h"

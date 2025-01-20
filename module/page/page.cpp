@@ -26,6 +26,10 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
+#include "../../uCtrl.h"
+
+#if defined(USE_PAGE_MODULE)
+
 #include "page.hpp"
 	
 namespace uctrl { namespace module {
@@ -42,11 +46,13 @@ Page::Page()
 
 Page::~Page()
 {
+#ifdef USE_PAGE_COMPONENT
 	// delete subpages first
 	for (uint8_t i=0; i < _pages_size; i++) {
 		delete[] _page_data[i].sub_page_data;
 	}
 	delete[] _page_data;
+#endif
 }
 
 void Page::init(uint8_t pages_size)
@@ -67,6 +73,7 @@ void Page::init(uint8_t pages_size)
 			_page_data[i].digital_input = nullptr;
 			_page_data[i].analog_input = nullptr;
 			_page_data[i].name = nullptr;
+#ifdef USE_PAGE_COMPONENT
 			_page_data[i].callback_f1 = nullptr;
 			_page_data[i].callback_f2 = nullptr;
 			_page_data[i].f1 = nullptr;
@@ -74,6 +81,7 @@ void Page::init(uint8_t pages_size)
 			_page_data[i].f1_state = 0;
 			_page_data[i].f2_state = 0;
 			_page_data[i].sub_page_data = nullptr;
+#endif
 		}
 	}
 
@@ -684,3 +692,5 @@ uint8_t Page::getPage()
 } }
 
 //uctrl::module::Page page_module;
+
+#endif

@@ -1,4 +1,7 @@
 #include "../../uCtrl.h"
+
+#if defined(USE_DEVICE_MODULE)
+
 #include "device.hpp"
 
 namespace uctrl { namespace module {
@@ -1352,3 +1355,5 @@ const uint8_t * Device::getDataLabel(uint8_t device_id, uint16_t address, uint16
 } }
 
 //uctrl::module::Device device_module;
+
+#endif // #if defined(USE_DEVICE_MODULE)

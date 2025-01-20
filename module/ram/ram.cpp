@@ -1,3 +1,7 @@
+#include "../../uCtrl.h"
+
+#if defined(USE_RAM_MODULE)
+
 #include "ram.hpp"
 	
 namespace uctrl { namespace module {
@@ -186,3 +190,5 @@ void Ram::setMode(uint8_t mode)
 } }
 
 uctrl::module::Ram ram_module;
+
+#endif

@@ -36,6 +36,9 @@
 
 */
 
+#include "../../../uCtrl.h"
+
+#if defined(USE_OLED_MODULE)
 
 #include "U8g2lib.h"
 
@@ -72,5 +75,4 @@ void U8G2::writeBufferXBM2(Print &p)
   u8g2_WriteBufferXBM2(getU8g2(), u8g2_print_callback);
 }
 
-
-
+#endif

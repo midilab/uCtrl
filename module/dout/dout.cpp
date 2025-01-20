@@ -26,6 +26,10 @@
  * DEALINGS IN THE SOFTWARE. 
  */
 
+#include "../../uCtrl.h"
+
+#if defined(USE_DOUT_MODULE)
+
 #include "dout.hpp"
 
 namespace uctrl { namespace module {
@@ -322,3 +326,5 @@ void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
         }
 }
 */
+
+#endif

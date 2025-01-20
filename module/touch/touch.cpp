@@ -25,6 +25,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE. 
  */
+
+#include "../../uCtrl.h"
+
+#if defined(USE_TOUCH_MODULE)
+
 #include "touch.hpp"
 
 namespace uctrl { namespace module {
@@ -181,3 +186,5 @@ void CapTouch::read()
 }
 
 } }
+
+#endif
