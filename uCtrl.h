@@ -33,7 +33,7 @@
 #include <SPI.h>
 
 // comment any non used module to save space
-//#define USE_OLED_MODULE
+#define USE_OLED_MODULE
 #define USE_MIDI_MODULE
 #define USE_DOUT_MODULE
 #define USE_DIN_MODULE
