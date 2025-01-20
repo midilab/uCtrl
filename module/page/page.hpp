@@ -32,8 +32,9 @@
 #include <Arduino.h>
 
 // auto defines, change per dinamicly setup
-//#define USE_PAGE_COMPONENT
-
+#if defined(USE_PAGE_MODULE_COMPONENT) && defined(USE_OLED_MODULE)
+#define USE_PAGE_COMPONENT
+#endif
 
 #ifdef USE_PAGE_COMPONENT	
 
