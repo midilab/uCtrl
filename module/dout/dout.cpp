@@ -180,9 +180,9 @@ void Dout::flush(uint8_t interrupted)
 #endif 
 	if (_spi_device != nullptr) {
 		// we are always running inside IRS, if is shared make sure no one will try to handle while we do it
-		if ( _is_shared ) { 
+		/* if ( interrupted == 0 ) { 
 			noInterrupts();
-		} 
+		}  */
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
 		// active device
 		digitalWrite(_latch_pin, LOW);
@@ -196,9 +196,9 @@ void Dout::flush(uint8_t interrupted)
 		// deactive device
 		digitalWrite(_latch_pin, HIGH);
 		_spi_device->endTransaction(); 
-		if ( _is_shared ) { 
+		/* if ( interrupted == 0 ) { 
 			interrupts();
-		}
+		} */
 	}
 	// wait for the next change request
 	_flush_dout = false;
@@ -245,7 +245,7 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 			} else {
 				_flush_dout = true;
 				// let the main uCtrl ISR take care of flushing to avoid spi usage conflict
-				//flush(interrupted);
+				flush(interrupted);
 			}
 		}
 	}
@@ -289,7 +289,7 @@ void Dout::writeAll(uint8_t value, uint8_t interrupted)
 		} else {
 			_flush_dout = true;
 			// let the main uCtrl ISR take care of flushing to avoid spi usage conflict
-			//flush(interrupted);
+			flush(interrupted);
 		}
 	}
 //#endif	

@@ -453,6 +453,7 @@ void uCtrlClass::run()
 			}
 #endif
 
+#if defined(USE_PAGE_MODULE)
 			if (page != nullptr) {
 				if (ain != nullptr) {
 #if defined(USE_PAGE_COMPONENT)
@@ -478,6 +479,7 @@ void uCtrlClass::run()
 				}
 				page->processEvent(port, value, uctrl::module::DIGITAL_EVENT);
 			}
+#endif // #if defined(USE_PAGE_MODULE)
 
 			if ( din->callback != nullptr )
 				din->callback(port, value);
@@ -511,6 +513,7 @@ void uCtrlClass::run()
 			}
 #endif
 
+#if defined(USE_PAGE_MODULE)
 			if (page != nullptr) {
 				if (ain != nullptr) {
 
@@ -537,6 +540,7 @@ void uCtrlClass::run()
 				}
 				page->processEvent(port, (uint16_t)value, uctrl::module::DIGITAL_EVENT);
 			}
+#endif // #if defined(USE_PAGE_MODULE)
 
 			if ( touch->callback != nullptr )
 				touch->callback(port, value);
@@ -584,9 +588,11 @@ void uCtrlClass::run()
 			}
 #endif
 
+#if defined(USE_PAGE_MODULE)
 			if (page != nullptr) {
 				page->processEvent(port, value, uctrl::module::ANALOG_EVENT);
 			}
+#endif
 
 			if ( ain->callback != nullptr ) {
 				ain->callback(port, value);

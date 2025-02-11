@@ -35,11 +35,11 @@
 //#include "BLE-MIDI/hardware/BLEMIDI_ArduinoBLE.h"
 #endif
 
-#include "MIDI/MIDI.h"
-
 #if defined(__AVR_ATmega32U4__)
 #include "USB-MIDI/USB-MIDI.h"
 #endif
+
+#include "MIDI/MIDI.h"
 
 #include "midi.h"
 #include "midi_interface.hpp"

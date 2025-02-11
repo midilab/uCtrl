@@ -84,7 +84,6 @@ void Din::plug(uint8_t setup)
 void Din::plugSR(uint8_t setup)
 {
 	_chain_size_sr = setup;
-	_remote_digital_port += _chain_size_sr * 8;
 }
 
 // call it only after all plug() and plugSR() requests
@@ -136,8 +135,9 @@ void Din::init()
 		_spi_device->begin();
 	}
 
-	// init total chain size 
+	// init total chain size in case SR and/or pin setup request
 	_chain_size = (_chain_size_pin + _chain_size_sr);
+	_remote_digital_port += _chain_size_sr * 8;
 
 	// any plug() for direct pin registered?
 	if (_chain_size_pin > 0) {
@@ -236,7 +236,7 @@ void Din::read(uint8_t interrupted)
 	if (_spi_device != nullptr) {
 	//if (_chain_size_sr != 0) {
 		// always inside ISR, if is shared make sure no one will try to handle while we do it
-		if ( _is_shared ) { 
+		if ( interrupted ) { 
 			noInterrupts();
 		} 
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
@@ -253,7 +253,7 @@ void Din::read(uint8_t interrupted)
 			}
 		}
 		_spi_device->endTransaction();
-		if ( _is_shared ) { 
+		if ( interrupted ) { 
 			interrupts();
 		}  
 	}
