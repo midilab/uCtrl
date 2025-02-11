@@ -101,6 +101,7 @@ class Din
 		bool use_encoder = false;
 
 		uint8_t _remote_digital_port = 0; 
+		uint8_t _remote_pin_digital_port = 0;
 		uint8_t _chain_size = 0;
 		uint8_t _chain_size_pin = 0;
 		uint8_t _chain_size_sr = 0;

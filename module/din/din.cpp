@@ -66,19 +66,19 @@ void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 // call first all plug() for pin register, then plugSR if needed
 void Din::plug(uint8_t setup)
 {
-	//if (_remote_digital_port >= USE_DIN_MAX_PORTS)
+	//if (_remote_pin_digital_port >= USE_DIN_MAX_PORTS)
 	//	return;
 
 	// alloc once and forever policy!
 	if (_din_pin_map == nullptr) {
 		_din_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
 	} else {
-		_din_pin_map = (uint8_t*) realloc( _din_pin_map, sizeof(uint8_t) * (_remote_digital_port+1) );
+		_din_pin_map = (uint8_t*) realloc( _din_pin_map, sizeof(uint8_t) * (_remote_pin_digital_port+1) );
 	}
 
-	_din_pin_map[_remote_digital_port] = setup;
-	++_remote_digital_port;
-	_chain_size_pin = floor(_remote_digital_port/8)+1;
+	_din_pin_map[_remote_pin_digital_port] = setup;
+	++_remote_pin_digital_port;
+	_chain_size_pin = floor(_remote_pin_digital_port/8)+1;
 }
 
 void Din::plugSR(uint8_t setup)
@@ -102,12 +102,22 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 		}
 	}
 
-	// find our indexes
-	state_group = floor(channel_a_id/8);
+	uint8_t channel_a = channel_a_id;
+	//uint8_t channel_b = channel_b_id;
+	uint8_t channel_b = channel_a + 1;
+	uint8_t chain_gap = 0;
+	if (channel_a >= _remote_pin_digital_port) {
+		channel_a -= _remote_pin_digital_port;
+		channel_b -= _remote_pin_digital_port;
+		chain_gap = _chain_size_pin;
+	}
 
-	if (channel_b_id - channel_a_id == 1) {
+	// find our indexes
+	state_group = floor(channel_a/8) + chain_gap;
+
+	if (channel_b - channel_a == 1) {
 		// register detent pin channel a 
-		_digital_detent_pin[state_group] |= 1 << (channel_a_id % 8);
+		_digital_detent_pin[state_group] |= 1 << (channel_a % 8);
 		//_digital_detent_pin[state_group] |= 1 << (channel_b_id % 8);
 	} else {
 		// a range of pairs register call(or invalid call)
@@ -137,13 +147,12 @@ void Din::init()
 
 	// init total chain size in case SR and/or pin setup request
 	_chain_size = (_chain_size_pin + _chain_size_sr);
-	_remote_digital_port += _chain_size_sr * 8;
+	_remote_digital_port = _remote_pin_digital_port + (_chain_size_sr * 8);
 
 	// any plug() for direct pin registered?
-	if (_chain_size_pin > 0) {
-		uint8_t remote_pin_port = _remote_digital_port - (_chain_size_sr * 8);
+	if (_remote_pin_digital_port > 0) {
 		// walk port reference structure and setup PINs as PULLUP/INPUT
-		for (uint8_t i=0; i < remote_pin_port; i++ ) {
+		for (uint8_t i=0; i < _remote_pin_digital_port; i++ ) {
 			pinMode(_din_pin_map[i], INPUT_PULLUP);
 		}
 		_chain_pin_gap = 8 - (_remote_digital_port % 8);
