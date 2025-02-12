@@ -38,7 +38,7 @@ namespace uctrl { namespace module {
 //#define USE_DIN_MAX_PORTS 18
 //#endif
 
-#define DIN_EVENT_QUEUE_SIZE	32
+#define DIN_EVENT_QUEUE_SIZE	16
 
 typedef struct 
 {
@@ -54,8 +54,8 @@ typedef struct
 	uint8_t size; //of the buffer
 } DIN_EVENT_QUEUE;
 
-#define SPI_SPEED_DIN         4000000
-//#define SPI_SPEED_DIN         2000000
+//#define SPI_SPEED_DIN         4000000
+#define SPI_SPEED_DIN         2000000
 #define SPI_MODE_DIN          SPI_MODE0
 
 // helper
@@ -97,6 +97,7 @@ class Din
 		uint8_t * _digital_input_state = nullptr;
 		uint8_t * _digital_input_last_state = nullptr;
 		uint8_t * _digital_detent_pin = nullptr;
+		uint8_t * _din_pin_map = nullptr;
 
 		bool use_encoder = false;
 
@@ -108,10 +109,6 @@ class Din
 		uint8_t _chain_pin_gap = 0;
 
     	volatile DIN_EVENT_QUEUE event_queue;	
-
-		// used for direct microcontroller digital input pins
-		uint8_t * _din_pin_map = nullptr;
-		//uint8_t _din_pin_map[USE_DIN_MAX_PORTS] = {0};
 
 		SPIClass * _spi_device = nullptr;
 		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);

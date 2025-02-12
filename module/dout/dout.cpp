@@ -43,7 +43,7 @@ Dout::~Dout()
 {
 	delete[] _digital_output_state;
     delete[] _digital_output_buffer;
-	free(_dout_pin_map);
+    delete[] _dout_pin_map;
 }
 
 uint8_t Dout::sizeOf()
@@ -180,9 +180,9 @@ void Dout::flush(uint8_t interrupted)
 #endif 
 	if (_spi_device != nullptr) {
 		// we are always running inside IRS, if is shared make sure no one will try to handle while we do it
-		/* if ( interrupted == 0 ) { 
+		if ( interrupted == 0 ) { 
 			noInterrupts();
-		}  */
+		}
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
 		// active device
 		digitalWrite(_latch_pin, LOW);
@@ -196,9 +196,9 @@ void Dout::flush(uint8_t interrupted)
 		// deactive device
 		digitalWrite(_latch_pin, HIGH);
 		_spi_device->endTransaction(); 
-		/* if ( interrupted == 0 ) { 
+		if ( interrupted == 0 ) { 
 			interrupts();
-		} */
+		}
 	}
 	// wait for the next change request
 	_flush_dout = false;

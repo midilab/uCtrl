@@ -44,7 +44,7 @@ Din::~Din()
 	delete[] _digital_input_state;
 	delete[] _digital_input_last_state;
 	delete[] _digital_detent_pin;
-	free(_din_pin_map);
+	delete[] _din_pin_map;
 }
 
 uint8_t Din::sizeOf()
@@ -103,8 +103,7 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 	}
 
 	uint8_t channel_a = channel_a_id;
-	//uint8_t channel_b = channel_b_id;
-	uint8_t channel_b = channel_a + 1;
+	uint8_t channel_b = channel_b_id;
 	uint8_t chain_gap = 0;
 	if (channel_a >= _remote_pin_digital_port) {
 		channel_a -= _remote_pin_digital_port;
@@ -155,7 +154,7 @@ void Din::init()
 		for (uint8_t i=0; i < _remote_pin_digital_port; i++ ) {
 			pinMode(_din_pin_map[i], INPUT_PULLUP);
 		}
-		_chain_pin_gap = 8 - (_remote_digital_port % 8);
+		_chain_pin_gap = 8 - (_remote_pin_digital_port % 8);
 	}
 
 	// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
@@ -204,7 +203,7 @@ void Din::read(uint8_t interrupted)
 			_digital_input_state[i] = 0;
 			for (uint8_t j=0; j < 8; j++) {
 				remote_port = (i*8)+j;
-				if (remote_port >= _remote_digital_port) {
+				if (remote_port >= _remote_pin_digital_port) {
 					break;
 				}
 				_digital_input_state[i] |= digitalRead(_din_pin_map[remote_port]) << j;
