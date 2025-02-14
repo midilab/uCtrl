@@ -685,18 +685,31 @@ uint8_t _timerCapTouch = 0;
 uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
 
+uint8_t _overflow = 0;
+
 void uCtrlHandler() 
 {
+	if (_overflow == 1) {
+		//Serial.println("overflow!");
+	}
+	_overflow = 1;
 	// 250us call
 	if (uCtrl.on250usCallback) {
 		uCtrl.on250usCallback();
 	}
+
+	++_timerCounter1ms;
+	++_timerCounterDin;
+	++_timerCapTouch;
+	++_timerCounterAin;
+	++_timerCounterDout;
 	
 	if (uCtrl.on1msCallback) {
 		// ~1ms call
-		if(++_timerCounter1ms == 4) {
+		if(_timerCounter1ms >= 4) {
 			_timerCounter1ms = 0;
 			uCtrl.on1msCallback();
+			_overflow = 0;
 			return;
 		}
 	}
@@ -704,9 +717,10 @@ void uCtrlHandler()
 #if defined(USE_DIN_MODULE)
 	if (uCtrl.din != nullptr) {
 		// ~2ms call
-		if (++_timerCounterDin == 8) {
+		if (_timerCounterDin >= 8) {
 			_timerCounterDin = 0;
 			uCtrl.din->read(1);
+			_overflow = 0;
 			return;
 		}
 	}
@@ -715,10 +729,23 @@ void uCtrlHandler()
 #if defined(USE_TOUCH_MODULE)
 	if (uCtrl.touch != nullptr) {
 		// ~3ms call
-		if (++_timerCapTouch == 12) 
+		if (_timerCapTouch >= 12) 
 		{
 			_timerCapTouch = 0;
 			uCtrl.touch->read();
+			_overflow = 0;
+			return;
+		}
+	}
+#endif
+
+#if defined(USE_DOUT_MODULE)
+	if (uCtrl.dout != nullptr) {
+		// ~5ms call
+		if (_timerCounterDout >= 20) {
+			_timerCounterDout = 0;
+			uCtrl.dout->flush(1);
+			_overflow = 0;
 			return;
 		}
 	}
@@ -727,23 +754,14 @@ void uCtrlHandler()
 #if defined(USE_AIN_MODULE)
 	if (uCtrl.ain != nullptr) {
 		// ~10ms call
-		if (++_timerCounterAin == 40) 
+		if (_timerCounterAin >= 40) 
 		{
 			_timerCounterAin = 0;
 			uCtrl.processAin();
+			_overflow = 0;
 			return;
 		}
 	}
 #endif
-
-#if defined(USE_DOUT_MODULE)
-	if (uCtrl.dout != nullptr) {
-		// ~30ms call
-		if (++_timerCounterDout == 120) {
-			_timerCounterDout = 0;
-			uCtrl.dout->flush(1);
-			return;
-		}
-	}
-#endif
+_overflow = 0;
 }

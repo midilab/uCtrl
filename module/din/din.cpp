@@ -179,14 +179,6 @@ void Din::init()
 	event_queue.size = DIN_EVENT_QUEUE_SIZE;
 }
 
-// make it bool...
-// if (read()) means something change...
-// so we can discard non encoders 
-// using skip control var
-// check if we have encoders for fast read...
-// if we dont, check skip counter and increment 
-// it(or zero it and reaches the value state)
-//
 // Read all DIN
 void Din::read(uint8_t interrupted)
 {
@@ -244,9 +236,9 @@ void Din::read(uint8_t interrupted)
 	if (_spi_device != nullptr) {
 	//if (_chain_size_sr != 0) {
 		// always inside ISR, if is shared make sure no one will try to handle while we do it
-		if ( interrupted ) { 
+		if ( _is_shared ) { 
 			noInterrupts();
-		} 
+		}
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
 		// pulsing the chip select pin to start capturing data
 		digitalWrite(_latch_pin, LOW);
@@ -261,9 +253,9 @@ void Din::read(uint8_t interrupted)
 			}
 		}
 		_spi_device->endTransaction();
-		if ( interrupted ) { 
+		if ( _is_shared ) { 
 			interrupts();
-		}  
+		}
 	}
 #endif
 

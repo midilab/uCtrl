@@ -180,7 +180,7 @@ void Dout::flush(uint8_t interrupted)
 #endif 
 	if (_spi_device != nullptr) {
 		// we are always running inside IRS, if is shared make sure no one will try to handle while we do it
-		if ( interrupted == 0 ) { 
+		if ( _is_shared ) { 
 			noInterrupts();
 		}
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
@@ -196,7 +196,7 @@ void Dout::flush(uint8_t interrupted)
 		// deactive device
 		digitalWrite(_latch_pin, HIGH);
 		_spi_device->endTransaction(); 
-		if ( interrupted == 0 ) { 
+		if ( _is_shared ) { 
 			interrupts();
 		}
 	}
@@ -207,7 +207,6 @@ void Dout::flush(uint8_t interrupted)
 void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 {
 	uint8_t chain_group, chain_group_index;
-	uint8_t * buffer = nullptr;
 
 	if ( _remote_digital_output_port == 0 ) 
 		return;	
@@ -221,11 +220,6 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 
 //#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 	if (_spi_device != nullptr) {
-		if (interrupted == 0) {
-			buffer = _digital_output_state;
-		} else {
-			buffer = _digital_output_buffer;
-		}
 
 		// The bitmap access key and intramap counter
 		chain_group = floor(remote_port / 8);
@@ -233,19 +227,18 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 		chain_group_index = remote_port % 8;
 		
 		// state changed?
-		if ( BIT_GET_VALUE(buffer[chain_group], chain_group_index) != value ) {		
+		if ( BIT_GET_VALUE(_digital_output_state[chain_group], chain_group_index) != value ) {		
 			if ( value == 0) {
-				buffer[chain_group] &= ~(1 << chain_group_index); 
+				_digital_output_state[chain_group] &= ~(1 << chain_group_index); 
 			} else if (value == 1) {
-				buffer[chain_group] |= (1 << chain_group_index);
+				_digital_output_state[chain_group] |= (1 << chain_group_index);
 			}
 			
 			if (interrupted == 0) {
 				_change_flag = true;
 			} else {
+				memcpy(_digital_output_buffer[chain_group], _digital_output_state[chain_group], sizeof(_digital_output_buffer));
 				_flush_dout = true;
-				// let the main uCtrl ISR take care of flushing to avoid spi usage conflict
-				flush(interrupted);
 			}
 		}
 	}
@@ -254,8 +247,6 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 
 void Dout::writeAll(uint8_t value, uint8_t interrupted)
 {
-	uint8_t * buffer = nullptr;
-
 	if ( _remote_digital_output_port == 0 ) {
 		return;	
 	}
@@ -272,24 +263,17 @@ void Dout::writeAll(uint8_t value, uint8_t interrupted)
 			value = 0xFF;
 		}
 
-		if (interrupted == 0) {
-			buffer = _digital_output_state;
-		} else {
-			buffer = _digital_output_buffer;
-		}
-
 		for (uint8_t i=0; i < _chain_size; i++) {
-			if (buffer[i] != value) {
-				buffer[i] = value;
+			if (_digital_output_state[i] != value) {
+				_digital_output_state[i] = value;
 			}
 		}
 		
 		if (interrupted == 0) {
 			_change_flag = true;
 		} else {
+			memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
 			_flush_dout = true;
-			// let the main uCtrl ISR take care of flushing to avoid spi usage conflict
-			flush(interrupted);
 		}
 	}
 //#endif	
