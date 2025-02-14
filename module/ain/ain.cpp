@@ -222,7 +222,7 @@ void Ain::lockAllControls()
 	} while (i);
 }
 
-inline uint16_t Ain::rangeMe(uint16_t value, uint16_t min, uint16_t max)
+uint16_t Ain::rangeMe(uint16_t value, uint16_t min, uint16_t max)
 {
 	return (value / (_adc_max_resolution / ((max - min) + 1))) + min;
 }

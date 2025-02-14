@@ -75,7 +75,7 @@ class Ain
 #ifdef ANALOG_AVG_READS
 		void setAvgReads(uint8_t average);
 #endif
-		inline uint16_t rangeMe(uint16_t value, uint16_t min, uint16_t max);
+		uint16_t rangeMe(uint16_t value, uint16_t min, uint16_t max);
 		void lockControl(uint8_t remote_port);
 		void lockAllControls();
 		bool isLocked(uint8_t remote_port);
