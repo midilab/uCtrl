@@ -12,9 +12,9 @@ namespace uctrl {
 #define AVR_CLOCK_FREQ	16000000
 
 #if defined(__AVR_ATmega32U4__)	
-ISR(TIMER3_COMPA_vect) 
+ISR(TIMER3_COMPA_vect, ISR_NOBLOCK) 
 #else
-ISR(TIMER2_COMPA_vect) 
+ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) 
 #endif
 {
 	uCtrlHandler();
