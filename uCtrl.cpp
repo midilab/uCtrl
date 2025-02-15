@@ -103,14 +103,14 @@ uCtrlClass::~uCtrlClass()
 }
 
 #if defined(USE_RAM_MODULE)
-bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
+bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select, bool is_shared)
 {
 	if ( ram == nullptr )
 		ram = &ram_module;
 		//ram = new uctrl::module::Ram();
 	
 	if ( ram != nullptr ) {
-		ram->init(device, chip_select);
+		ram->init(device, chip_select, is_shared);
 		return true;
 	}
 
@@ -705,7 +705,7 @@ uint8_t _overflow4 = 0;
 
 void uCtrlHandler() 
 {
-	/* if (_overflow == 1) 
+	if (_overflow == 1) 
 		Serial.println("overflow 250us!");
 	if (_overflow0 == 1) 
 		Serial.println("overflow 1ms!");
@@ -716,7 +716,7 @@ void uCtrlHandler()
 	if (_overflow3 == 1) 
 		Serial.println("overflow dout!");
 	if (_overflow4 == 1) 
-		Serial.println("overflow ain!"); */
+		Serial.println("overflow ain!");
 
 	// 250us call
 	if (uCtrl.on250usCallback) {

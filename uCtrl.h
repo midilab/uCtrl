@@ -129,7 +129,7 @@ class uCtrlClass
 	//
 #if defined(USE_RAM_MODULE)
 	// external ram module
-	bool initRam(SPIClass * device, uint8_t chip_select = 2);
+	bool initRam(SPIClass * device, uint8_t chip_select = 2, bool is_shared = false);
 	uctrl::module::Ram * ram = nullptr;		
 #endif
 
