@@ -103,14 +103,14 @@ uCtrlClass::~uCtrlClass()
 }
 
 #if defined(USE_RAM_MODULE)
-bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select, bool is_shared)
+bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select)
 {
 	if ( ram == nullptr )
 		ram = &ram_module;
 		//ram = new uctrl::module::Ram();
 	
 	if ( ram != nullptr ) {
-		ram->init(device, chip_select, is_shared);
+		ram->init(device, chip_select);
 		return true;
 	}
 
@@ -236,14 +236,14 @@ bool uCtrlClass::initMidi()
 #endif
 
 #if defined(USE_DOUT_MODULE)
-bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
+bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin)
 {
 	if ( dout == nullptr ) 
 		dout = new uctrl::module::Dout();
 	
 	if ( dout != nullptr ) {	
 		if (spi_device != nullptr) {
-			dout->setSpi(spi_device, latch_pin, is_shared);
+			dout->setSpi(spi_device, latch_pin);
 		}
 		return true;
 	}
@@ -253,14 +253,14 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin, bool is_shar
 #endif
 
 #if defined(USE_DIN_MODULE)
-bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
+bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin)
 {
 	if ( din == nullptr ) 
 		din = new uctrl::module::Din();
 	
 	if ( din != nullptr ) {
 		if (spi_device != nullptr) {
-			din->setSpi(spi_device, latch_pin, is_shared);
+			din->setSpi(spi_device, latch_pin);
 		}
 		return true;
 	}
@@ -784,7 +784,7 @@ void uCtrlHandler()
 #endif
 
 #if defined(USE_AIN_MODULE)
- 	if (uCtrl.ain != nullptr) {
+/*  	if (uCtrl.ain != nullptr) {
 		// ~10ms call
 		if (_timerCounterAin >= uCtrl.ainFrequency) 
 		{
@@ -794,6 +794,6 @@ void uCtrlHandler()
 			_overflow4 = 0;
 			return;
 		}
-	}
+	} */
 #endif
 }

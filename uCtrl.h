@@ -129,7 +129,7 @@ class uCtrlClass
 	//
 #if defined(USE_RAM_MODULE)
 	// external ram module
-	bool initRam(SPIClass * device, uint8_t chip_select = 2, bool is_shared = false);
+	bool initRam(SPIClass * device, uint8_t chip_select = 2);
 	uctrl::module::Ram * ram = nullptr;		
 #endif
 
@@ -163,13 +163,13 @@ class uCtrlClass
 
 #if defined(USE_DOUT_MODULE)
 	// dout module
-	bool initDout(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
+	bool initDout(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
 	uctrl::module::Dout * dout = nullptr;
 #endif
 
 #if defined(USE_DIN_MODULE)
 	// din module
-	bool initDin(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
+	bool initDin(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
 	uctrl::module::Din * din = nullptr;
 #endif
 
