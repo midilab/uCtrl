@@ -231,6 +231,14 @@ class uCtrlClass
 	void (*loopCallback)();
 	void (*on250usCallback)();
 	void (*on1msCallback)();
+
+	// frequency setup for ISR controlled resources and processing
+	// mlutiple of base frequency (250us or 1ms)
+	uint8_t ms1Frequency = 4;
+	uint8_t dinFrequency = 8;
+	uint8_t touchFrequency = 12;
+	uint8_t doutFrequency = 20;
+	uint8_t ainFrequency = 40;
 };
 
 }
