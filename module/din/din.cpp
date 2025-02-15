@@ -184,14 +184,15 @@ void Din::read(uint8_t interrupted)
 {
 	static bool state_change;
 	state_change = false;
+	
+	// copy our last state to start read new one
+	memcpy(_digital_input_last_state, _digital_input_state, sizeof(uint8_t) * _chain_size);
 
 	// any direct pin registered to read?
 	if (_chain_size_pin > 0) {
 		// Read port per port
 		uint8_t remote_port = 0;
-		for (uint8_t i=0; i < _chain_size_pin; i++) {
-			// Before refresh data, set the last state data
-			_digital_input_last_state[i] = _digital_input_state[i];				
+		for (uint8_t i=0; i < _chain_size_pin; i++) {			
 			_digital_input_state[i] = 0;
 			for (uint8_t j=0; j < 8; j++) {
 				remote_port = (i*8)+j;
@@ -199,9 +200,6 @@ void Din::read(uint8_t interrupted)
 					break;
 				}
 				_digital_input_state[i] |= digitalRead(_din_pin_map[remote_port]) << j;
-			}				
-			if (state_change == false && _digital_input_last_state[i] != _digital_input_state[i]) {
-				state_change = true;
 			}
 		}
 	}
@@ -215,9 +213,7 @@ void Din::read(uint8_t interrupted)
 	digitalWriteFast(DIN_LATCH_PIN, HIGH);
 	
 	// Read byte per byte
-	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
-		// Before refresh data, set the last state data
-		_digital_input_last_state[i] = _digital_input_state[i];		
+	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {	
 		// shift in that byte
 		//_digital_input_state[i] = (uint8_t) shiftIn(DIN_DATA_PIN, DIN_CLOCK_PIN, MSBFIRST); 				
 		_digital_input_state[i] = 0;
@@ -227,9 +223,6 @@ void Din::read(uint8_t interrupted)
 			// buggy digitalReadFast() or too fast read just after clock the device?
 			//_digital_input_state[i] |= digitalReadFast(DIN_DATA_PIN) << (7 - j);
 			digitalWriteFast(DIN_CLOCK_PIN, LOW);
-		}				
-		if (state_change == false && _digital_input_last_state[i] != _digital_input_state[i]) {
-			state_change = true;
 		}
 	}
 #else
@@ -243,21 +236,26 @@ void Din::read(uint8_t interrupted)
 		// pulsing the chip select pin to start capturing data
 		digitalWrite(_latch_pin, LOW);
 		digitalWrite(_latch_pin, HIGH);
+		//_spi_device->transfer(_digital_input_state[_chain_size_pin], _chain_size-_chain_size_pin);
 		// Read byte per byte
 		for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
-			// Before refresh data, set the last state data
-			_digital_input_last_state[i] = _digital_input_state[i];		
 			_digital_input_state[i] = (uint8_t) _spi_device->transfer(0x00); 
-			if (state_change == false && _digital_input_last_state[i] != _digital_input_state[i]) {
-				state_change = true;
-			}
 		}
 		_spi_device->endTransaction();
 		if ( _is_shared ) { 
 			interrupts();
 		}
+		
 	}
 #endif
+
+	// any change occur?
+	for (uint8_t i=0; i < _chain_size; i++) {
+		if (_digital_input_last_state[i] != _digital_input_state[i]) {
+			state_change = true;
+			break;
+		}
+	}
 
 	if (state_change) {
 		processQueue();

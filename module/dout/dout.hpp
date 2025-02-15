@@ -38,8 +38,8 @@ namespace uctrl { namespace module {
 #define USE_DOUT_MAX_PORTS 12
 #endif */
 
-//#define SPI_SPEED_DOUT         4000000
-#define SPI_SPEED_DOUT         2000000
+#define SPI_SPEED_DOUT         4000000
+//#define SPI_SPEED_DOUT         2000000
 #define SPI_MODE_DOUT          SPI_MODE0	
 
 // helper

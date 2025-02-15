@@ -54,8 +54,8 @@ typedef struct
 	uint8_t size; //of the buffer
 } DIN_EVENT_QUEUE;
 
-//#define SPI_SPEED_DIN         4000000
-#define SPI_SPEED_DIN         2000000
+#define SPI_SPEED_DIN         4000000
+//#define SPI_SPEED_DIN         2000000
 #define SPI_MODE_DIN          SPI_MODE0
 
 // helper

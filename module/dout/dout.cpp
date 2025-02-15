@@ -142,7 +142,7 @@ void Dout::flushBuffer()
 	if (_spi_device != nullptr) {
 		noInterrupts();
 		// TODO: instead of copying state over buffer, its a better approach to merge everything from state into buffer
-		memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
+		memcpy(_digital_output_buffer, _digital_output_state, sizeof(uint8_t)*_chain_size);
 		//i=_chain_size-1;
 		//while(i >= 0) {
 		//	_digital_output_buffer[i] = _digital_output_state[i];
@@ -237,7 +237,7 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 			if (interrupted == 0) {
 				_change_flag = true;
 			} else {
-				memcpy(_digital_output_buffer[chain_group], _digital_output_state[chain_group], sizeof(_digital_output_buffer));
+				memcpy(_digital_output_buffer[chain_group], _digital_output_state[chain_group], sizeof(uint8_t));
 				_flush_dout = true;
 			}
 		}
@@ -272,7 +272,7 @@ void Dout::writeAll(uint8_t value, uint8_t interrupted)
 		if (interrupted == 0) {
 			_change_flag = true;
 		} else {
-			memcpy(_digital_output_buffer, _digital_output_state, sizeof(_digital_output_buffer)*_chain_size);
+			memcpy(_digital_output_buffer, _digital_output_state, sizeof(uint8_t)*_chain_size);
 			_flush_dout = true;
 		}
 	}
