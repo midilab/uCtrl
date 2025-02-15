@@ -111,9 +111,8 @@ class Din
     	volatile DIN_EVENT_QUEUE event_queue;	
 
 		SPIClass * _spi_device = nullptr;
-		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
+		void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
 		uint8_t _latch_pin;
-		bool _is_shared = false;
 };
 
 } }

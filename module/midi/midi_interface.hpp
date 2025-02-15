@@ -20,21 +20,21 @@ public:
 
     // Replace static_cast with direct access to _midiInterface
     void read(uint8_t interrupted) {
-    if (interrupted == 0) {
-        MIDI_ATOMIC(_midiInterface->read());
-    } else {
+    //if (interrupted == 0) {
+    //    MIDI_ATOMIC(_midiInterface->read());
+    //} else {
         _midiInterface->read();
-    }
+    //}
     }
 
     void send(const midi::MidiType& inType, const midi::DataByte& inData1,
             const midi::DataByte& inData2, const midi::Channel& inChannel,
             uint8_t interrupted) {
-    if (interrupted == 0) {
-        MIDI_ATOMIC(_midiInterface->send(inType, inData1, inData2, inChannel));
-    } else {
+    //if (interrupted == 0) {
+    //    MIDI_ATOMIC(_midiInterface->send(inType, inData1, inData2, inChannel));
+    //} else {
         _midiInterface->send(inType, inData1, inData2, inChannel);
-    }
+    //}
     }
 
 private:
@@ -50,21 +50,21 @@ public:
 
     // Replace static_cast with direct access to _midiInterface
     void read(uint8_t interrupted) {
-    if (interrupted == 0) {
-        MIDI_ATOMIC(_midiInterface->read());
-    } else {
+    //if (interrupted == 0) {
+    //    MIDI_ATOMIC(_midiInterface->read());
+    //} else {
         _midiInterface->read();
-    }
+    //}
     }
 
     void send(const midi::MidiType& inType, const midi::DataByte& inData1,
             const midi::DataByte& inData2, const midi::Channel& inChannel,
             uint8_t interrupted) {
-    if (interrupted == 0) {
-        MIDI_ATOMIC(_midiInterface->send(inType, inData1, inData2, inChannel, 0));
-    } else {
+    //if (interrupted == 0) {
+    //    MIDI_ATOMIC(_midiInterface->send(inType, inData1, inData2, inChannel, 0));
+    //} else {
         _midiInterface->send(inType, inData1, inData2, inChannel, 0);
-    }
+    //}
     }
 
 private:

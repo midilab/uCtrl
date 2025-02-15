@@ -51,19 +51,15 @@ uint8_t Dout::sizeOf()
 	return _remote_digital_output_port;
 }	
 
-void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
+void Dout::setSpi(SPIClass * spi_device, uint8_t latch_pin)
 {
 	_spi_device = spi_device;
 	_latch_pin = latch_pin;
-	_is_shared = is_shared;
 }
 
 // call first all plug() for pin register, then plugSR if needed
 void Dout::plug(uint8_t setup)
 {
-	//if (_chain_size_pin >= USE_DOUT_MAX_PORTS)
-	//	return;
-
 	// alloc once and forever policy!
 	if (_dout_pin_map == nullptr) {
 		_dout_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
@@ -104,7 +100,6 @@ void Dout::init()
 		//_change_flag = false;
 	}
 
-//#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
 	if (_spi_device != nullptr) {
 		// Chip select pin setup
 		pinMode(_latch_pin, OUTPUT);
@@ -117,8 +112,6 @@ void Dout::init()
 		// Each bit represents the value state readed by digital inputs
 		if ( _chain_size > 0 ) {
 			// alloc once and forever policy!
-			//_digital_output_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
-			//_digital_output_buffer = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
 			_digital_output_state = new uint8_t[_chain_size];
 			_digital_output_buffer = new uint8_t[_chain_size];
 			for (uint8_t i=0; i < _chain_size; i++) {
@@ -127,44 +120,30 @@ void Dout::init()
 			}			
 		}
 	}
-//#endif
 }
 
 // should be called only inside non interrupted stack
-// for interrupted the flush will be called on write()
+// flush() is the one called inside isr
 void Dout::flushBuffer()
 {
-	//int8_t i;
-	if (_change_flag == false) {
+	if (_change_flag == false)
 		return;
-	}
-//#if defined(USE_DOUT_SPI_DRIVER) || defined(USE_DOUT_BITBANG_DRIVER)
+
 	if (_spi_device != nullptr) {
 		noInterrupts();
-		// TODO: instead of copying state over buffer, its a better approach to merge everything from state into buffer
+		// copy output state to output buffer
 		memcpy(_digital_output_buffer, _digital_output_state, sizeof(uint8_t)*_chain_size);
-		//i=_chain_size-1;
-		//while(i >= 0) {
-		//	_digital_output_buffer[i] = _digital_output_state[i];
-		//	i--;
-		//}
 		_flush_dout = true;
 		interrupts();
 	}
-//#endif
-
-	// should we flush using realtime resource shared?
-	// better not!
-	//flush(0);
 }
 
 void Dout::flush(uint8_t interrupted)
 {
 	int8_t i = 0;
 
-	if (_flush_dout == false) {
+	if (_flush_dout == false)
 		return;
-	}
 	
 #if defined(USE_DOUT_BITBANG_DRIVER)
 	// active device
@@ -179,10 +158,6 @@ void Dout::flush(uint8_t interrupted)
 	digitalWrite(DOUT_LATCH_PIN, HIGH);
 #endif 
 	if (_spi_device != nullptr) {
-		// we are always running inside IRS, if is shared make sure no one will try to handle while we do it
-		if ( _is_shared ) { 
-			noInterrupts();
-		}
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DOUT, MSBFIRST, SPI_MODE_DOUT));
 		// active device
 		digitalWrite(_latch_pin, LOW);
@@ -196,10 +171,8 @@ void Dout::flush(uint8_t interrupted)
 		// deactive device
 		digitalWrite(_latch_pin, HIGH);
 		_spi_device->endTransaction(); 
-		if ( _is_shared ) { 
-			interrupts();
-		}
 	}
+
 	// wait for the next change request
 	_flush_dout = false;
 }

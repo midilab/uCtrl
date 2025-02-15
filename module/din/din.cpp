@@ -52,7 +52,7 @@ uint8_t Din::sizeOf()
 	return _remote_digital_port;
 }			
 
-void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
+void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin)
 {
 	// HARDWARE NOTES
 	// For those using a SPI device for other devices than 165:
@@ -60,7 +60,6 @@ void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin, bool is_shared)
 	_spi_device = spi_device;
 	// Chip select pin setup
 	_latch_pin = latch_pin;
-	_is_shared = is_shared;
 }
 
 // call first all plug() for pin register, then plugSR if needed
@@ -196,9 +195,8 @@ void Din::read(uint8_t interrupted)
 			_digital_input_state[i] = 0;
 			for (uint8_t j=0; j < 8; j++) {
 				remote_port = (i*8)+j;
-				if (remote_port >= _remote_pin_digital_port) {
+				if (remote_port >= _remote_pin_digital_port)
 					break;
-				}
 				_digital_input_state[i] |= digitalRead(_din_pin_map[remote_port]) << j;
 			}
 		}
@@ -227,11 +225,6 @@ void Din::read(uint8_t interrupted)
 	}
 #else
 	if (_spi_device != nullptr) {
-	//if (_chain_size_sr != 0) {
-		// always inside ISR, if is shared make sure no one will try to handle while we do it
-		if ( _is_shared ) { 
-			noInterrupts();
-		}
 		_spi_device->beginTransaction(SPISettings(SPI_SPEED_DIN, MSBFIRST, SPI_MODE_DIN));
 		// pulsing the chip select pin to start capturing data
 		digitalWrite(_latch_pin, LOW);
@@ -242,9 +235,6 @@ void Din::read(uint8_t interrupted)
 			_digital_input_state[i] = (uint8_t) _spi_device->transfer(0x00); 
 		}
 		_spi_device->endTransaction();
-		if ( _is_shared ) { 
-			interrupts();
-		}
 		
 	}
 #endif

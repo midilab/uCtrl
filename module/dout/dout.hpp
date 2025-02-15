@@ -80,9 +80,8 @@ class Dout
 	uint32_t _blink_timer = 0;
 
 	SPIClass * _spi_device = nullptr;
-	void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2, bool is_shared = false);
+	void setSpi(SPIClass * spi_device = nullptr, uint8_t latch_pin = 2);
         int8_t _latch_pin = -1;
-        bool _is_shared = false;
 
 };
 
