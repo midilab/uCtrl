@@ -222,7 +222,12 @@ void Ain::lockAllControls()
 	} while (i);
 }
 
-uint16_t Ain::rangeMe(uint16_t value, uint16_t min, uint16_t max)
+uint16_t Ain::range(uint16_t value, uint16_t min, uint16_t max)
+{
+	return (value / (_user_adc_max_resolution / ((max - min) + 1))) + min;
+}
+
+inline uint16_t Ain::rangeVal(uint16_t value, uint16_t min, uint16_t max)
 {
 	return (value / (_adc_max_resolution / ((max - min) + 1))) + min;
 }
@@ -312,8 +317,8 @@ int16_t Ain::getData(uint8_t remote_port, uint16_t min, uint16_t max)
 		value = input_data;
 		last_value = _analog_input_last_state[remote_port];
 	} else {
-		value = rangeMe(input_data, min, max);
-		last_value = rangeMe(_analog_input_last_state[remote_port], min, max);		
+		value = rangeVal(input_data, min, max);
+		last_value = rangeVal(_analog_input_last_state[remote_port], min, max);		
 	}
 
 	// Process only the registered host_ports

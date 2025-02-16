@@ -53,8 +53,8 @@ bool Midi::read(uint8_t port, uint8_t interrupted)
 	// Use the stored function pointers to invoke member functions
 	// should always be atomic interrupted=0
 	//readFunctions[_port](midiArray[_port], interrupted);
-	midiArray[_port]->read(1);
-	//midiArray[_port]->read(0);
+	//midiArray[_port]->read(1);
+	midiArray[_port]->read(0);
 }
 
 void Midi::readAllPorts(uint8_t interrupted)
@@ -138,7 +138,12 @@ void Midi::writeMidiInterface(uint8_t port, uctrl::protocol::midi::MIDI_MESSAGE 
 			midiArray[port]->send(midi::ControlChange, 6, 0x7f & (msg->data2 >> 7), msg->channel+1, interrupted);
 			midiArray[port]->send(midi::ControlChange, 38, 0x7f & msg->data2, msg->channel+1, interrupted);
 			break;
-		/* 
+
+		case uctrl::protocol::midi::Sysex:
+			midiArray[port]->sendSysEx(msg, interrupted);
+			break;
+/*
+
 		case uctrl::protocol::midi::PitchBend:
 			if ( interrupted == 0 ) { 
 				ATOMIC(device->sendPitchBend(msg->data1, msg->channel+1))
@@ -147,15 +152,6 @@ void Midi::writeMidiInterface(uint8_t port, uctrl::protocol::midi::MIDI_MESSAGE 
 				device->sendPitchBend(msg->data1, msg->channel+1);
 			}
 			break;
-
-		case uctrl::protocol::midi::Sysex:
-			if ( interrupted == 0 ) { 
-				ATOMIC(device->sendSysEx(msg->data1, msg->sysex))
-			} else {
-				device->sendSysEx(msg->data1, msg->sysex);
-			}
-			break;
-
 
 		case uctrl::protocol::midi::AfterTouchPoly:
 			if ( interrupted == 0 ) { 
@@ -172,7 +168,7 @@ void Midi::writeMidiInterface(uint8_t port, uctrl::protocol::midi::MIDI_MESSAGE 
 				device->sendAfterTouch(msg->data1, msg->channel+1);
 			}
 			break;
- */
+			*/
 		default:
 			break;
     
