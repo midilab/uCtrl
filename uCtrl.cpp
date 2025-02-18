@@ -2,7 +2,7 @@
  *  @file       uCtrl.cpp
  *  Project     Arduino Library API interface for uMODULAR projects
  *  @brief      ...
- *  @version    1.1.0
+ *  @version    1.3.0
  *  @author     Romulo Silva
  *  @date       30/10/22
  *  @license    MIT - (c) 2022 - Romulo Silva - contact@midilab.co
@@ -75,18 +75,8 @@ namespace uctrl {
 // header of this file
 void enableTimer()
 {
-	if (uCtrl.on250usCallback) {
-		// begin at 250us task
-    	initTimer(250);
-	} else {
-		// otherwise keep 1ms to give processing some room
-		uCtrl.ms1Frequency /= 4;
-		uCtrl.dinFrequency /= 4;
-		uCtrl.touchFrequency /= 4;
-		uCtrl.doutFrequency /= 4;
-		uCtrl.ainFrequency /= 4;
-    	initTimer(1000);
-	}
+	// begin at 250us task
+	initTimer(250);
 }
 
 uCtrlClass::uCtrlClass()
@@ -288,45 +278,48 @@ bool uCtrlClass::initAin(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 
 void uCtrlClass::processAin()
 {
-	uint8_t size_of_ports;
+	//uint8_t size_of_ports;
 	int16_t value;
-	uint8_t port;
+	//uint8_t port;
 	
-	size_of_ports = ain->sizeOf();
+	//size_of_ports = ain->sizeOf();
 
 	// 
-	for ( port=0; port < size_of_ports; port++ ) {
-
+	//for ( port=0; port < size_of_ports; port++ ) {
+		ATOMIC(
 #if defined(USE_DEVICE_MODULE)
 		if ( device != nullptr ) {
-			value = ain->getData(port, device->getCtrlAdcMin(port), device->getCtrlAdcMax(port));
+			value = ain->getData(_ain_port_read, device->getCtrlAdcMin(_ain_port_read), device->getCtrlAdcMax(_ain_port_read));
 		} else {
-			value = ain->getData(port);
+			value = ain->getData(_ain_port_read);
 		}
 #else
-		value = ain->getData(port);
+		value = ain->getData(_ain_port_read);
 #endif
-	
+		)
+		
 		if ( value > -1 ) {
 
 #if defined(USE_DEVICE_MODULE)
 			if ( device != nullptr ) {
 				// make midi signal smooth as posible
-				if ( device->handleAnalogEvent(port, value, 1) == true ) {
+				if ( device->handleAnalogEvent(_ain_port_read, value, 1) == true ) {
 					//continue;
 				}
 			} else {
 				// ain callback is processed inside a timmer interrupt, so always be short inside it!
 				if ( ain->rtCallback != nullptr ) {
-					ain->rtCallback(port, value);
-					continue;
+					ain->rtCallback(_ain_port_read, value);
+					//continue;
+					return;
 				}
 			}  
 #else
 			// ain callback is processed inside a timmer interrupt, so always be short inside it!
 			if ( ain->rtCallback != nullptr ) {
-				ain->rtCallback(port, value);
-				continue;
+				ain->rtCallback(_ain_port_read, value);
+				//continue;
+				return;
 			}
 #endif
 
@@ -334,14 +327,14 @@ void uCtrlClass::processAin()
 			uint8_t tail = (_ain_event_queue.tail+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.tail+1);
 			if ( _ain_event_queue.head != tail )
 			{
-				_ain_event_queue.event[_ain_event_queue.tail].port = port;
+				_ain_event_queue.event[_ain_event_queue.tail].port = _ain_port_read;
 				_ain_event_queue.event[_ain_event_queue.tail].value = value;  
 				_ain_event_queue.tail = tail; 
 			}    
 
 		}
 		
-	}
+	//}
 }
 #endif
 
@@ -695,11 +688,34 @@ uint8_t _timerCapTouch = 0;
 uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
 
+// just for development debug, remove for release
+uint8_t _overflow = 0;
+uint8_t _overflow0 = 0;
+uint8_t _overflow1 = 0;
+uint8_t _overflow2 = 0;
+uint8_t _overflow3 = 0;
+uint8_t _overflow4 = 0;
+
 void uCtrlHandler() 
 {
+	if (_overflow == 1) 
+		Serial.println("overflow 250us!");
+	if (_overflow0 == 1) 
+		Serial.println("overflow 1ms!");
+	if (_overflow1 == 1) 
+		Serial.println("overflow din!");
+	if (_overflow2 == 1) 
+		Serial.println("overflow touch!");
+	if (_overflow3 == 1) 
+		Serial.println("overflow dout!");
+	if (_overflow4 == 1) 
+		Serial.println("overflow ain!");
+
 	// 250us call
 	if (uCtrl.on250usCallback) {
+		_overflow = 1;
 		uCtrl.on250usCallback();
+		_overflow = 0;
 	}
 
 	++_timerCounter1ms;
@@ -712,7 +728,9 @@ void uCtrlHandler()
 		// ~1ms call
 		if(_timerCounter1ms >= uCtrl.ms1Frequency) {
 			_timerCounter1ms = 0;
+			_overflow0 = 1;
 			uCtrl.on1msCallback();
+			_overflow0 = 0;
 			if (uCtrl.ms1Frequency > 1)
 				return;
 		}
@@ -723,7 +741,9 @@ void uCtrlHandler()
 		// ~2ms call
 		if (_timerCounterDin >= uCtrl.dinFrequency) {
 			_timerCounterDin = 0;
+			_overflow1 = 1;
 			uCtrl.din->read(1);
+			_overflow1 = 0;
 			return;
 		}
 	}
@@ -735,7 +755,9 @@ void uCtrlHandler()
 		if (_timerCapTouch >= uCtrl.touchFrequency) 
 		{
 			_timerCapTouch = 0;
+			_overflow2 = 1;
 			uCtrl.touch->read();
+			_overflow2 = 0;
 			return;
 		}
 	}
@@ -746,7 +768,9 @@ void uCtrlHandler()
 		// ~5ms call
 		if (_timerCounterDout >= uCtrl.doutFrequency) {
 			_timerCounterDout = 0;
+			_overflow3 = 1;
 			uCtrl.dout->flush(1);
+			_overflow3 = 0;
 			return;
 		}
 	}
@@ -758,7 +782,14 @@ void uCtrlHandler()
 		if (_timerCounterAin >= uCtrl.ainFrequency) 
 		{
 			_timerCounterAin = 0;
+			_overflow4 = 1;
 			uCtrl.processAin();
+			_overflow4 = 0;
+
+			++uCtrl._ain_port_read;
+			if (uCtrl._ain_port_read == uCtrl.ain->sizeOf())
+				uCtrl._ain_port_read = 0;
+
 			return;
 		}
 	}

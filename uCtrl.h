@@ -179,6 +179,7 @@ class uCtrlClass
 	void processAin();
 	uctrl::module::Ain * ain = nullptr;
     volatile EVENT_QUEUE _ain_event_queue;
+	uint8_t _ain_port_read = 0;
 #endif
 
 #if defined(USE_TOUCH_MODULE)
@@ -233,12 +234,12 @@ class uCtrlClass
 	void (*on1msCallback)();
 
 	// frequency setup for ISR controlled resources and processing
-	// mlutiple of base frequency (250us or 1ms)
+	// multiple of base frequency (250us or 1ms)
 	uint8_t ms1Frequency = 4;
 	uint8_t dinFrequency = 8;
 	uint8_t touchFrequency = 12;
 	uint8_t doutFrequency = 20;
-	uint8_t ainFrequency = 40;
+	uint8_t ainFrequency = 2; // 500us
 };
 
 }
