@@ -51,10 +51,9 @@ bool Midi::read(uint8_t port, uint8_t interrupted)
 	_port = port;
 
 	// Use the stored function pointers to invoke member functions
-	// should always be atomic interrupted=0
-	//readFunctions[_port](midiArray[_port], interrupted);
-	//midiArray[_port]->read(1);
-	midiArray[_port]->read(0);
+	// controlled by uCtrl interruption, should always be inside interruption. so dont waste too much processing power here
+	// or you can start getting some isr overflow processing
+	midiArray[_port]->read();
 }
 
 void Midi::readAllPorts(uint8_t interrupted)
@@ -196,7 +195,7 @@ void Midi::handleNoteOn(byte channel, byte pitch, byte velocity)
 		midi_module._message.data1 = pitch;
 		midi_module._message.data2 = velocity;
 		midi_module._message.type = uctrl::protocol::midi::NoteOn;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}
 }
 
@@ -207,7 +206,7 @@ void Midi::handleNoteOff(byte channel, byte pitch, byte velocity)
 		midi_module._message.data1 = pitch;
 		midi_module._message.data2 = velocity;
 		midi_module._message.type = uctrl::protocol::midi::NoteOff;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}	
 }
 
@@ -218,7 +217,7 @@ void Midi::handleCC(byte channel, byte number, byte value)
 		midi_module._message.data1 = number;
 		midi_module._message.data2 = value;
 		midi_module._message.type = uctrl::protocol::midi::ControlChange;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}	
 }
 
@@ -229,7 +228,7 @@ void Midi::handleAfterTouchPoly(byte channel, byte note, byte pressure)
 		midi_module._message.data1 = note;
 		midi_module._message.data2 = pressure;
 		midi_module._message.type = uctrl::protocol::midi::AfterTouchPoly;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}	
 }
 
@@ -240,7 +239,7 @@ void Midi::handleAfterTouchChannel(byte channel, byte pressure)
 		//midi_module._message.data1 = note;
 		midi_module._message.data2 = pressure;
 		midi_module._message.type = uctrl::protocol::midi::AfterTouchChannel;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}		
 }
 
@@ -252,7 +251,7 @@ void Midi::handlePitchBend(byte channel, int bend)
 		//midi_module._message.data2 = (uint8_t) bend & 0xff; // lsb
 		midi_module._message.data1 = (int16_t) bend;	
 		midi_module._message.type = uctrl::protocol::midi::PitchBend;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}		
 }
 
@@ -265,7 +264,7 @@ void Midi::handleClock(void)
 {
 	if ( midi_module._midiInputCallback != nullptr ) {
 		midi_module._message.type = uctrl::protocol::midi::Clock;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}	
 }
 
@@ -273,7 +272,7 @@ void Midi::handleStart(void)
 {
 	if ( midi_module._midiInputCallback != nullptr ) {
 		midi_module._message.type = uctrl::protocol::midi::Start;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}	
 }
 
@@ -281,7 +280,7 @@ void Midi::handleStop(void)
 {
 	if ( midi_module._midiInputCallback != nullptr ) {
 		midi_module._message.type = uctrl::protocol::midi::Stop;
-		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 0);
+		midi_module._midiInputCallback(&midi_module._message, midi_module._port+1, 1);
 	}	
 }
 
