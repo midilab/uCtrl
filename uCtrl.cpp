@@ -190,8 +190,7 @@ bool uCtrlClass::initOled(U8X8 * display)
 	return false;
 }
 
-//#if defined(USE_EXT_RAM)
-//#if defined(USE_DEVICE)
+#if defined(USE_DEVICE_MODULE) && defined(USE_RAM_MODULE)
 void uCtrlClass::processDisplay()
 {
 	if ( device->showDataFeedback() == true ) {
@@ -205,8 +204,7 @@ void uCtrlClass::processDisplay()
 		}			
 	}
 }
-//#endif // defined(USE_DEVICE)
-//#endif // defined(USE_EXT_RAM)
+#endif // defined(USE_DEVICE_MODULE) && defined(USE_RAM_MODULE)
 #endif
 
 #if defined(USE_MIDI_MODULE)
@@ -621,9 +619,11 @@ void uCtrlClass::run()
 
 #if defined(USE_OLED_MODULE)
 	if ( oled != nullptr ) {
+#if defined(USE_DEVICE_MODULE) && defined(USE_RAM_MODULE)
 		if ( device != nullptr && ram != nullptr ) {
     		processDisplay();
 		}
+#endif
 #if defined(USE_OLED_U8G2)
 		oled->refreshDisplay();
 #endif // defined(USE_OLED_U8G2)

@@ -33,17 +33,17 @@
 #include <SPI.h>
 
 // comment any non used module to reduce code size
-//#define USE_OLED_MODULE
+#define USE_OLED_MODULE
 #define USE_MIDI_MODULE
 #define USE_DOUT_MODULE
 #define USE_DIN_MODULE
 #define USE_AIN_MODULE
 //#define USE_TOUCH_MODULE
 #define USE_RAM_MODULE
-//#define USE_STORAGE_MODULE
+#define USE_STORAGE_MODULE
 //#define USE_SDCARD_MODULE
-//#define USE_PAGE_MODULE
-//#define USE_PAGE_MODULE_COMPONENT
+#define USE_PAGE_MODULE
+#define USE_PAGE_MODULE_COMPONENT
 //#define USE_DEVICE_MODULE
 
 // modules classes includes
