@@ -23,7 +23,7 @@
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE. 
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include "uCtrl.h"
@@ -98,7 +98,7 @@ bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select, bool is_shared)
 	if ( ram == nullptr )
 		ram = &ram_module;
 		//ram = new uctrl::module::Ram();
-	
+
 	if ( ram != nullptr ) {
 		ram->init(device, chip_select, is_shared);
 		return true;
@@ -111,16 +111,16 @@ bool uCtrlClass::initRam(SPIClass * device, uint8_t chip_select, bool is_shared)
 #if defined(USE_STORAGE_MODULE)
 bool uCtrlClass::initStorage(SPIClass * spi_device, bool is_shared)
 {
-	if ( storage == nullptr ) 
+	if ( storage == nullptr )
 		storage = new uctrl::module::Storage();
-	
+
 	if ( storage != nullptr ) {
 		storage->init(spi_device, is_shared);
 		return true;
 	} else {
 		storage->init();
 		return true;
-	}	
+	}
 
 	return false;
 }
@@ -129,15 +129,15 @@ bool uCtrlClass::initStorage(SPIClass * spi_device, bool is_shared)
 #if defined(USE_SDCARD_MODULE)
 bool uCtrlClass::initSdCard(SPIClass * spi_device, uint8_t chip_select, bool is_shared)
 {
-	if ( sdcard == nullptr ) 
+	if ( sdcard == nullptr )
 		sdcard = new uctrl::module::SdCard();
-	
+
 	if ( sdcard != nullptr ) {
 		sdcard->init(spi_device, chip_select, is_shared);
 		return true;
 	}
 
-	return false;	
+	return false;
 }
 #endif
 
@@ -146,7 +146,7 @@ bool uCtrlClass::initDevice(uint8_t device_number, uint16_t event_buffer_size, u
 {
 	if ( device == nullptr )
 		device = new uctrl::module::Device();
-	
+
 	if ( device != nullptr ) {
 		device->init(device_number, event_buffer_size, sysex_buffer_size, device_label_buffer_size);
 		return true;
@@ -161,7 +161,7 @@ bool uCtrlClass::initPage(uint8_t pages_size)
 {
 	if ( page == nullptr )
 		page = new uctrl::module::Page();
-	
+
 	if ( page != nullptr ) {
 		page->init(pages_size);
 		return true;
@@ -180,7 +180,7 @@ bool uCtrlClass::initOled(U8X8 * display)
 {
 	if ( oled == nullptr )
 		oled = new uctrl::module::Oled();
-	
+
 	if ( oled != nullptr ) {
 		// plug display
 		oled->plug(display);
@@ -200,8 +200,8 @@ void uCtrlClass::processDisplay()
 		if ( ((millis() - device->getDataFeedbackTimeout()) >= 1000) && device->getCtrlMode() != 2 ) {
 			device->setDataFeedback(false);
 			oled->setDisplayLockState(false);
-			oled->clearDisplay(1,1,1);				
-		}			
+			oled->clearDisplay(1,1,1);
+		}
 	}
 }
 #endif // defined(USE_DEVICE_MODULE) && defined(USE_RAM_MODULE)
@@ -214,11 +214,11 @@ bool uCtrlClass::initMidi()
 		midi = &midi_module;
 		//midi = new uctrl::module::Midi();
 	}
-	
+
 	if ( midi != nullptr ) {
 		return true;
 	}
-		
+
 	return false;
 }
 #endif
@@ -226,10 +226,10 @@ bool uCtrlClass::initMidi()
 #if defined(USE_DOUT_MODULE)
 bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin)
 {
-	if ( dout == nullptr ) 
+	if ( dout == nullptr )
 		dout = new uctrl::module::Dout();
-	
-	if ( dout != nullptr ) {	
+
+	if ( dout != nullptr ) {
 		if (spi_device != nullptr) {
 			dout->setSpi(spi_device, latch_pin);
 		}
@@ -243,9 +243,9 @@ bool uCtrlClass::initDout(SPIClass * spi_device, uint8_t latch_pin)
 #if defined(USE_DIN_MODULE)
 bool uCtrlClass::initDin(SPIClass * spi_device, uint8_t latch_pin)
 {
-	if ( din == nullptr ) 
+	if ( din == nullptr )
 		din = new uctrl::module::Din();
-	
+
 	if ( din != nullptr ) {
 		if (spi_device != nullptr) {
 			din->setSpi(spi_device, latch_pin);
@@ -262,7 +262,7 @@ bool uCtrlClass::initAin(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4)
 {
 	if ( ain == nullptr )
 		ain = new uctrl::module::Ain();
-	
+
 	if ( ain != nullptr ) {
 		// pin1 as argument means mux request to register
 		if (pin1 >= 0) {
@@ -279,10 +279,10 @@ void uCtrlClass::processAin()
 	//uint8_t size_of_ports;
 	int16_t value;
 	//uint8_t port;
-	
+
 	//size_of_ports = ain->sizeOf();
 
-	// 
+	//
 	//for ( port=0; port < size_of_ports; port++ ) {
 		ATOMIC(
 #if defined(USE_DEVICE_MODULE)
@@ -295,7 +295,7 @@ void uCtrlClass::processAin()
 		value = ain->getData(_ain_port_read);
 #endif
 		)
-		
+
 		if ( value > -1 ) {
 
 #if defined(USE_DEVICE_MODULE)
@@ -311,7 +311,7 @@ void uCtrlClass::processAin()
 					//continue;
 					return;
 				}
-			}  
+			}
 #else
 			// ain callback is processed inside a timmer interrupt, so always be short inside it!
 			if ( ain->rtCallback != nullptr ) {
@@ -326,12 +326,12 @@ void uCtrlClass::processAin()
 			if ( _ain_event_queue.head != tail )
 			{
 				_ain_event_queue.event[_ain_event_queue.tail].port = _ain_port_read;
-				_ain_event_queue.event[_ain_event_queue.tail].value = value;  
-				_ain_event_queue.tail = tail; 
-			}    
+				_ain_event_queue.event[_ain_event_queue.tail].value = value;
+				_ain_event_queue.tail = tail;
+			}
 
 		}
-		
+
 	//}
 }
 #endif
@@ -343,7 +343,7 @@ bool uCtrlClass::initCapTouch(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4
 		//touch = &cap_touch_module;
 		touch = new uctrl::module::CapTouch();
 	}
-	
+
 	if ( touch != nullptr ) {
 		touch->setControlPins(pin1, pin2, pin3, pin4);
 		return true;
@@ -371,7 +371,7 @@ void uCtrlClass::init()
 		din->init();
 	}
 #endif
-	
+
 #if defined(USE_DOUT_MODULE)
 	if (dout != nullptr) {
 		dout->init();
@@ -441,7 +441,7 @@ void uCtrlClass::run()
 		{
 			ATOMIC(
 				port = din->event_queue.event[din->event_queue.head].port;
-				value = din->event_queue.event[din->event_queue.head].value; 
+				value = din->event_queue.event[din->event_queue.head].value;
 				head = (din->event_queue.head+1)%(din->event_queue.size);
 				din->event_queue.head = head;
 			)
@@ -460,15 +460,15 @@ void uCtrlClass::run()
 #if defined(USE_PAGE_COMPONENT)
 					// before each processEvent we need to: check if pot_ctrl is needed
 					if(page->_use_nav_pot) {
-						// if it is, check if it is inc or dec commands... 
-						if (port == page->_nav_ctrl_port.incrementer || 
+						// if it is, check if it is inc or dec commands...
+						if (port == page->_nav_ctrl_port.incrementer ||
 							port == page->_nav_ctrl_port.decrementer ||
-							port == page->_nav_ctrl_port.incrementer_secondary || 
+							port == page->_nav_ctrl_port.incrementer_secondary ||
 							port == page->_nav_ctrl_port.decrementer_secondary ||
-							port == page->_nav_ctrl_port.up || 
+							port == page->_nav_ctrl_port.up ||
 							port == page->_nav_ctrl_port.down ||
-							port == page->_nav_ctrl_port.left || 
-							port == page->_nav_ctrl_port.right) 
+							port == page->_nav_ctrl_port.left ||
+							port == page->_nav_ctrl_port.right)
 						{
 							// if it is. lock ain pot control to avoid mess with inc/dec changes
 							ain->lockControl(page->_nav_ctrl_port.pot);
@@ -486,7 +486,7 @@ void uCtrlClass::run()
 				din->callback(port, value);
 		}
 		//return;
-		
+
 		// set port_ref in case other digital modules were initialized
 		port_ref = din->sizeOf();
 	}
@@ -502,7 +502,7 @@ void uCtrlClass::run()
 			// use port_ref in case din were initialized
 			ATOMIC(
 				port = touch->event_queue.event[touch->event_queue.head].port+port_ref;
-				value = touch->event_queue.event[touch->event_queue.head].value; 
+				value = touch->event_queue.event[touch->event_queue.head].value;
 				head = (touch->event_queue.head+1)%(touch->event_queue.size);
 				touch->event_queue.head = head;
 			)
@@ -521,15 +521,15 @@ void uCtrlClass::run()
 #if defined(USE_PAGE_COMPONENT)
 					// before each processEvent we need to: check if pot_ctrl is needed
 					if(page->_use_nav_pot) {
-						// if it is, check if it is inc or dec commands... 
-						if (port == page->_nav_ctrl_port.incrementer || 
+						// if it is, check if it is inc or dec commands...
+						if (port == page->_nav_ctrl_port.incrementer ||
 							port == page->_nav_ctrl_port.decrementer ||
-							port == page->_nav_ctrl_port.incrementer_secondary || 
+							port == page->_nav_ctrl_port.incrementer_secondary ||
 							port == page->_nav_ctrl_port.decrementer_secondary ||
-							port == page->_nav_ctrl_port.up || 
+							port == page->_nav_ctrl_port.up ||
 							port == page->_nav_ctrl_port.down ||
-							port == page->_nav_ctrl_port.left || 
-							port == page->_nav_ctrl_port.right) 
+							port == page->_nav_ctrl_port.left ||
+							port == page->_nav_ctrl_port.right)
 						{
 							// if it is. lock ain pot control to avoid mess with inc/dec changes
 							ain->lockControl(page->_nav_ctrl_port.pot);
@@ -556,10 +556,10 @@ void uCtrlClass::run()
 		// read while empty
 		while ( _ain_event_queue.head != _ain_event_queue.tail )
 		{
-			ATOMIC( 
+			ATOMIC(
 				port = _ain_event_queue.event[_ain_event_queue.head].port;
-				value = _ain_event_queue.event[_ain_event_queue.head].value;  
-				head = (_ain_event_queue.head+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.head+1);					
+				value = _ain_event_queue.event[_ain_event_queue.head].value;
+				head = (_ain_event_queue.head+1) >= _ain_event_queue.size ? 0 : (_ain_event_queue.head+1);
 				_ain_event_queue.head = head;
 			)
 
@@ -661,17 +661,17 @@ uint8_t uCtrlClass::getOutputPorts()
 {
 #if defined(USE_MIDI_MODULE)
 	return midi->sizeOf();
-#endif	
+#endif
 /*
-#if defined(UMODULAR_DMX)	
+#if defined(UMODULAR_DMX)
 
 #endif // defined(UMODULAR_DMX)
-	
-#if defined(UMODULAR_CV)	
+
+#if defined(UMODULAR_CV)
 
 #endif // defined(UMODULAR_CV)
 */
-		
+
 }
 
 } // end namespace uctrl
@@ -689,33 +689,37 @@ uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
 
 // just for development debug, remove for release
+/*
 uint8_t _overflow = 0;
 uint8_t _overflow0 = 0;
 uint8_t _overflow1 = 0;
 uint8_t _overflow2 = 0;
 uint8_t _overflow3 = 0;
 uint8_t _overflow4 = 0;
+*/
 
-void uCtrlHandler() 
+void uCtrlHandler()
 {
-	if (_overflow == 1) 
+	/*
+	if (_overflow == 1)
 		Serial.println("overflow 250us!");
-	if (_overflow0 == 1) 
+	if (_overflow0 == 1)
 		Serial.println("overflow 1ms!");
-	if (_overflow1 == 1) 
+	if (_overflow1 == 1)
 		Serial.println("overflow din!");
-	if (_overflow2 == 1) 
+	if (_overflow2 == 1)
 		Serial.println("overflow touch!");
-	if (_overflow3 == 1) 
+	if (_overflow3 == 1)
 		Serial.println("overflow dout!");
-	if (_overflow4 == 1) 
+	if (_overflow4 == 1)
 		Serial.println("overflow ain!");
+	*/
 
 	// 250us call
 	if (uCtrl.on250usCallback) {
-		_overflow = 1;
+		//_overflow = 1;
 		uCtrl.on250usCallback();
-		_overflow = 0;
+		//_overflow = 0;
 	}
 
 	++_timerCounter1ms;
@@ -723,14 +727,14 @@ void uCtrlHandler()
 	++_timerCapTouch;
 	++_timerCounterAin;
 	++_timerCounterDout;
-	
+
 	if (uCtrl.on1msCallback) {
 		// ~1ms call
 		if(_timerCounter1ms >= uCtrl.ms1Frequency) {
 			_timerCounter1ms = 0;
-			_overflow0 = 1;
+			//_overflow0 = 1;
 			uCtrl.on1msCallback();
-			_overflow0 = 0;
+			//_overflow0 = 0;
 			if (uCtrl.ms1Frequency > 1)
 				return;
 		}
@@ -741,9 +745,9 @@ void uCtrlHandler()
 		// ~2ms call
 		if (_timerCounterDin >= uCtrl.dinFrequency) {
 			_timerCounterDin = 0;
-			_overflow1 = 1;
+			//_overflow1 = 1;
 			uCtrl.din->read(1);
-			_overflow1 = 0;
+			//_overflow1 = 0;
 			return;
 		}
 	}
@@ -752,12 +756,12 @@ void uCtrlHandler()
 #if defined(USE_TOUCH_MODULE)
 	if (uCtrl.touch != nullptr) {
 		// ~3ms call
-		if (_timerCapTouch >= uCtrl.touchFrequency) 
+		if (_timerCapTouch >= uCtrl.touchFrequency)
 		{
 			_timerCapTouch = 0;
-			_overflow2 = 1;
+			//_overflow2 = 1;
 			uCtrl.touch->read();
-			_overflow2 = 0;
+			//_overflow2 = 0;
 			return;
 		}
 	}
@@ -768,9 +772,9 @@ void uCtrlHandler()
 		// ~5ms call
 		if (_timerCounterDout >= uCtrl.doutFrequency) {
 			_timerCounterDout = 0;
-			_overflow3 = 1;
+			//_overflow3 = 1;
 			uCtrl.dout->flush(1);
-			_overflow3 = 0;
+			//_overflow3 = 0;
 			return;
 		}
 	}
@@ -779,12 +783,12 @@ void uCtrlHandler()
 #if defined(USE_AIN_MODULE)
   	if (uCtrl.ain != nullptr) {
 		// ~10ms call
-		if (_timerCounterAin >= uCtrl.ainFrequency) 
+		if (_timerCounterAin >= uCtrl.ainFrequency)
 		{
 			_timerCounterAin = 0;
-			_overflow4 = 1;
+			//_overflow4 = 1;
 			uCtrl.processAin();
-			_overflow4 = 0;
+			//_overflow4 = 0;
 
 			++uCtrl._ain_port_read;
 			if (uCtrl._ain_port_read == uCtrl.ain->sizeOf())

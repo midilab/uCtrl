@@ -210,7 +210,7 @@ void Dout::write(uint8_t remote_port, uint8_t value, uint8_t interrupted)
 			if (interrupted == 0) {
 				_change_flag = true;
 			} else {
-				memcpy(_digital_output_buffer[chain_group], _digital_output_state[chain_group], sizeof(uint8_t));
+				memcpy(&_digital_output_buffer[chain_group], &_digital_output_state[chain_group], sizeof(uint8_t));
 				_flush_dout = true;
 			}
 		}

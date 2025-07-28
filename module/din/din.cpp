@@ -23,7 +23,7 @@
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE. 
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #include "../../uCtrl.h"
@@ -33,7 +33,7 @@
 #include "din.hpp"
 
 namespace uctrl { namespace module {
-    
+
 Din::Din()
 {
 
@@ -50,7 +50,7 @@ Din::~Din()
 uint8_t Din::sizeOf()
 {
 	return _remote_digital_port;
-}			
+}
 
 void Din::setSpi(SPIClass * spi_device, uint8_t latch_pin)
 {
@@ -69,11 +69,13 @@ void Din::plug(uint8_t setup)
 	//	return;
 
 	// alloc once and forever policy!
-	if (_din_pin_map == nullptr) {
-		_din_pin_map = (uint8_t*) malloc( sizeof(uint8_t) );
-	} else {
-		_din_pin_map = (uint8_t*) realloc( _din_pin_map, sizeof(uint8_t) * (_remote_pin_digital_port+1) );
+	// Reallocate by creating a new array, copying data, and deleting the old one
+	uint8_t* new_din_pin_map = new uint8_t[_remote_pin_digital_port + 1];
+	if (_din_pin_map != nullptr) {
+		memcpy(new_din_pin_map, _din_pin_map, sizeof(uint8_t) * _remote_pin_digital_port);
+		delete[] _din_pin_map;
 	}
+	_din_pin_map = new_din_pin_map;
 
 	_din_pin_map[_remote_pin_digital_port] = setup;
 	++_remote_pin_digital_port;
@@ -114,7 +116,7 @@ void Din::encoder(uint8_t channel_a_id, uint8_t channel_b_id)
 	state_group = floor(channel_a/8) + chain_gap;
 
 	if (channel_b - channel_a == 1) {
-		// register detent pin channel a 
+		// register detent pin channel a
 		_digital_detent_pin[state_group] |= 1 << (channel_a % 8);
 		//_digital_detent_pin[state_group] |= 1 << (channel_b_id % 8);
 	} else {
@@ -130,15 +132,15 @@ void Din::init()
 {
 #if defined(USE_DIN_BITBANG_DRIVER)
 	pinModeFast(DIN_LATCH_PIN, OUTPUT);
-	pinModeFast(DIN_DATA_PIN, INPUT); 
-	pinModeFast(DIN_CLOCK_PIN, OUTPUT);	
-	digitalWriteFast(DIN_LATCH_PIN, HIGH);	
+	pinModeFast(DIN_DATA_PIN, INPUT);
+	pinModeFast(DIN_CLOCK_PIN, OUTPUT);
+	digitalWriteFast(DIN_LATCH_PIN, HIGH);
 #endif
 	// should we init spi driver for shiftregister?
 	if (_spi_device != nullptr) {
 	//if (_chain_size_sr != 0) {
 		pinMode(_latch_pin, OUTPUT);
-		digitalWrite(_latch_pin, HIGH);	
+		digitalWrite(_latch_pin, HIGH);
 		// initing SPI bus
 		_spi_device->begin();
 	}
@@ -157,7 +159,7 @@ void Din::init()
 	}
 
 	// For each 8 buttons alloc 1 byte memory area state data and other 1 byte for last state data.
-	// Each bit represents the value state readed by digital inputs	
+	// Each bit represents the value state readed by digital inputs
 	// alloc rules: alloc once and forever! no memory free call at runtime
 	if ( _remote_digital_port > 0 ) {
 		//_digital_input_state = (uint8_t*) malloc( sizeof(uint8_t) * _chain_size );
@@ -183,7 +185,7 @@ void Din::read(uint8_t interrupted)
 {
 	static bool state_change;
 	state_change = false;
-	
+
 	// copy our last state to start read new one
 	memcpy(_digital_input_last_state, _digital_input_state, sizeof(uint8_t) * _chain_size);
 
@@ -191,7 +193,7 @@ void Din::read(uint8_t interrupted)
 	if (_chain_size_pin > 0) {
 		// Read port per port
 		uint8_t remote_port = 0;
-		for (uint8_t i=0; i < _chain_size_pin; i++) {			
+		for (uint8_t i=0; i < _chain_size_pin; i++) {
 			_digital_input_state[i] = 0;
 			for (uint8_t j=0; j < 8; j++) {
 				remote_port = (i*8)+j;
@@ -209,11 +211,11 @@ void Din::read(uint8_t interrupted)
 	// latch and load!
 	digitalWriteFast(DIN_LATCH_PIN, LOW);
 	digitalWriteFast(DIN_LATCH_PIN, HIGH);
-	
+
 	// Read byte per byte
-	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {	
+	for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
 		// shift in that byte
-		//_digital_input_state[i] = (uint8_t) shiftIn(DIN_DATA_PIN, DIN_CLOCK_PIN, MSBFIRST); 				
+		//_digital_input_state[i] = (uint8_t) shiftIn(DIN_DATA_PIN, DIN_CLOCK_PIN, MSBFIRST);
 		_digital_input_state[i] = 0;
 		for (uint8_t j=0; j < 8; ++j) {
 			digitalWriteFast(DIN_CLOCK_PIN, HIGH);
@@ -232,10 +234,10 @@ void Din::read(uint8_t interrupted)
 		//_spi_device->transfer(_digital_input_state[_chain_size_pin], _chain_size-_chain_size_pin);
 		// Read byte per byte
 		for (uint8_t i=_chain_size_pin; i < _chain_size; i++) {
-			_digital_input_state[i] = (uint8_t) _spi_device->transfer(0x00); 
+			_digital_input_state[i] = (uint8_t) _spi_device->transfer(0x00);
 		}
 		_spi_device->endTransaction();
-		
+
 	}
 #endif
 
@@ -304,8 +306,8 @@ void Din::processQueue()
 						continue;
 					}
 					event_queue.event[event_queue.tail].port = port;
-					event_queue.event[event_queue.tail].value = value;  
-					event_queue.tail = tail; 
+					event_queue.event[event_queue.tail].value = value;
+					event_queue.tail = tail;
 				}
 			}
 		}
@@ -316,25 +318,25 @@ int8_t Din::getData(uint8_t port)
 {
 	uint8_t state_group, state_port;
 
-	if ( _remote_digital_port == 0 ) 
+	if ( _remote_digital_port == 0 )
 		return -1;
 
 	// find our indexes
-	state_group = floor(port/8);	
+	state_group = floor(port/8);
 	state_port = port%8;
 
 	// Check for digital state changes
 	if ( BIT_VALUE(_digital_input_state[state_group], state_port) != BIT_VALUE(_digital_input_last_state[state_group], state_port) ) {
 		return !BIT_VALUE(_digital_input_state[state_group], state_port);
 	}
-	
+
 	return -1;
 }
 
 int8_t Din::getDataRaw(uint8_t port)
 {
-	if ( _remote_digital_port == 0 ) 
-		return -1;	
+	if ( _remote_digital_port == 0 )
+		return -1;
 
 	return !BIT_VALUE( _digital_input_state[(uint8_t)(floor(port / 8))], (port % 8) );
 }

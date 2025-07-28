@@ -46,7 +46,7 @@
 
 namespace uctrl { namespace module { 
 
-#define MAX_MIDI_DEVICE 2
+#define MAX_MIDI_DEVICE 4
 
 class Midi
 {
