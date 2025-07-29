@@ -23,27 +23,27 @@
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE. 
+ * DEALINGS IN THE SOFTWARE.
  */
 
 #ifndef __U_CTRL_H__
 #define __U_CTRL_H__
 
-#include <Arduino.h> 
+#include <Arduino.h>
 #include <SPI.h>
 
 // comment any non used module to reduce code size
-//#define USE_OLED_MODULE
+#define USE_OLED_MODULE
 #define USE_MIDI_MODULE
 #define USE_DOUT_MODULE
 #define USE_DIN_MODULE
 #define USE_AIN_MODULE
-//#define USE_TOUCH_MODULE
-#define USE_RAM_MODULE
-//#define USE_STORAGE_MODULE
+#define USE_TOUCH_MODULE
+//#define USE_RAM_MODULE
+#define USE_STORAGE_MODULE
 //#define USE_SDCARD_MODULE
-//#define USE_PAGE_MODULE
-//#define USE_PAGE_MODULE_COMPONENT
+#define USE_PAGE_MODULE
+#define USE_PAGE_MODULE_COMPONENT
 //#define USE_DEVICE_MODULE
 
 // modules classes includes
@@ -93,11 +93,11 @@
 #endif
 
 // tools
-#define BLINK_TIME 250	
+#define BLINK_TIME 250
 
 namespace uctrl {
 
-typedef struct 
+typedef struct
 {
 	uint16_t port;
 	uint16_t value;
@@ -111,32 +111,32 @@ typedef struct
 	uint8_t size; //of the buffer
 } EVENT_QUEUE;
 
-class uCtrlClass 
+class uCtrlClass
 {
-	
+
   public:
-  
+
 	uCtrlClass();
 	~uCtrlClass();
-	
+
 	//
 	// Grab config data and create all memory data layout
 	//
 	void init();
-	
+
 	//
 	// modules access
 	//
 #if defined(USE_RAM_MODULE)
 	// external ram module
 	bool initRam(SPIClass * device, uint8_t chip_select = 2, bool is_shared = false);
-	uctrl::module::Ram * ram = nullptr;		
+	uctrl::module::Ram * ram = nullptr;
 #endif
 
 #if defined(USE_STORAGE_MODULE)
 	// generic storage module for epprom and sdcard
 	bool initStorage(SPIClass * spi_device = nullptr, bool is_shared = false);
-	uctrl::module::Storage * storage = nullptr;	
+	uctrl::module::Storage * storage = nullptr;
 #endif
 
 #if defined(USE_OLED_MODULE)
@@ -190,7 +190,7 @@ class uCtrlClass
 
 #if defined(USE_SDCARD_MODULE)
 	// sdcard module
-	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2, bool is_shared = false);	
+	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2, bool is_shared = false);
 	uctrl::module::SdCard * sdcard;
 #endif
 
@@ -213,7 +213,7 @@ class uCtrlClass
 	uint8_t getOutputPorts();
 	uint8_t getAnalogPorts();
 	uint8_t getDigitalPorts();
-	
+
 	// runtime handler
 	void run();
 
@@ -247,4 +247,3 @@ class uCtrlClass
 extern uctrl::uCtrlClass uCtrl;
 
 #endif // __U_CTRL_H__
-

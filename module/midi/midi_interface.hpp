@@ -7,7 +7,7 @@
 class BaseMidiInterface {
 public:
     virtual ~BaseMidiInterface() {}
-    virtual void read() = 0;
+    virtual void read(uint8_t interrupted) = 0;
     virtual void send(const midi::MidiType& inType, const midi::DataByte& inData1,
                     const midi::DataByte& inData2, const midi::Channel& inChannel,
                     uint8_t interrupted = 0) = 0;
@@ -20,12 +20,12 @@ public:
     MidiInterfaceWrapper(T* midiInterface) : _midiInterface(midiInterface) {}
 
     // Replace static_cast with direct access to _midiInterface
-    void read() {
-        //if (interrupted == 0) {
-        //    MIDI_ATOMIC(_midiInterface->read());
-        //} else {
+    void read(uint8_t interrupted = 0) {
+        if (interrupted == 0) {
+            MIDI_ATOMIC(_midiInterface->read());
+        } else {
             _midiInterface->read();
-        //}
+        }
     }
 
     void send(const midi::MidiType& inType, const midi::DataByte& inData1,
@@ -58,12 +58,12 @@ public:
     MidiInterfaceWrapperTeensy(T* midiInterface) : _midiInterface(midiInterface) {}
 
     // Replace static_cast with direct access to _midiInterface
-    void read() {
-        //if (interrupted == 0) {
-        //    MIDI_ATOMIC(_midiInterface->read());
-        //} else {
+    void read(uint8_t interrupted = 0) {
+        if (interrupted == 0) {
+            MIDI_ATOMIC(_midiInterface->read());
+        } else {
             _midiInterface->read();
-        //}
+        }
     }
 
     void send(const midi::MidiType& inType, const midi::DataByte& inData1,
@@ -88,5 +88,5 @@ private:
     T* _midiInterface;
 };
 #endif
-    
+
 #endif
