@@ -46,6 +46,9 @@
 #define USE_PAGE_MODULE_COMPONENT
 //#define USE_DEVICE_MODULE
 
+// For serial print of any ISR processing overflow
+//#define DEBUG_HANDLER
+
 // modules classes includes
 #if defined(USE_OLED_MODULE)
 #include "module/oled/oled.hpp"
@@ -235,10 +238,10 @@ class uCtrlClass
 
 	// frequency setup for ISR controlled resources and processing
 	// multiple of base frequency (250us or 1ms)
-	uint8_t ms1Frequency = 4;
-	uint8_t dinFrequency = 8;
-	uint8_t touchFrequency = 12;
-	uint8_t doutFrequency = 20;
+	uint8_t ms1Frequency = 4; // 1ms
+	uint8_t dinFrequency = 8; // 2ms
+	uint8_t touchFrequency = 12; // 3ms
+	uint8_t doutFrequency = 20; // 5ms
 	uint8_t ainFrequency = 2; // 500us
 };
 

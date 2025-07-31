@@ -688,20 +688,18 @@ uint8_t _timerCapTouch = 0;
 uint8_t _timerCounterDin = 0;
 uint8_t _timerCounterDout = 0;
 
-// just for development debug, remove for release
-/*
+#if defined(DEBUG_HANDLER)
 uint8_t _overflow = 0;
 uint8_t _overflow0 = 0;
 uint8_t _overflow1 = 0;
 uint8_t _overflow2 = 0;
 uint8_t _overflow3 = 0;
 uint8_t _overflow4 = 0;
-*/
 
-void uCtrlHandler()
+// for debug only
+void degubHandlerOverflow()
 {
-	/*
-	if (_overflow == 1)
+    if (_overflow == 1)
 		Serial.println("overflow 250us!");
 	if (_overflow0 == 1)
 		Serial.println("overflow 1ms!");
@@ -713,13 +711,24 @@ void uCtrlHandler()
 		Serial.println("overflow dout!");
 	if (_overflow4 == 1)
 		Serial.println("overflow ain!");
-	*/
+}
+#endif
+
+void uCtrlHandler()
+{
+#if defined(DEBUG_HANDLER)
+    degubHandlerOverflow();
+#endif
 
 	// 250us call
 	if (uCtrl.on250usCallback) {
-		//_overflow = 1;
+#if defined(DEBUG_HANDLER)
+		_overflow = 1;
+#endif
 		uCtrl.on250usCallback();
-		//_overflow = 0;
+#if defined(DEBUG_HANDLER)
+		_overflow = 0;
+#endif
 	}
 
 	++_timerCounter1ms;
@@ -732,11 +741,14 @@ void uCtrlHandler()
 		// ~1ms call
 		if(_timerCounter1ms >= uCtrl.ms1Frequency) {
 			_timerCounter1ms = 0;
-			//_overflow0 = 1;
+#if defined(DEBUG_HANDLER)
+			_overflow0 = 1;
+#endif
 			uCtrl.on1msCallback();
-			//_overflow0 = 0;
-			if (uCtrl.ms1Frequency > 1)
-				return;
+#if defined(DEBUG_HANDLER)
+			_overflow0 = 0;
+#endif
+			return;
 		}
 	}
 
@@ -745,9 +757,13 @@ void uCtrlHandler()
 		// ~2ms call
 		if (_timerCounterDin >= uCtrl.dinFrequency) {
 			_timerCounterDin = 0;
-			//_overflow1 = 1;
+#if defined(DEBUG_HANDLER)
+			_overflow1 = 1;
+#endif
 			uCtrl.din->read(1);
-			//_overflow1 = 0;
+#if defined(DEBUG_HANDLER)
+			_overflow1 = 0;
+#endif
 			return;
 		}
 	}
@@ -759,9 +775,13 @@ void uCtrlHandler()
 		if (_timerCapTouch >= uCtrl.touchFrequency)
 		{
 			_timerCapTouch = 0;
-			//_overflow2 = 1;
+#if defined(DEBUG_HANDLER)
+			_overflow2 = 1;
+#endif
 			uCtrl.touch->read();
-			//_overflow2 = 0;
+#if defined(DEBUG_HANDLER)
+			_overflow2 = 0;
+#endif
 			return;
 		}
 	}
@@ -772,9 +792,13 @@ void uCtrlHandler()
 		// ~5ms call
 		if (_timerCounterDout >= uCtrl.doutFrequency) {
 			_timerCounterDout = 0;
-			//_overflow3 = 1;
+#if defined(DEBUG_HANDLER)
+			_overflow3 = 1;
+#endif
 			uCtrl.dout->flush(1);
-			//_overflow3 = 0;
+#if defined(DEBUG_HANDLER)
+			_overflow3 = 0;
+#endif
 			return;
 		}
 	}
@@ -786,11 +810,15 @@ void uCtrlHandler()
 		if (_timerCounterAin >= uCtrl.ainFrequency)
 		{
 			_timerCounterAin = 0;
-			//_overflow4 = 1;
+#if defined(DEBUG_HANDLER)
+			_overflow4 = 1;
+#endif
 			uCtrl.processAin();
-			//_overflow4 = 0;
+#if defined(DEBUG_HANDLER)
+			_overflow4 = 0;
+#endif
 
-			++uCtrl._ain_port_read;
+            ++uCtrl._ain_port_read;
 			if (uCtrl._ain_port_read == uCtrl.ain->sizeOf())
 				uCtrl._ain_port_read = 0;
 
