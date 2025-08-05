@@ -72,7 +72,7 @@ void Din::plug(uint8_t setup)
 	// Reallocate by creating a new array, copying data, and deleting the old one
 	uint8_t* new_din_pin_map = new uint8_t[_remote_pin_digital_port + 1];
 	if (_din_pin_map != nullptr) {
-		memcpy(new_din_pin_map, _din_pin_map, sizeof(uint8_t) * _remote_pin_digital_port);
+		memcpy(new_din_pin_map, _din_pin_map, sizeof(uint8_t) * (_remote_pin_digital_port+1));
 		delete[] _din_pin_map;
 	}
 	_din_pin_map = new_din_pin_map;
