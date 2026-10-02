@@ -43,6 +43,7 @@ CapTouch::~CapTouch()
 {
 	delete[] _digital_input_state;
 	delete[] _digital_input_last_state;
+	delete[] _hyst_prev;
 	free(_port);
 }
 
@@ -109,6 +110,12 @@ void CapTouch::init()
 			_digital_input_state[i] = 0;
 			_digital_input_last_state[i] = 0;
 		}
+
+		_hyst_prev = new uint8_t[_remote_touch_port];
+		for (uint8_t i=0; i < _remote_touch_port; i++) {
+			_hyst_prev[i] = 0;
+		}
+
 		_next_touch_port = 0;
 		// since we use the post process of CapTouch as a wait time for mux change port signal to propagate lets select first one
 		selectMuxPort(_next_touch_port);	
@@ -122,6 +129,8 @@ void CapTouch::init()
 void CapTouch::setThreshold(uint16_t threshold)
 {
 	_capacitance_threshold = threshold;
+	// release level for hysteresis: prevents chatter while finger rests on threshold
+	_capacitance_threshold_off = threshold > 20 ? threshold - 20 : 0;
 }
 
 void CapTouch::selectMuxPort(uint8_t port)
@@ -138,6 +147,7 @@ void CapTouch::selectMuxPort(uint8_t port)
 // runs inside interruption
 void CapTouch::read()
 {
+	uint16_t raw;
 	uint16_t value;
 
 	// find our indexes
@@ -151,15 +161,24 @@ void CapTouch::read()
 		_digital_input_state[group_analog_port] = 0;
 	}
 
+	// last debounced state of this channel (previous scan)
+	uint8_t emitted_prev = BIT_VALUE(_digital_input_last_state[group_analog_port], group_touch_port);
+
 	if (READ_BUFFER_SIZE == 1) {
-		value = fastTouchRead(_port[group_analog_port]) > _capacitance_threshold ? 1 : 0;
+		raw = fastTouchRead(_port[group_analog_port]);
 	} else {
-		value = 0;
+		raw = 0;
 		for(uint8_t k=0; k < READ_BUFFER_SIZE; k++) {
-			value += fastTouchRead(_port[group_analog_port]);
+			raw += fastTouchRead(_port[group_analog_port]);
 		}
-		value = (value / READ_BUFFER_SIZE) > _capacitance_threshold ? 1 : 0;
+		raw /= READ_BUFFER_SIZE;
 	}
+
+	// hysteresis: ON above threshold, OFF below threshold-off, hold in between
+	uint8_t cand = raw > _capacitance_threshold ? 1 : (raw < _capacitance_threshold_off ? 0 : emitted_prev);
+	// 2-scan debounce: accept a candidate only after two consecutive scans agree
+	value = cand == _hyst_prev[_next_touch_port] ? cand : emitted_prev;
+	_hyst_prev[_next_touch_port] = cand;
 
 	// select next mux port while processing this one to avoid crosstalk issues
 	_next_touch_port = ++_next_touch_port % _remote_touch_port;
@@ -167,7 +186,7 @@ void CapTouch::read()
 
 	_digital_input_state[group_analog_port] |= value << group_touch_port;
 
-	if ( value != BIT_VALUE(_digital_input_last_state[group_analog_port], group_touch_port) ) {
+	if ( value != emitted_prev ) {
 		// we got a change
 		uint8_t port = (group_analog_port*16)+group_touch_port;
 		

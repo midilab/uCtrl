@@ -240,7 +240,7 @@ class uCtrlClass
 	// multiple of base frequency (250us or 1ms)
 	uint8_t ms1Frequency = 4; // 1ms
 	uint8_t dinFrequency = 8; // 2ms
-	uint8_t touchFrequency = 12; // 3ms
+	uint8_t touchFrequency = 2; // 0.5ms, full 32ch scan = 16ms
 	uint8_t doutFrequency = 20; // 5ms
 	uint8_t ainFrequency = 2; // 500us
 };

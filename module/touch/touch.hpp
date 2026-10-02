@@ -34,9 +34,9 @@
 
 namespace uctrl { namespace module {
 
-#define TOUCH_EVENT_QUEUE_SIZE	4
+#define TOUCH_EVENT_QUEUE_SIZE	8
 
-#define READ_BUFFER_SIZE	1
+#define READ_BUFFER_SIZE	3
 
 typedef struct 
 {
@@ -90,12 +90,17 @@ class CapTouch
 		uint16_t * _digital_input_state = nullptr;
 		uint16_t * _digital_input_last_state = nullptr;
 
+		// previous scan hysteresis candidate per channel, for 2-scan debounce
+		uint8_t * _hyst_prev = nullptr;
+
 		uint8_t _host_analog_port = 0;
 		uint8_t _remote_touch_port = 0; 
 		uint8_t _current_touch_port = 0; 
 		uint8_t _next_touch_port = 0; 
 
 		uint16_t _capacitance_threshold = 40;
+		// release level: on-level minus hysteresis margin, derived in setThreshold()
+		uint16_t _capacitance_threshold_off = 20;
 
     	volatile TOUCH_EVENT_QUEUE event_queue;	
 			

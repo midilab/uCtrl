@@ -389,7 +389,7 @@ int fastTouchRead(int pin)
 {
     pinMode(pin, OUTPUT_OPENDRAIN);
     digitalWriteFast(pin, LOW);
-    delayMicroseconds(50);
+    delayMicroseconds(10); // RC settle is a few us; 10us still >=5tau
     /* disable interrupts */
     noInterrupts();
     pinMode(pin, INPUT_PULLUP);
