@@ -191,6 +191,14 @@ class uCtrlClass
 	uctrl::module::CapTouch * touch = nullptr;
 #endif
 
+#if defined(USE_AIN_MODULE) && defined(USE_TOUCH_MODULE)
+	// ain and touch sharing the same mux control lines?
+	// auto detected at init() from the pins the port header registered and when
+	// true uCtrl takes over the pre select of the next mux port after every read
+	bool _shared_mux_ctrl = false;
+	void preSelectSharedMuxNext();
+#endif
+
 #if defined(USE_SDCARD_MODULE)
 	// sdcard module
 	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2, bool is_shared = false);

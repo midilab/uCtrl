@@ -356,6 +356,18 @@ bool uCtrlClass::initCapTouch(int8_t pin1, int8_t pin2, int8_t pin3, int8_t pin4
 void uCtrlClass::init()
 {
 
+#if defined(USE_AIN_MODULE) && defined(USE_TOUCH_MODULE)
+	// mux control lines shared between ain and touch? the port header declares
+	// both pin sets, so any matching control pin means one shared select bus
+	if ( ain != nullptr && touch != nullptr && ain->_use_mux_driver != -1 &&
+		 ( (ain->_mux_control_pin_1 >= 0 && ain->_mux_control_pin_1 == touch->_control_pin_1) ||
+		   (ain->_mux_control_pin_2 >= 0 && ain->_mux_control_pin_2 == touch->_control_pin_2) ||
+		   (ain->_mux_control_pin_3 >= 0 && ain->_mux_control_pin_3 == touch->_control_pin_3) ||
+		   (ain->_mux_control_pin_4 >= 0 && ain->_mux_control_pin_4 == touch->_control_pin_4) ) ) {
+		_shared_mux_ctrl = true;
+	}
+#endif
+
 #if defined(USE_SDCARD_MODULE)
 	// init of hardware configuration
 	// if we have sdcard support, then retrive hardware config info from ucontrol.cfg on sdcard root filesystem
@@ -390,6 +402,14 @@ void uCtrlClass::init()
 		_ain_event_queue.head = 0;
 		_ain_event_queue.tail = 0;
 		_ain_event_queue.size = 8;
+	}
+#endif
+
+#if defined(USE_AIN_MODULE) && defined(USE_TOUCH_MODULE)
+	// both module inits selected the bus already, seed it for whoever
+	// is serviced first before the timer starts
+	if ( _shared_mux_ctrl ) {
+		preSelectSharedMuxNext();
 	}
 #endif
 
@@ -714,13 +734,55 @@ void degubHandlerOverflow()
 }
 #endif
 
+#if defined(USE_AIN_MODULE) && defined(USE_TOUCH_MODULE)
+//
+// Shared mux control lines between ain and touch: only one channel selection
+// exists on the bus at any time, so instead of each module pre selecting its own
+// next channel at the end of a read(whoever writes last wins and breaks the other),
+// we pre select the channel of the module serviced next. both targets are already
+// maintained by existing code: touch->_next_touch_port and _ain_port_read always
+// hold the channel that module will read next time.
+//
+// the next reader comes straight from the scheduler: uCtrlHandler runs tasks
+// by EDF(most overdue due task first), counters advance every tick and reset
+// only when their task runs, so time to fire is a pure function of the counter
+// and a 1ms/din/dout steal can delay touch or ain but never invert their order.
+// the next reader is therefore just the nearest counter.
+//
+// ponytail: tie -> touch mirrors the handler's candidate evaluation order;
+// assumes touchFrequency/ainFrequency >= 2. keep in sync with uCtrlHandler.
+//
+void uctrl::uCtrlClass::preSelectSharedMuxNext()
+{
+	bool touch_next = true;
+
+	if ( touch == nullptr ) {
+		touch_next = false;
+	} else if ( ain != nullptr ) {
+		uint8_t d_touch = _timerCapTouch >= touchFrequency ? 1 : touchFrequency - _timerCapTouch;
+		uint8_t d_ain = _timerCounterAin >= ainFrequency ? 1 : ainFrequency - _timerCounterAin;
+		touch_next = d_touch <= d_ain;
+	}
+
+	if ( touch_next ) {
+		touch->selectMuxPort(touch->_next_touch_port);
+	} else if ( ain != nullptr ) {
+		// direct port? bus not needed and the next reader is ain itself, so a
+		// touch can't read in between; re prediction after that read fixes the bus
+		if ( _ain_port_read >= ain->_direct_pin_size ) {
+			ain->selectMuxPort(_ain_port_read - ain->_direct_pin_size);
+		}
+	}
+}
+#endif
+
 void uCtrlHandler()
 {
 #if defined(DEBUG_HANDLER)
     degubHandlerOverflow();
 #endif
 
-	// 250us call
+	// 250us call: fires first, never skipped, never returns early
 	if (uCtrl.on250usCallback) {
 #if defined(DEBUG_HANDLER)
 		_overflow = 1;
@@ -731,99 +793,135 @@ void uCtrlHandler()
 #endif
 	}
 
+	// counters advance every tick no matter who runs; they alone define each
+	// task's due time for the EDF pick below
 	++_timerCounter1ms;
 	++_timerCounterDin;
 	++_timerCapTouch;
 	++_timerCounterAin;
 	++_timerCounterDout;
 
-	if (uCtrl.on1msCallback) {
-		// ~1ms call
-		if(_timerCounter1ms >= uCtrl.ms1Frequency) {
-			_timerCounter1ms = 0;
-#if defined(DEBUG_HANDLER)
-			_overflow0 = 1;
-#endif
-			uCtrl.on1msCallback();
-#if defined(DEBUG_HANDLER)
-			_overflow0 = 0;
-#endif
-			return;
-		}
+	// EDF: run the most overdue due task. candidate evaluation order is the
+	// tie order(1ms, din, touch, dout, ain) - a task due earlier can never run
+	// after one due later, so 1ms/din/dout steals can't invert touch vs ain
+	// order and preSelectSharedMuxNext stays a plain counter comparison.
+	int8_t winner = 0;
+	int16_t best = -1;
+
+	if (uCtrl.on1msCallback != nullptr && _timerCounter1ms >= uCtrl.ms1Frequency &&
+			(int16_t)(_timerCounter1ms - uCtrl.ms1Frequency) > best) {
+		best = (int16_t)(_timerCounter1ms - uCtrl.ms1Frequency);
+		winner = 1;
 	}
 
 #if defined(USE_DIN_MODULE)
-	if (uCtrl.din != nullptr) {
-		// ~2ms call
-		if (_timerCounterDin >= uCtrl.dinFrequency) {
-			_timerCounterDin = 0;
-#if defined(DEBUG_HANDLER)
-			_overflow1 = 1;
-#endif
-			uCtrl.din->read(1);
-#if defined(DEBUG_HANDLER)
-			_overflow1 = 0;
-#endif
-			return;
-		}
+	if (uCtrl.din != nullptr && _timerCounterDin >= uCtrl.dinFrequency &&
+			(int16_t)(_timerCounterDin - uCtrl.dinFrequency) > best) {
+		best = (int16_t)(_timerCounterDin - uCtrl.dinFrequency);
+		winner = 2;
 	}
 #endif
 
 #if defined(USE_TOUCH_MODULE)
-	if (uCtrl.touch != nullptr) {
-		// ~3ms call
-		if (_timerCapTouch >= uCtrl.touchFrequency)
-		{
-			_timerCapTouch = 0;
-#if defined(DEBUG_HANDLER)
-			_overflow2 = 1;
-#endif
-			uCtrl.touch->read();
-#if defined(DEBUG_HANDLER)
-			_overflow2 = 0;
-#endif
-			return;
-		}
+	if (uCtrl.touch != nullptr && _timerCapTouch >= uCtrl.touchFrequency &&
+			(int16_t)(_timerCapTouch - uCtrl.touchFrequency) > best) {
+		best = (int16_t)(_timerCapTouch - uCtrl.touchFrequency);
+		winner = 3;
 	}
 #endif
 
 #if defined(USE_DOUT_MODULE)
-	if (uCtrl.dout != nullptr) {
-		// ~5ms call
-		if (_timerCounterDout >= uCtrl.doutFrequency) {
-			_timerCounterDout = 0;
-#if defined(DEBUG_HANDLER)
-			_overflow3 = 1;
-#endif
-			uCtrl.dout->flush(1);
-#if defined(DEBUG_HANDLER)
-			_overflow3 = 0;
-#endif
-			return;
-		}
+	if (uCtrl.dout != nullptr && _timerCounterDout >= uCtrl.doutFrequency &&
+			(int16_t)(_timerCounterDout - uCtrl.doutFrequency) > best) {
+		best = (int16_t)(_timerCounterDout - uCtrl.doutFrequency);
+		winner = 4;
 	}
 #endif
 
 #if defined(USE_AIN_MODULE)
-  	if (uCtrl.ain != nullptr) {
-		// ~10ms call
-		if (_timerCounterAin >= uCtrl.ainFrequency)
-		{
-			_timerCounterAin = 0;
-#if defined(DEBUG_HANDLER)
-			_overflow4 = 1;
-#endif
-			uCtrl.processAin();
-#if defined(DEBUG_HANDLER)
-			_overflow4 = 0;
-#endif
-
-            ++uCtrl._ain_port_read;
-			if (uCtrl._ain_port_read == uCtrl.ain->sizeOf())
-				uCtrl._ain_port_read = 0;
-
-			return;
-		}
+	if (uCtrl.ain != nullptr && _timerCounterAin >= uCtrl.ainFrequency &&
+			(int16_t)(_timerCounterAin - uCtrl.ainFrequency) > best) {
+		best = (int16_t)(_timerCounterAin - uCtrl.ainFrequency);
+		winner = 5;
 	}
 #endif
+
+	switch (winner) {
+	case 1:
+		_timerCounter1ms = 0;
+#if defined(DEBUG_HANDLER)
+		_overflow0 = 1;
+#endif
+		uCtrl.on1msCallback();
+#if defined(DEBUG_HANDLER)
+		_overflow0 = 0;
+#endif
+		return;
+#if defined(USE_DIN_MODULE)
+	case 2:
+		_timerCounterDin = 0;
+#if defined(DEBUG_HANDLER)
+		_overflow1 = 1;
+#endif
+		uCtrl.din->read(1);
+#if defined(DEBUG_HANDLER)
+		_overflow1 = 0;
+#endif
+		return;
+#endif
+#if defined(USE_TOUCH_MODULE)
+	case 3:
+		_timerCapTouch = 0;
+#if defined(DEBUG_HANDLER)
+		_overflow2 = 1;
+#endif
+		uCtrl.touch->read();
+#if defined(DEBUG_HANDLER)
+		_overflow2 = 0;
+#endif
+#if defined(USE_AIN_MODULE)
+		// shared mux control lines: pre select the channel of the next reader
+		if (uCtrl._shared_mux_ctrl) {
+			uCtrl.preSelectSharedMuxNext();
+		}
+#endif
+		return;
+#endif
+#if defined(USE_DOUT_MODULE)
+	case 4:
+		_timerCounterDout = 0;
+#if defined(DEBUG_HANDLER)
+		_overflow3 = 1;
+#endif
+		uCtrl.dout->flush(1);
+#if defined(DEBUG_HANDLER)
+		_overflow3 = 0;
+#endif
+		return;
+#endif
+#if defined(USE_AIN_MODULE)
+	case 5:
+		_timerCounterAin = 0;
+#if defined(DEBUG_HANDLER)
+		_overflow4 = 1;
+#endif
+		uCtrl.processAin();
+#if defined(DEBUG_HANDLER)
+		_overflow4 = 0;
+#endif
+
+		++uCtrl._ain_port_read;
+		if (uCtrl._ain_port_read == uCtrl.ain->sizeOf())
+			uCtrl._ain_port_read = 0;
+
+#if defined(USE_TOUCH_MODULE)
+		// shared mux control lines: pre select the channel of the next reader
+		// (after the port advance so _ain_port_read is the next target)
+		if (uCtrl._shared_mux_ctrl) {
+			uCtrl.preSelectSharedMuxNext();
+		}
+#endif
+		return;
+#endif
+	}
 }
