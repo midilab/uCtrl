@@ -48,18 +48,38 @@ class Storage
 
 		void init(SPIClass * spi_device = nullptr, bool is_shared = false);
 
-		// epprom
-		bool save(void *data, size_t n, int address = -1);
-		bool load(void *data, size_t n, int address = -1);
-		bool copy(int address_from, int address_to, size_t n);
-		// sdcard
+		// transparent byte address interface: backed by epprom or by the active sdcard session image
+		bool save(void *data, size_t n, uint32_t address = (uint32_t)-1);
+		bool load(void *data, size_t n, uint32_t address = (uint32_t)-1);
+		bool copy(uint32_t address_from, uint32_t address_to, size_t n);
+
+		// raw file access (sdcard only)
 		bool load(void *data, size_t n, const char * path);
 		bool save(void *data, size_t n, const char * path);
 
+		// sdcard session management
+		bool isSdActive();
+		uint32_t size();
+		uint16_t getActiveSession();
+		uint16_t getSessionCount();
+		bool useSession(uint16_t index, bool create = false);
+		bool restoreSession();
+		bool importFromEpprom(uint32_t n);
+		bool hasEppromData(uint16_t valid_marker);
+		// per session sidecar file: session stuff not part of the epprom compatible image
+		bool saveSessionConfig(void *data, size_t n);
+		bool loadSessionConfig(void *data, size_t n);
+
 	private:
 
-		int _current_address = 0;
+		uint32_t _current_address = 0;
 		bool _is_shared = false;
+		uint16_t _active_session = 0;
+
+		bool sdReady();
+		void sdSessionPath(char * buffer, uint16_t index, bool config);
+		bool sdWriteAt(void *data, size_t n, uint32_t address);
+		bool sdReadAt(void *data, size_t n, uint32_t address);
 };
 			
 } }

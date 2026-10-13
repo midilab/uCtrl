@@ -41,7 +41,7 @@
 #define USE_TOUCH_MODULE
 //#define USE_RAM_MODULE
 #define USE_STORAGE_MODULE
-//#define USE_SDCARD_MODULE
+#define USE_SDCARD_MODULE
 #define USE_PAGE_MODULE
 #define USE_PAGE_MODULE_COMPONENT
 //#define USE_DEVICE_MODULE
@@ -202,7 +202,7 @@ class uCtrlClass
 #if defined(USE_SDCARD_MODULE)
 	// sdcard module
 	bool initSdCard(SPIClass * spi_device = nullptr, uint8_t chip_select = 2, bool is_shared = false);
-	uctrl::module::SdCard * sdcard;
+	uctrl::module::SdCard * sdcard = nullptr;
 #endif
 
 #if defined(USE_PAGE_MODULE)

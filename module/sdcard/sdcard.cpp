@@ -57,37 +57,84 @@ void SdCard::init(SPIClass * spi_device, uint8_t chip_select, bool is_shared)
 {  
   _buffer_count = 0;
   _is_shared = is_shared;
+  _card_present = false;
+  _ready = false;
 
 #if defined(SDCARD_BITBANG_DRIVER)
     // init sdcard
-    if (!_sd_fat.begin(SdSpiConfig(chip_select, DEDICATED_SPI, SD_SCK_MHZ(0), &_soft_spi))) {
+    if (!_sd_fat.cardBegin(SdSpiConfig(chip_select, DEDICATED_SPI, SD_SCK_MHZ(0), &_soft_spi))) {
       //_sd_fat.initErrorHalt();
       _sd_fat.initErrorPrint();
+      return;
     }
 #else
     // init sdcard
     sdSpi.setDevice(spi_device);
     // SHARED_SPI, DEDICATED_SPI
-    if (!_sd_fat.begin(SdSpiConfig(chip_select, SHARED_SPI, SD_SCK_MHZ(4), &sdSpi))) {
+    if (!_sd_fat.cardBegin(SdSpiConfig(chip_select, SHARED_SPI, SD_SCK_MHZ(4), &sdSpi))) {
     //if (!_sd_fat.begin(ram_module._chip_select)) {
       //_sd_fat.initErrorHalt();
       _sd_fat.initErrorPrint();
+      return;
     }
-#endif  
+#endif
+
+  // card is physically there
+  _card_present = true;
+
+  // try to mount the filesystem on it
+  _ready = _sd_fat.volumeBegin();
+  if (!_ready) {
+    // card present but unsupported/corrupted filesystem
+    _sd_fat.initErrorPrint();
+  }
 
   // get sdfat cache data address (512 bytes cache)
   //_cache = (uint8_t*)_sd_fat.vol()->cacheAddress()->data;
 }
 
-bool SdCard::openFile(const char * path, uint8_t oflags, uint8_t interrupted)
+bool SdCard::isReady()
 {
-  if ( oflags == 1 ) {
+  return _ready;
+}
+
+bool SdCard::needsFormat()
+{
+  return _card_present && !_ready;
+}
+
+bool SdCard::formatCard()
+{
+  if (!_card_present) {
+    return false;
+  }
+
+  // quick format: writes mbr + fat structures, not a full card wipe
+  if (!_sd_fat.format()) {
+    return false;
+  }
+
+  // remount the fresh filesystem
+  _ready = _sd_fat.volumeBegin();
+  return _ready;
+}
+
+bool SdCard::openFile(const char * path, uint8_t mode, uint8_t interrupted)
+{
+  // oflag_t is int on ARM(O_CREAT=0x200) and uint8_t on AVR: always use the local type
+  oflag_t oflags = O_READ;
+
+  if ( mode == 1 ) {
     oflags = O_WRITE | O_CREAT;
     if ( interrupted == 0 && _is_shared ) ATOMIC_START
     _sd_fat.remove(path);
     if ( interrupted == 0 && _is_shared ) ATOMIC_END
-  } else if ( oflags == 0 ) {
-    oflags = O_READ;
+  } else if ( mode == 2 ) {
+    // write in place: create if missing, keep existing content
+    oflags = O_WRITE | O_CREAT;
+  } else if ( mode == 3 ) {
+    // read/write in place: create if missing, keep existing content
+    oflags = O_RDWR | O_CREAT;
   }
 
   if ( interrupted == 0 && _is_shared ) ATOMIC_START
@@ -98,6 +145,42 @@ bool SdCard::openFile(const char * path, uint8_t oflags, uint8_t interrupted)
     return true;
   }
   return false;
+}
+
+bool SdCard::seek(uint32_t position, uint8_t interrupted)
+{
+  bool result = false;
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
+  result = _file.seekSet(position);
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
+  return result;
+}
+
+uint32_t SdCard::position(uint8_t interrupted)
+{
+  uint32_t result = 0;
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
+  result = _file.curPosition();
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
+  return result;
+}
+
+uint32_t SdCard::size(uint8_t interrupted)
+{
+  uint32_t result = 0;
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
+  result = _file.size();
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
+  return result;
+}
+
+bool SdCard::mkdir(const char * path, uint8_t interrupted)
+{
+  if ( interrupted == 0 && _is_shared ) ATOMIC_START
+  bool result = _sd_fat.mkdir(path);
+  if ( interrupted == 0 && _is_shared ) ATOMIC_END
+
+  return result;
 }
 
 bool SdCard::closeFile(uint8_t interrupted)
@@ -115,11 +198,11 @@ bool SdCard::closeFile(uint8_t interrupted)
 
 uint8_t * SdCard::getData(size_t buffer_size, uint8_t interrupted)
 {
-  uint8_t ret = 0;
+  int32_t ret = 0;
   if ( interrupted == 0 && _is_shared ) ATOMIC_START
   ret = _file.read((char*)_cache, buffer_size);
   if ( interrupted == 0 && _is_shared ) ATOMIC_END
-  if ( ret < buffer_size ) {
+  if ( ret < 0 || (size_t)ret < buffer_size ) {
     return NULL;
   } else {
     return _cache;
@@ -128,7 +211,7 @@ uint8_t * SdCard::getData(size_t buffer_size, uint8_t interrupted)
 
 bool SdCard::setData(uint8_t * buffer, size_t buffer_size, uint8_t interrupted)
 {
-  uint8_t ret = 0;
+  size_t ret = 0;
 
   // buffer == NULL is the end of file setData
   if ( buffer == NULL ) {
@@ -153,7 +236,7 @@ bool SdCard::setData(uint8_t * buffer, size_t buffer_size, uint8_t interrupted)
   if ( interrupted == 0 && _is_shared ) ATOMIC_END
   
   if ( ret < buffer_size ) {
-    return NULL;
+    return false;
   }
   
   // increment buffer counter
@@ -321,7 +404,7 @@ bool SdCard::chdir(char * path, uint8_t interrupted)
   return true;
 }
 
-bool SdCard::exists(char * path, uint8_t interrupted)
+bool SdCard::exists(const char * path, uint8_t interrupted)
 {
   if ( interrupted == 0 && _is_shared ) ATOMIC_START 
   bool result = _sd_fat.exists(path);
